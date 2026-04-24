@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "compounds": [
+    {
+      "name": "Full Stack",
+      "configurations": ["Angular", "FastAPI"]
+    }
+  ],
+  "configurations": [
+    {
+      "name": "FastAPI",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--log-level", "debug"],
+      "jinja": true,
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Angular",
+      "type": "firefox",
+      "request": "launch",
+      "preLaunchTask": "npm: start - frontend",
+      "url": "http://localhost:4200/",
+      "webRoot": "${workspaceFolder}/frontend",
+      "tmpDir": "${workspaceFolder}/tmp"
+    }
+  ]
+}
