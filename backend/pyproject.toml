@@ -10,7 +10,7 @@ dependencies = [
     "pydantic[email]",
     "pydantic-settings",
     # Async database
-    "sqlmodel==0.0.37",
+    "sqlmodel==0.0.38",
     "sqlalchemy[asyncio]",
     "aiosqlite",
     "alembic",

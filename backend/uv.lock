@@ -66,9 +66,9 @@ source = { virtual = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "alembic" },
+    { name = "bcrypt" },
     { name = "fastapi", extra = ["standard"] },
     { name = "httpx" },
-    { name = "passlib", extra = ["bcrypt"] },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
     { name = "python-jose", extra = ["cryptography"] },
@@ -88,15 +88,15 @@ dev = [
 requires-dist = [
     { name = "aiosqlite" },
     { name = "alembic" },
+    { name = "bcrypt" },
     { name = "fastapi", extras = ["standard"], specifier = "==0.135.2" },
     { name = "httpx" },
-    { name = "passlib", extras = ["bcrypt"] },
     { name = "pydantic", extras = ["email"] },
     { name = "pydantic-settings" },
     { name = "python-jose", extras = ["cryptography"] },
     { name = "python-multipart" },
     { name = "sqlalchemy", extras = ["asyncio"] },
-    { name = "sqlmodel", specifier = "==0.0.37" },
+    { name = "sqlmodel", specifier = "==0.0.38" },
 ]
 
 [package.metadata.requires-dev]
@@ -650,20 +650,6 @@ wheels = [
 ]
 
 [[package]]
-name = "passlib"
-version = "1.7.4"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b6/06/9da9ee59a67fae7761aab3ccc84fa4f3f33f125b370f1ccdb915bf967c11/passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04", size = 689844, upload-time = "2020-10-08T19:00:52.121Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/a4/ab6b7589382ca3df236e03faa71deac88cae040af60c071a78d254a62172/passlib-1.7.4-py2.py3-none-any.whl", hash = "sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1", size = 525554, upload-time = "2020-10-08T19:00:49.856Z" },
-]
-
-[package.optional-dependencies]
-bcrypt = [
-    { name = "bcrypt" },
-]
-
-[[package]]
 name = "pathspec"
 version = "1.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -1040,15 +1026,16 @@ asyncio = [
 
 [[package]]
 name = "sqlmodel"
-version = "0.0.37"
+version = "0.0.38"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
     { name = "sqlalchemy" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fb/26/1d2faa0fd5a765267f49751de533adac6b9ff9366c7c6e7692df4f32230f/sqlmodel-0.0.37.tar.gz", hash = "sha256:d2c19327175794faf50b1ee31cc966764f55b1dedefc046450bc5741a3d68352", size = 85527, upload-time = "2026-02-21T16:39:47.038Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/64/0d/26ec1329960ea9430131fe63f63a95ea4cb8971d49c891ff7e1f3255421c/sqlmodel-0.0.38.tar.gz", hash = "sha256:d583ec237b14103809f74e8630032bc40ab68cd6b754a610f0813c56911a547b", size = 86710, upload-time = "2026-04-02T21:03:55.571Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b1/e1/7c8d18e737433f3b5bbe27b56a9072a9fcb36342b48f1bef34b6da1d61f2/sqlmodel-0.0.37-py3-none-any.whl", hash = "sha256:2137a4045ef3fd66a917a7717ada959a1ceb3630d95e1f6aaab39dd2c0aef278", size = 27224, upload-time = "2026-02-21T16:39:47.781Z" },
+    { url = "https://files.pythonhosted.org/packages/72/c7/10c60af0607ab6fa136264f7f39d205932218516226d38585324ffda705d/sqlmodel-0.0.38-py3-none-any.whl", hash = "sha256:84e3fa990a77395461ded72a6c73173438ce8449d5c1c4d97fbff1b1df692649", size = 27294, upload-time = "2026-04-02T21:03:56.406Z" },
 ]
 
 [[package]]
