@@ -13,6 +13,17 @@ updates:
     directory: "/backend"
     schedule:
       interval: "weekly"
+    groups:
+      fastapi-pydantic:
+        patterns:
+          - "fastapi"
+          - "pydantic"
+          - "pydantic-settings"
+      sqlmodel-sqlalchemy:
+        patterns:
+          - "sqlmodel"
+          - "sqlalchemy"
+          - "alembic"
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
