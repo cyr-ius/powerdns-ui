@@ -1,0 +1,148 @@
+import secrets
+from datetime import UTC, datetime, timedelta
+from urllib.parse import urlencode
+
+import bcrypt
+import httpx
+from jose import jwt
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
+
+from app.config import settings
+from app.models.user import User
+
+_oidc_discovery_cache: dict | None = None
+_oidc_state_store: dict[str, str] = {}
+
+
+def clear_oidc_cache() -> None:
+    global _oidc_discovery_cache
+    _oidc_discovery_cache = None
+
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
+
+
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
+    to_encode["exp"] = expire
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)  # type: ignore[no-any-return]
+
+
+async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
+    result = await db.exec(select(User).where(User.username == username))  # type: ignore[call-overload]
+    return result.first()
+
+
+async def authenticate_user(
+    db: AsyncSession, username: str, password: str
+) -> User | None:
+    user = await get_user_by_username(db, username)
+    if not user or not user.hashed_password:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+async def create_user(
+    db: AsyncSession,
+    username: str,
+    password: str | None = None,
+    email: str | None = None,
+    is_oidc: bool = False,
+    is_admin: bool = False,
+) -> User:
+    user = User(
+        username=username,
+        email=email,
+        hashed_password=hash_password(password) if password else None,
+        is_oidc=is_oidc,
+        is_admin=is_admin,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def get_or_create_oidc_user(
+    db: AsyncSession, username: str, email: str | None
+) -> User:
+    user = await get_user_by_username(db, username)
+    if not user:
+        user = await create_user(db, username=username, email=email, is_oidc=True)
+    return user
+
+
+def _oidc_cfg(override: dict | None) -> dict:
+    return override or {}
+
+
+async def _get_oidc_discovery(cfg: dict) -> dict:
+    global _oidc_discovery_cache
+    if _oidc_discovery_cache is None:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(cfg["discovery_url"])
+            resp.raise_for_status()
+            _oidc_discovery_cache = resp.json()
+    result: dict = _oidc_discovery_cache  # type: ignore[assignment]
+    return result
+
+
+async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
+    cfg = _oidc_cfg(cfg_override)
+    discovery = await _get_oidc_discovery(cfg)
+    auth_endpoint = discovery["authorization_endpoint"]
+    state = secrets.token_urlsafe(32)
+    _oidc_state_store[state] = "/"
+    params = {
+        "response_type": "code",
+        "client_id": cfg["client_id"],
+        "redirect_uri": cfg["redirect_uri"],
+        "scope": cfg["scopes"],
+        "state": state,
+    }
+    return f"{auth_endpoint}?{urlencode(params)}"
+
+
+async def exchange_oidc_code(
+    code: str, state: str, cfg_override: dict | None = None
+) -> dict:
+    cfg = _oidc_cfg(cfg_override)
+    discovery = await _get_oidc_discovery(cfg)
+    token_endpoint = discovery["token_endpoint"]
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            token_endpoint,
+            data={
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": cfg["redirect_uri"],
+                "client_id": cfg["client_id"],
+                "client_secret": cfg["client_secret"],
+            },
+        )
+        resp.raise_for_status()
+        return resp.json()  # type: ignore[no-any-return]
+
+
+async def get_oidc_userinfo(
+    access_token: str, cfg_override: dict | None = None
+) -> dict:
+    cfg = _oidc_cfg(cfg_override)
+    discovery = await _get_oidc_discovery(cfg)
+    userinfo_endpoint = discovery["userinfo_endpoint"]
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            userinfo_endpoint,
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        resp.raise_for_status()
+        return resp.json()  # type: ignore[no-any-return]
