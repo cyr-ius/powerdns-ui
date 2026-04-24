@@ -1,0 +1,73 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-sliders me-2 text-primary"></i>Server Configuration</h2>
+    <p class="text-muted small mb-0">{{ filtered().length }} / {{ settings().length }} setting(s)</p>
+  </div>
+  <button class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="isLoading()">
+    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="card-header border-bottom py-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="input-group" style="max-width: 360px">
+        <span class="input-group-text bg-transparent border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input
+          type="search"
+          class="form-control border-start-0"
+          placeholder="Filter by name or value…"
+          [formField]="filterForm.filter"
+        />
+      </div>
+      <span class="badge bg-secondary-subtle text-secondary-emphasis"> <i class="bi bi-lock me-1"></i>Read Only </span>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading configuration…</p>
+      </div>
+    } @else if (filtered().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No settings found</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0 font-monospace-values">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40%">Parameter</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of filtered(); track trackByName($index, s)) {
+            <tr>
+              <td class="fw-medium text-nowrap">{{ s.name }}</td>
+              <td>
+                @if (s.value === "" || s.value == null) {
+                  <span class="text-muted fst-italic small">—</span>
+                } @else {
+                  <code class="text-body small">{{ s.value }}</code>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

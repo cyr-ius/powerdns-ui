@@ -1,0 +1,176 @@
+<!-- ── Top navbar ─────────────────────────────────────────────────────────── -->
+<header class="pdns-topbar">
+  <div class="pdns-topbar-start">
+    <button class="pdns-icon-btn pdns-sidebar-toggle" type="button" (click)="toggleSidebar()" title="Menu">
+      <i class="bi bi-list"></i>
+    </button>
+    <a class="pdns-brand" routerLink="/zones">
+      <i class="bi bi-hdd-network"></i>
+      <span>PowerDNS <strong>UI</strong></span>
+    </a>
+  </div>
+
+  <form class="pdns-topbar-search" (ngSubmit)="onSearch()">
+    <i class="bi bi-search pdns-search-icon"></i>
+    <input
+      type="search"
+      class="pdns-search-input"
+      placeholder="Search… (*, ?)"
+      [(ngModel)]="searchQuery"
+      name="globalSearch"
+    />
+  </form>
+
+  <div class="pdns-topbar-end">
+    <button
+      class="pdns-icon-btn"
+      type="button"
+      title="Theme : {{ themeService.themeLabel() }}"
+      (click)="themeService.cycleTheme()"
+    >
+      <i class="bi" [class]="themeService.themeIcon()"></i>
+    </button>
+
+    @if (auth.currentUser()) {
+      <a routerLink="/profile" class="pdns-user-btn" [title]="auth.currentUser()!.username" (click)="closeSidebar()">
+        <span class="pdns-avatar">{{ auth.currentUser()!.username.charAt(0).toUpperCase() }}</span>
+        <span class="d-none d-sm-inline">{{ auth.currentUser()!.username }}</span>
+        @if (auth.currentUser()!.is_oidc) {
+          <span class="pdns-sso-badge">SSO</span>
+        }
+      </a>
+    }
+
+    <button class="pdns-icon-btn pdns-logout" title="Logout" (click)="logout()">
+      <i class="bi bi-box-arrow-right"></i>
+    </button>
+  </div>
+</header>
+
+<!-- ── App body ──────────────────────────────────────────────────────────── -->
+<div class="pdns-app-body">
+  <!-- Sidebar overlay (mobile) -->
+  @if (sidebarOpen()) {
+    <div class="pdns-sidebar-overlay" (click)="closeSidebar()"></div>
+  }
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="pdns-sidebar" [class.open]="sidebarOpen()">
+    <nav class="pdns-sidenav">
+      <p class="pdns-sidenav-label">Principal</p>
+
+      <a
+        class="pdns-sidenav-link"
+        routerLink="/zones"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: false }"
+        (click)="closeSidebar()"
+      >
+        <i class="bi bi-globe2"></i>
+        <span>DNS Zones</span>
+      </a>
+
+      <a class="pdns-sidenav-link" routerLink="/catalogues" routerLinkActive="active" (click)="closeSidebar()">
+        <i class="bi bi-collection"></i>
+        <span>Catalogues</span>
+      </a>
+
+      <a class="pdns-sidenav-link" routerLink="/statistics" routerLinkActive="active" (click)="closeSidebar()">
+        <i class="bi bi-bar-chart-line"></i>
+        <span>Statistics</span>
+      </a>
+
+      @if (auth.isAdmin()) {
+        <p class="pdns-sidenav-label mt-3">Server</p>
+
+        <a class="pdns-sidenav-link" routerLink="/tsigkeys" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-key"></i>
+          <span>TSIG Keys</span>
+        </a>
+
+        <a class="pdns-sidenav-link" routerLink="/server-config" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-sliders"></i>
+          <span>Configuration</span>
+        </a>
+
+        <a class="pdns-sidenav-link" routerLink="/autoprimaries" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-hdd-rack"></i>
+          <span>Autoprimaries</span>
+        </a>
+
+        @if (server.supportsViewsAndNetworks()) {
+          <a class="pdns-sidenav-link" routerLink="/views" routerLinkActive="active" (click)="closeSidebar()">
+            <i class="bi bi-eye"></i>
+            <span>Views</span>
+          </a>
+
+          <a class="pdns-sidenav-link" routerLink="/networks" routerLinkActive="active" (click)="closeSidebar()">
+            <i class="bi bi-diagram-3"></i>
+            <span>Networks</span>
+          </a>
+        }
+
+        <p class="pdns-sidenav-label mt-3">Administration</p>
+
+        <a class="pdns-sidenav-link" routerLink="/admin/users" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-people"></i>
+          <span>Users</span>
+        </a>
+
+        <a class="pdns-sidenav-link" routerLink="/admin/accounts" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-folder2-open"></i>
+          <span>Accounts</span>
+        </a>
+
+        <a class="pdns-sidenav-link" routerLink="/admin/oidc" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-shield-check"></i>
+          <span>OIDC</span>
+        </a>
+
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/record-types"
+          routerLinkActive="active"
+          (click)="closeSidebar()"
+        >
+          <i class="bi bi-card-list"></i>
+          <span>DNS Types</span>
+        </a>
+
+        <a class="pdns-sidenav-link" routerLink="/admin/audit" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-journal-text"></i>
+          <span>Audit Journal</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <!-- ── Main content ──────────────────────────────────────────────────────── -->
+  <main class="pdns-main">
+    <div class="pdns-content">
+      <router-outlet />
+    </div>
+  </main>
+</div>
+
+<!-- ── Session expirée ───────────────────────────────────────────────────── -->
+@if (auth.sessionExpired()) {
+  <div class="modal-backdrop-overlay"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title"><i class="bi bi-lock-fill me-2 text-warning"></i>Session expirée</h5>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0 text-muted">Your session has expired. Please log in again to continue.</p>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button class="btn btn-primary" (click)="logout()">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Log in
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,32 @@
+.pdns-log-console {
+  background: #0d1117;
+  color: #c9d1d9;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 0.8rem;
+  padding: 1rem;
+  max-height: 600px;
+  overflow-y: auto;
+  border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.pdns-log-line {
+  display: flex;
+  gap: 1rem;
+  padding: 0.1rem 0;
+  border-bottom: 1px solid #21262d;
+}
+
+.pdns-log-line:last-child {
+  border-bottom: none;
+}
+
+.pdns-log-time {
+  color: #8b949e;
+  white-space: nowrap;
+  min-width: 180px;
+}
+
+.pdns-log-msg {
+  color: #c9d1d9;
+  word-break: break-all;
+}

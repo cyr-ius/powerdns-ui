@@ -1,0 +1,250 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "bootstrap-icons/font/bootstrap-icons.min.css";
+
+/* ══════════════════════════════════════════════════════
+   PowerDNS UI · Design System
+   Brand: #e66e00 (orange) · #666666 (gray)
+══════════════════════════════════════════════════════ */
+
+/* ─── Light theme ─────────────────────────────────── */
+:root,
+[data-bs-theme="light"] {
+  /* Brand accents */
+  --pdns-orange: #e66e00;
+  --pdns-orange-dk: #cb6100;
+  --pdns-orange-sub: rgba(230, 110, 0, 0.07);
+  --pdns-orange-ring: rgba(230, 110, 0, 0.18);
+
+  /* Surfaces */
+  --pdns-bg: #f5f4f2;
+  --pdns-surface: #ffffff;
+  --pdns-border: #e2dfd9;
+
+  /* Text */
+  --pdns-text: #1c1a17;
+  --pdns-text-muted: #6a6560;
+
+  /* Navbar */
+  --pdns-nav-bg: #ffffff;
+  --pdns-nav-border: #e2dfd9;
+  --pdns-nav-link: #4a4540;
+  --pdns-nav-link-hov: #1c1a17;
+  --pdns-nav-link-act: #e66e00;
+  --pdns-nav-admin: #b0aba5;
+
+  /* Bootstrap overrides */
+  --bs-primary: #e66e00;
+  --bs-primary-rgb: 230, 110, 0;
+  --bs-body-bg: #f5f4f2;
+  --bs-body-color: #1c1a17;
+  --bs-secondary-color: #6a6560;
+  --bs-border-color: #e2dfd9;
+  --bs-link-color: #e66e00;
+  --bs-link-hover-color: #cb6100;
+  --bs-card-bg: #ffffff;
+  --bs-card-border-color: #e2dfd9;
+  --bs-card-cap-bg: #f9f8f6;
+}
+
+/* ─── Dark theme ──────────────────────────────────── */
+[data-bs-theme="dark"] {
+  --pdns-orange: #f07820;
+  --pdns-orange-dk: #f58c3a;
+  --pdns-orange-sub: rgba(240, 120, 32, 0.1);
+  --pdns-orange-ring: rgba(240, 120, 32, 0.22);
+
+  --pdns-bg: #111111;
+  --pdns-surface: #1c1c1c;
+  --pdns-border: #2c2a27;
+
+  --pdns-text: #edeae6;
+  --pdns-text-muted: #7a7570;
+
+  --pdns-nav-bg: #181818;
+  --pdns-nav-border: #272422;
+  --pdns-nav-link: #c0bcb6;
+  --pdns-nav-link-hov: #edeae6;
+  --pdns-nav-link-act: #f07820;
+  --pdns-nav-admin: #4a4540;
+
+  --bs-primary: #f07820;
+  --bs-primary-rgb: 240, 120, 32;
+  --bs-body-bg: #111111;
+  --bs-body-color: #edeae6;
+  --bs-secondary-color: #7a7570;
+  --bs-border-color: #2c2a27;
+  --bs-link-color: #f07820;
+  --bs-link-hover-color: #f58c3a;
+  --bs-card-bg: #1c1c1c;
+  --bs-card-border-color: #2c2a27;
+  --bs-card-cap-bg: #1f1f1f;
+}
+
+/* ─── Typography ──────────────────────────────────── */
+body {
+  font-family:
+    "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  font-size: 0.9375rem;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-monospace {
+  font-size: 0.875em;
+}
+
+/* ─── Primary button ──────────────────────────────── */
+.btn-primary {
+  --bs-btn-bg: var(--pdns-orange);
+  --bs-btn-border-color: var(--pdns-orange);
+  --bs-btn-hover-bg: var(--pdns-orange-dk);
+  --bs-btn-hover-border-color: var(--pdns-orange-dk);
+  --bs-btn-active-bg: var(--pdns-orange-dk);
+  --bs-btn-active-border-color: var(--pdns-orange-dk);
+  --bs-btn-disabled-bg: var(--pdns-orange);
+  --bs-btn-disabled-border-color: var(--pdns-orange);
+  --bs-btn-focus-shadow-rgb: 230, 110, 0;
+}
+
+/* ─── Outline primary button ──────────────────────── */
+.btn-outline-primary {
+  --bs-btn-color: var(--pdns-orange);
+  --bs-btn-border-color: var(--pdns-orange);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--pdns-orange);
+  --bs-btn-hover-border-color: var(--pdns-orange);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--pdns-orange);
+  --bs-btn-active-border-color: var(--pdns-orange);
+  --bs-btn-focus-shadow-rgb: 230, 110, 0;
+}
+
+/* ─── Colour utilities ────────────────────────────── */
+.text-primary {
+  color: var(--pdns-orange) !important;
+}
+.bg-primary {
+  background-color: var(--pdns-orange) !important;
+}
+.border-primary {
+  border-color: var(--pdns-orange) !important;
+}
+.badge.bg-primary,
+.badge.text-bg-primary {
+  background-color: var(--pdns-orange) !important;
+}
+
+/* ─── Form controls ───────────────────────────────── */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--pdns-orange);
+  box-shadow: 0 0 0 0.2rem var(--pdns-orange-ring);
+}
+
+.form-control,
+.form-select {
+  border-color: var(--pdns-border);
+  background-color: var(--pdns-surface);
+  color: var(--pdns-text);
+}
+
+.input-group-text {
+  border-color: var(--pdns-border);
+  background-color: var(--pdns-bg);
+  color: var(--pdns-text-muted);
+}
+
+/* ─── Cards ───────────────────────────────────────── */
+.card {
+  border-color: var(--pdns-border);
+  border-radius: 0.625rem;
+}
+
+.card.shadow-sm {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.card-header {
+  background-color: var(--pdns-surface);
+  border-bottom-color: var(--pdns-border);
+}
+
+/* ─── Tables ──────────────────────────────────────── */
+.table {
+  --bs-table-border-color: var(--pdns-border);
+}
+
+.table-light {
+  --bs-table-bg: var(--pdns-bg);
+  --bs-table-color: var(--pdns-text-muted);
+  --bs-table-border-color: var(--pdns-border);
+  color: var(--pdns-text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: var(--pdns-orange-sub);
+}
+
+/* ─── Spinners ────────────────────────────────────── */
+.spinner-border.text-primary {
+  color: var(--pdns-orange) !important;
+}
+
+/* ─── Alerts ──────────────────────────────────────── */
+.alert {
+  border-radius: 0.5rem;
+}
+
+/* ─── Badges ──────────────────────────────────────── */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Modals ──────────────────────────────────────── */
+.modal-content {
+  border-color: var(--pdns-border);
+  border-radius: 0.75rem;
+}
+.modal-header {
+  border-bottom-color: var(--pdns-border);
+}
+.modal-footer {
+  border-top-color: var(--pdns-border);
+}
+
+/* ─── Layout root ─────────────────────────────────── */
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+app-root {
+  display: block;
+  height: 100%;
+}
+
+/* ─── Scrollbars (webkit) ─────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pdns-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pdns-text-muted);
+}

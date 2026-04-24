@@ -1,0 +1,160 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-primary"></i>Networks</h2>
+    <p class="text-muted small mb-0">Network association → DNS view (split-horizon)</p>
+  </div>
+  <button class="btn btn-primary" (click)="openAddModal()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadNetworks()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading networks…</p>
+      </div>
+    } @else if (networks().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-diagram-3 text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No networks configured</p>
+        <p class="text-muted small">Associate network ranges with DNS views for split-horizon.</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Network (CIDR)</th>
+            <th>DNS View</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (net of networks(); track trackByNetwork($index, net)) {
+            <tr>
+              <td class="font-monospace fw-medium">{{ net.network }}</td>
+              <td>
+                @if (editingNetwork()?.network === net.network) {
+                  <select
+                    class="form-select form-select-sm"
+                    style="max-width: 200px"
+                    [value]="editView()"
+                    (change)="editView.set($any($event.target).value)"
+                  >
+                    @for (v of availableViews(); track v) {
+                      <option [value]="v">{{ v }}</option>
+                    }
+                  </select>
+                } @else {
+                  <span class="badge bg-primary-subtle text-primary-emphasis">{{ net.view }}</span>
+                }
+              </td>
+              <td class="text-end">
+                @if (editingNetwork()?.network === net.network) {
+                  <button class="btn btn-sm btn-success me-1" (click)="saveEdit(net)" title="Save changes">
+                    <i class="bi bi-check-lg"></i>
+                  </button>
+                  <button class="btn btn-sm btn-secondary" (click)="cancelEdit()" title="Cancel">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                } @else {
+                  <button
+                    class="btn btn-sm btn-outline-secondary me-1"
+                    (click)="startEdit(net)"
+                    title="Modifier la vue"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="deleteNetwork(net)" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+@if (showAddModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeAddModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-diagram-3 me-2 text-primary"></i>Add Network Association</h5>
+          <button type="button" class="btn-close" (click)="closeAddModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onAdd()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (addError()) {
+              <div class="alert alert-danger py-2 small">{{ addError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Network CIDR <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="addForm.network().touched() && addForm.network().errors().length"
+                placeholder="192.0.2.0/24"
+                [formField]="addForm.network"
+              />
+              @if (addForm.network().touched() && addForm.network().errors().length) {
+                <div class="invalid-feedback">
+                  {{ addForm.network().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">DNS View <span class="text-danger">*</span></label>
+              @if (availableViews().length > 0) {
+                <select
+                  class="form-select"
+                  [class.is-invalid]="addForm.view().touched() && addForm.view().errors().length"
+                  [formField]="addForm.view"
+                >
+                  <option value="">— Select a view —</option>
+                  @for (v of availableViews(); track v) {
+                    <option [value]="v">{{ v }}</option>
+                  }
+                </select>
+              } @else {
+                <input
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="addForm.view().touched() && addForm.view().errors().length"
+                  placeholder="internal"
+                  [formField]="addForm.view"
+                />
+              }
+              @if (addForm.view().touched() && addForm.view().errors().length) {
+                <div class="invalid-feedback">
+                  {{ addForm.view().errors()[0].message }}
+                </div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onAdd()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

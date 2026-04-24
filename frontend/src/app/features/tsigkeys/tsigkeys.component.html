@@ -1,0 +1,154 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-key me-2 text-primary"></i>TSIG Keys</h2>
+    <p class="text-muted small mb-0">Authentication of zone transfers (AXFR) and DNS updates</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreateModal()"><i class="bi bi-plus-lg me-1"></i>New Key</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadKeys()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading TSIG keys…</p>
+      </div>
+    } @else if (keys().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-key text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No TSIG keys configured</p>
+        <p class="text-muted small">TSIG keys secure zone transfers and DNS updates between DNS servers.</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Algorithm</th>
+            <th>ID</th>
+            <th>Secret</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (key of keys(); track trackById($index, key)) {
+            <tr>
+              <td class="fw-medium">{{ key.name }}</td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                  {{ key.algorithm }}
+                </span>
+              </td>
+              <td class="font-monospace small text-muted">{{ key.id }}</td>
+              <td>
+                @if (revealedId() === key.id) {
+                  <div class="d-flex align-items-center gap-2">
+                    <code class="text-break small">{{ revealedKey() }}</code>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="revealKey(key)" title="Hide secret">
+                      <i class="bi bi-eye-slash"></i>
+                    </button>
+                  </div>
+                } @else {
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="revealKey(key)"
+                    [disabled]="isRevealing()"
+                    title="Reveal secret"
+                  >
+                    @if (isRevealing()) {
+                      <span class="spinner-border spinner-border-sm"></span>
+                    } @else {
+                      <i class="bi bi-eye me-1"></i>Reveal
+                    }
+                  </button>
+                }
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteKey(key)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-key me-2 text-primary"></i>Create TSIG Key</h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreate()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">
+                {{ createError() }}
+              </div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Name <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+                placeholder="my-tsig-key"
+                [formField]="createForm.name"
+              />
+              @if (createForm.name().touched() && createForm.name().errors().length) {
+                <div class="invalid-feedback">
+                  {{ createForm.name().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Algorithm</label>
+              <select class="form-select" [formField]="createForm.algorithm">
+                @for (a of algorithms; track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">
+                Secret Base64
+                <span class="text-muted small">— optional</span>
+              </label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                placeholder="Leave blank to generate automatically"
+                [formField]="createForm.secret"
+              />
+              <div class="form-text">If left blank, the server will generate a random secret automatically.</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

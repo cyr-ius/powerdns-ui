@@ -1,0 +1,262 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Users</h2>
+    <p class="text-muted small mb-0">{{ users().length }} user(s) registered</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreate()"><i class="bi bi-person-plus me-1"></i>New User</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading…</p>
+      </div>
+    } @else if (users().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-people text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No users found</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Auth</th>
+            <th>Role</th>
+            <th>Accounts</th>
+            <th>Status</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="fw-semibold font-monospace">{{ user.username }}</td>
+              <td class="text-muted small">{{ user.email ?? "—" }}</td>
+              <td>
+                <span class="badge" [class]="authBadgeClass(user)">{{ authBadge(user) }}</span>
+              </td>
+              <td>
+                @if (user.is_admin) {
+                  <span class="badge bg-danger">Super Admin</span>
+                } @else {
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis border">User</span>
+                }
+              </td>
+              <td>
+                @if (user.accounts.length === 0) {
+                  <span class="text-muted small">—</span>
+                } @else {
+                  @for (acc of user.accounts; track acc) {
+                    <span class="badge bg-primary-subtle text-primary me-1">{{ acc }}</span>
+                  }
+                }
+              </td>
+              <td>
+                <div class="form-check form-switch mb-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    [checked]="user.is_active"
+                    (change)="toggleActive(user)"
+                  />
+                </div>
+              </td>
+              <td class="text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  <button
+                    class="btn btn-sm"
+                    [class]="user.is_admin ? 'btn-outline-danger' : 'btn-outline-warning'"
+                    title="{{ user.is_admin ? 'Remove admin' : 'Promote admin' }}"
+                    (click)="toggleAdmin(user)"
+                  >
+                    <i class="bi bi-shield-{{ user.is_admin ? 'minus' : 'plus' }}"></i>
+                  </button>
+                  @if (!user.is_oidc) {
+                    <button class="btn btn-sm btn-outline-secondary" title="Reset password" (click)="openReset(user)">
+                      <i class="bi bi-key"></i>
+                    </button>
+                  }
+                  <button class="btn btn-sm btn-outline-danger" title="Delete" (click)="confirmDelete(user)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Create user modal -->
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="showCreateModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-primary"></i>New User</h5>
+          <button class="btn-close" (click)="showCreateModal.set(false)"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreateSubmit()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">{{ createError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Username <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.username().touched() && createForm.username().errors().length"
+                [formField]="createForm.username"
+                autocomplete="off"
+              />
+              @if (createForm.username().touched() && createForm.username().errors().length) {
+                <div class="invalid-feedback">{{ createForm.username().errors()[0].message }}</div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Password <span class="text-danger">*</span></label>
+              <input
+                type="password"
+                class="form-control"
+                [class.is-invalid]="createForm.password().touched() && createForm.password().errors().length"
+                [formField]="createForm.password"
+                autocomplete="new-password"
+              />
+              @if (createForm.password().touched() && createForm.password().errors().length) {
+                <div class="invalid-feedback">{{ createForm.password().errors()[0].message }}</div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">E-mail</label>
+              <input type="email" class="form-control" [formField]="createForm.email" />
+            </div>
+            <div class="form-check mb-0">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="is_admin"
+                [checked]="createModel().is_admin"
+                (change)="createModel.update((m) => ({ ...m, is_admin: !m.is_admin }))"
+              />
+              <label class="form-check-label" for="is_admin">Super Administrator</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="showCreateModal.set(false)">Cancel</button>
+            <button class="btn btn-primary" [disabled]="isCreating()" (click)="onCreateSubmit()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Reset password modal -->
+@if (showResetModal()) {
+  <div class="modal-backdrop-overlay" (click)="showResetModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-key me-2 text-primary"></i>Reset Password — {{ resetTarget()?.username }}
+          </h5>
+          <button class="btn-close" (click)="showResetModal.set(false)"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onResetSubmit()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (resetError()) {
+              <div class="alert alert-danger py-2 small">{{ resetError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">New Password <span class="text-danger">*</span></label>
+              <input
+                type="password"
+                class="form-control"
+                [class.is-invalid]="resetForm.password().touched() && resetForm.password().errors().length"
+                [formField]="resetForm.password"
+                autocomplete="new-password"
+              />
+              @if (resetForm.password().touched() && resetForm.password().errors().length) {
+                <div class="invalid-feedback">{{ resetForm.password().errors()[0].message }}</div>
+              }
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">Confirm Password <span class="text-danger">*</span></label>
+              <input
+                type="password"
+                class="form-control"
+                [class.is-invalid]="resetForm.confirm().touched() && resetForm.confirm().errors().length"
+                [formField]="resetForm.confirm"
+                autocomplete="new-password"
+              />
+              @if (resetForm.confirm().touched() && resetForm.confirm().errors().length) {
+                <div class="invalid-feedback">{{ resetForm.confirm().errors()[0].message }}</div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="showResetModal.set(false)">Cancel</button>
+            <button class="btn btn-primary" [disabled]="isResetting()" (click)="onResetSubmit()">
+              @if (isResetting()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Reset Password
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete confirm modal -->
+@if (deleteTarget()) {
+  <div class="modal-backdrop-overlay" (click)="deleteTarget.set(null)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header border-0">
+          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Confirm deletion</h5>
+          <button class="btn-close" (click)="deleteTarget.set(null)"></button>
+        </div>
+        <div class="modal-body">
+          Delete the user <strong>{{ deleteTarget()?.username }}</strong> ? This action is irreversible.
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-secondary" (click)="deleteTarget.set(null)">Cancel</button>
+          <button class="btn btn-danger" [disabled]="isDeleting()" (click)="doDelete()">
+            @if (isDeleting()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

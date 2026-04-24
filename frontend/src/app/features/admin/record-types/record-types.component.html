@@ -1,0 +1,167 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-card-list me-2 text-primary"></i>DNS Record Types</h2>
+    <p class="text-muted small mb-0">Define the types available when creating records</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreate()"><i class="bi bi-plus-lg me-1"></i>New Type</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading…</p>
+      </div>
+    } @else if (recordTypes().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-card-list text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No record types defined</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Type</th>
+            <th>Applicable to</th>
+            <th>Enabled</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (rt of recordTypes(); track rt.id) {
+            <tr [class.table-secondary]="!rt.enabled">
+              <td>
+                <span class="badge bg-primary-subtle text-primary-emphasis font-monospace fs-6">{{ rt.name }}</span>
+              </td>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  style="width: auto"
+                  (change)="updateApplicableTo(rt, $any($event.target).value)"
+                >
+                  @for (opt of applicableOptions; track opt.value) {
+                    <option [value]="opt.value" [selected]="opt.value === rt.applicable_to">{{ opt.label }}</option>
+                  }
+                </select>
+              </td>
+              <td>
+                <div class="form-check form-switch mb-0">
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    [checked]="rt.enabled"
+                    (change)="toggleEnabled(rt)"
+                  />
+                </div>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-danger" title="Supprimer" (click)="confirmDelete(rt)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal: New type -->
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="showCreateModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>New Record Type</h5>
+          <button type="button" class="btn-close" (click)="showCreateModal.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          @if (createError()) {
+            <div class="alert alert-danger py-2 small">{{ createError() }}</div>
+          }
+          <div class="mb-3">
+            <label class="form-label fw-medium">Type Name <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              class="form-control font-monospace text-uppercase"
+              placeholder="ex: HTTPS, SSHFP…"
+              [formField]="createForm.name"
+              [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+            />
+            @if (createForm.name().touched() && createForm.name().errors().length) {
+              <div class="invalid-feedback">{{ createForm.name().errors()[0].message }}</div>
+            }
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">Applicable à</label>
+            <select class="form-select" [formField]="createForm.applicable_to">
+              @for (opt of applicableOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="createEnabled"
+              role="switch"
+              [checked]="createModel().enabled"
+              (change)="createModel.update((m) => ({ ...m, enabled: $any($event.target).checked }))"
+            />
+            <label class="form-check-label" for="createEnabled">Enabled by default</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="showCreateModal.set(false)">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="onCreateSubmit()" [disabled]="isCreating()">
+            @if (isCreating()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Create
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal: Confirm deletion -->
+@if (deleteTarget()) {
+  <div class="modal-backdrop-overlay" (click)="deleteTarget.set(null)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete</h5>
+          <button type="button" class="btn-close" (click)="deleteTarget.set(null)"></button>
+        </div>
+        <div class="modal-body">
+          Delete the type <strong class="font-monospace">{{ deleteTarget()!.name }}</strong> ?
+          <div class="text-muted small mt-2">Zones with this type selected will need to be updated manually.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" (click)="deleteTarget.set(null)">Cancel</button>
+          <button type="button" class="btn btn-danger btn-sm" (click)="doDelete()" [disabled]="isDeleting()">
+            @if (isDeleting()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

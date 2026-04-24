@@ -1,0 +1,25 @@
+.login-wrapper {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(230, 110, 0, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 75% 80%, rgba(102, 102, 102, 0.06) 0%, transparent 55%), var(--pdns-bg);
+}
+
+[data-bs-theme="dark"] .login-wrapper {
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(240, 120, 32, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(102, 102, 102, 0.05) 0%, transparent 50%), var(--pdns-bg);
+}
+
+.login-card {
+  border: 1px solid var(--pdns-border);
+  border-radius: 0.875rem;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.07),
+    0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+[data-bs-theme="dark"] .login-card {
+  box-shadow:
+    0 4px 32px rgba(0, 0, 0, 0.35),
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}

@@ -1,0 +1,190 @@
+<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-search me-2 text-primary"></i>Global search</h2>
+    <p class="text-muted small mb-0">Zones, DNS records and comments</p>
+  </div>
+</div>
+
+<!-- Search bar -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form (submit)="onSubmit(); $event.preventDefault()" class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label fw-medium">Search term</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="search"
+            class="form-control form-control-lg"
+            placeholder="example.com or *.example.com"
+            [formField]="searchForm.search"
+            autofocus
+          />
+        </div>
+        <div class="form-text">
+          Use <code>*</code> as a multi-character wildcard, <code>?</code> for a single character.
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label fw-medium">Object type</label>
+        <select class="form-select" [formField]="searchForm.objectType">
+          <option value="all">All</option>
+          <option value="zone">Zones only</option>
+          <option value="record">Records only</option>
+          <option value="comment">Comments only</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label fw-medium">Max results</label>
+        <input type="number" class="form-control" [formField]="searchForm.max" />
+      </div>
+      <div class="col-md-1 d-grid">
+        <button type="submit" class="btn btn-primary" [disabled]="!searchModel().search.trim() || isLoading()">
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm"></span>
+          } @else {
+            <i class="bi bi-search"></i>
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">Research in progress…</p>
+  </div>
+} @else if (hasSearched()) {
+  <!-- Summary -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <span class="text-muted small">
+      {{ results().length }} result(s) — <span class="text-primary">{{ zones().length }} zone(s)</span>,
+      <span class="text-success">{{ records().length }} record(s)</span>,
+      <span class="text-secondary">{{ comments().length }} comment(s)</span>
+    </span>
+  </div>
+
+  @if (results().length === 0) {
+    <div class="text-center py-5">
+      <i class="bi bi-search text-muted" style="font-size: 2.5rem"></i>
+      <p class="text-muted mt-2 mb-0">No results for this search</p>
+      <p class="text-muted small">Try with wildcards: <code>*.example.com</code></p>
+    </div>
+  } @else {
+    <!-- Zones -->
+    @if (zones().length > 0) {
+      <div class="card shadow-sm mb-4">
+        <div class="card-header py-2">
+          <span class="fw-semibold text-primary">
+            <i class="bi bi-globe2 me-2"></i>Zones
+            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zones().length }}</span>
+          </span>
+        </div>
+        <div class="list-group list-group-flush">
+          @for (r of zones(); track trackByResult($index, r)) {
+            <a
+              [routerLink]="zoneLink(r)"
+              class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3"
+            >
+              <i class="bi bi-globe2 text-primary fs-5"></i>
+              <div>
+                <div class="fw-medium font-monospace">{{ r.name }}</div>
+                <div class="small text-muted">ID: {{ r.zone_id }}</div>
+              </div>
+              <i class="bi bi-chevron-right ms-auto text-muted"></i>
+            </a>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Records -->
+    @if (records().length > 0) {
+      <div class="card shadow-sm mb-4">
+        <div class="card-header py-2">
+          <span class="fw-semibold text-success">
+            <i class="bi bi-list-ul me-2"></i>DNS Records
+            <span class="badge bg-success-subtle text-success-emphasis ms-1">{{ records().length }}</span>
+          </span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>TTL</th>
+                <th>Content</th>
+                <th>Zone</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of records(); track trackByResult($index, r)) {
+                <tr [class.table-secondary]="r.disabled">
+                  <td class="font-monospace small">
+                    {{ r.name }}
+                    @if (r.disabled) {
+                      <span class="badge bg-warning-subtle text-warning-emphasis ms-1">disabled</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge bg-primary-subtle text-primary-emphasis">{{ r.type }}</span>
+                  </td>
+                  <td class="text-muted small">{{ r.ttl }}s</td>
+                  <td class="font-monospace small text-break">
+                    {{ r.content }}
+                  </td>
+                  <td>
+                    <a [routerLink]="zoneLink(r)" class="small text-decoration-none font-monospace">
+                      {{ r.zone }}
+                    </a>
+                  </td>
+                  <td class="text-end">
+                    <a [routerLink]="zoneLink(r)" class="btn btn-sm btn-outline-primary">
+                      <i class="bi bi-arrow-right"></i>
+                    </a>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <!-- Comments -->
+    @if (comments().length > 0) {
+      <div class="card shadow-sm mb-4">
+        <div class="card-header py-2">
+          <span class="fw-semibold text-secondary">
+            <i class="bi bi-chat-text me-2"></i>Comments
+            <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ comments().length }}</span>
+          </span>
+        </div>
+        <div class="list-group list-group-flush">
+          @for (r of comments(); track trackByResult($index, r)) {
+            <a [routerLink]="zoneLink(r)" class="list-group-item list-group-item-action py-3">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="font-monospace small fw-medium">{{ r.name }}</span>
+                @if (r.type) {
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ r.type }}</span>
+                }
+                <span class="ms-auto small text-muted font-monospace">{{ r.zone }}</span>
+              </div>
+              <div class="small text-muted">{{ r.content }}</div>
+            </a>
+          }
+        </div>
+      </div>
+    }
+  }
+}

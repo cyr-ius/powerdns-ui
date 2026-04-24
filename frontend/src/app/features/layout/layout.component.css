@@ -1,0 +1,291 @@
+/* ── Host ────────────────────────────────────────────────────────────────── */
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+/* ── Top navbar ──────────────────────────────────────────────────────────── */
+.pdns-topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  height: 56px;
+  background: var(--pdns-nav-bg);
+  border-bottom: 1px solid var(--pdns-nav-border);
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+  flex-shrink: 0;
+}
+
+.pdns-topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pdns-topbar-end {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.pdns-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--pdns-text) !important;
+  text-decoration: none;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+.pdns-brand .bi {
+  font-size: 1.25rem;
+  color: var(--pdns-orange);
+}
+.pdns-brand strong {
+  color: var(--pdns-orange);
+}
+
+/* ── Search ──────────────────────────────────────────────────────────────── */
+.pdns-topbar-search {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.pdns-search-icon {
+  position: absolute;
+  left: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--pdns-text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.pdns-search-input {
+  width: 100%;
+  padding: 0.375rem 0.75rem 0.375rem 2rem;
+  background: var(--pdns-bg);
+  border: 1px solid var(--pdns-border);
+  border-radius: 6px;
+  color: var(--pdns-text);
+  font-size: 0.8125rem;
+  outline: none;
+  appearance: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.pdns-search-input::placeholder {
+  color: var(--pdns-text-muted);
+}
+.pdns-search-input:focus {
+  border-color: var(--pdns-orange);
+  box-shadow: 0 0 0 3px var(--pdns-orange-sub);
+}
+
+/* ── Icon button ─────────────────────────────────────────────────────────── */
+.pdns-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--pdns-nav-link);
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+  flex-shrink: 0;
+}
+.pdns-icon-btn:hover {
+  background: var(--pdns-orange-sub);
+  border-color: var(--pdns-border);
+  color: var(--pdns-orange);
+}
+.pdns-logout:hover {
+  background: rgba(220, 53, 69, 0.07);
+  border-color: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+/* ── User button ─────────────────────────────────────────────────────────── */
+.pdns-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.625rem 0.25rem 0.25rem;
+  background: transparent;
+  border: 1px solid var(--pdns-border);
+  border-radius: 6px;
+  color: var(--pdns-nav-link);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.pdns-user-btn:hover {
+  background: var(--pdns-orange-sub);
+  border-color: rgba(230, 110, 0, 0.2);
+  color: var(--pdns-orange);
+}
+
+.pdns-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pdns-orange);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pdns-sso-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: rgba(13, 110, 253, 0.1);
+  color: #0d6efd;
+}
+
+/* ── App body (sidebar + main) ───────────────────────────────────────────── */
+.pdns-app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.pdns-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--pdns-nav-bg);
+  border-right: 1px solid var(--pdns-nav-border);
+  overflow-y: auto;
+  padding: 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdns-sidenav {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pdns-sidenav-label {
+  font-size: 0.675rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--pdns-nav-admin, var(--pdns-text-muted));
+  margin: 0 0 0.25rem 0.5rem;
+}
+
+.pdns-sidenav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  color: var(--pdns-nav-link);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.pdns-sidenav-link .bi {
+  font-size: 1rem;
+  flex-shrink: 0;
+  width: 1.125rem;
+  text-align: center;
+}
+.pdns-sidenav-link:hover {
+  background: var(--pdns-orange-sub);
+  color: var(--pdns-orange);
+}
+.pdns-sidenav-link.active {
+  background: var(--pdns-orange-sub);
+  color: var(--pdns-orange);
+  font-weight: 600;
+}
+.pdns-sidenav-link.active .bi {
+  color: var(--pdns-orange);
+}
+
+/* ── Main content ────────────────────────────────────────────────────────── */
+.pdns-main {
+  flex: 1;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.pdns-content {
+  padding: 1.5rem;
+}
+
+/* ── Sidebar overlay (mobile only) ──────────────────────────────────────── */
+.pdns-sidebar-overlay {
+  display: none;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .pdns-sidebar {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    z-index: 1035;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .pdns-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .pdns-sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 56px 0 0 0;
+    z-index: 1034;
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .pdns-content {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .pdns-sidebar-toggle {
+    display: none;
+  }
+}

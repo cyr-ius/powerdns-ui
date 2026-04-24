@@ -1,0 +1,6 @@
+code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  border-radius: 0.25rem;
+  background: var(--bs-secondary-bg);
+}

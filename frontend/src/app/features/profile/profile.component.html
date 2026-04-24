@@ -1,0 +1,217 @@
+<div class="d-flex align-items-center mb-4">
+  <a routerLink="/zones" class="btn btn-sm btn-outline-secondary me-3"> <i class="bi bi-arrow-left me-1"></i>Back </a>
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-person-gear me-2 text-primary"></i>Profile</h2>
+    <p class="text-muted small mb-0">Manage your preferences and security</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Informations utilisateur -->
+  <div class="col-12 col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-person-circle me-2 text-primary"></i>Information</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted fw-normal">User</dt>
+          <dd class="col-7 fw-semibold">{{ auth.currentUser()?.username }}</dd>
+
+          <dt class="col-5 text-muted fw-normal">Email</dt>
+          <dd class="col-7">{{ auth.currentUser()?.email ?? "—" }}</dd>
+
+          <dt class="col-5 text-muted fw-normal">Authentication</dt>
+          <dd class="col-7">
+            @if (auth.currentUser()?.is_oidc) {
+              <span class="badge bg-info">SSO / OIDC</span>
+            } @else {
+              <span class="badge bg-secondary">Local</span>
+            }
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- Apparence -->
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-palette me-2 text-primary"></i>Appearance</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">Choose the theme for the interface.</p>
+        <div class="d-flex gap-3 flex-wrap">
+          @for (t of themes; track t.value) {
+            <button
+              type="button"
+              class="btn btn-sm theme-btn"
+              [class.active]="themeService.theme() === t.value"
+              (click)="setTheme(t.value)"
+            >
+              <i class="bi me-2" [class]="t.icon"></i>{{ t.label }}
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changement de mot de passe -->
+  @if (!auth.currentUser()?.is_oidc) {
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header py-3">
+          <h5 class="mb-0 fw-semibold"><i class="bi bi-shield-lock me-2 text-primary"></i>Change Password</h5>
+        </div>
+        <div class="card-body">
+          @if (passwordSuccess()) {
+            <div class="alert alert-success d-flex align-items-center gap-2 py-2">
+              <i class="bi bi-check-circle-fill"></i>
+              <span>Password changed successfully.</span>
+            </div>
+          }
+          @if (passwordError()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ passwordError() }}</span>
+            </div>
+          }
+
+          <form (ngSubmit)="onChangePassword()" novalidate>
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-medium"> Current Password <span class="text-danger">*</span> </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  [class.is-invalid]="
+                    passwordForm.current_password().touched() && passwordForm.current_password().errors().length
+                  "
+                  autocomplete="current-password"
+                  [formField]="passwordForm.current_password"
+                />
+                @if (passwordForm.current_password().touched() && passwordForm.current_password().errors().length) {
+                  <div class="invalid-feedback">
+                    {{ passwordForm.current_password().errors()[0].message }}
+                  </div>
+                }
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-medium"> New Password <span class="text-danger">*</span> </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  [class.is-invalid]="
+                    passwordForm.new_password().touched() && passwordForm.new_password().errors().length
+                  "
+                  autocomplete="new-password"
+                  [formField]="passwordForm.new_password"
+                />
+                @if (passwordForm.new_password().touched() && passwordForm.new_password().errors().length) {
+                  <div class="invalid-feedback">
+                    {{ passwordForm.new_password().errors()[0].message }}
+                  </div>
+                }
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label fw-medium"> Confirm New Password <span class="text-danger">*</span> </label>
+                <input
+                  type="password"
+                  class="form-control"
+                  [class.is-invalid]="
+                    passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length
+                  "
+                  autocomplete="new-password"
+                  [formField]="passwordForm.confirm_password"
+                />
+                @if (passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length) {
+                  <div class="invalid-feedback">
+                    {{ passwordForm.confirm_password().errors()[0].message }}
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary" [disabled]="isChangingPassword()">
+                @if (isChangingPassword()) {
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                }
+                <i class="bi bi-check-lg me-1"></i>Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- À propos -->
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2 text-primary"></i>About</h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-3">
+          <dt class="col-5 col-md-3 text-muted fw-normal">Application</dt>
+          <dd class="col-7 col-md-9 fw-semibold">PowerDNS UI</dd>
+
+          <dt class="col-5 col-md-3 text-muted fw-normal">Version</dt>
+          <dd class="col-7 col-md-9">
+            @if (appInfo()) {
+              <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">
+                v{{ appInfo()!.version }}
+              </span>
+            } @else {
+              <span class="text-muted small">—</span>
+            }
+          </dd>
+
+          <dt class="col-5 col-md-3 text-muted fw-normal">Update</dt>
+          <dd class="col-7 col-md-9">
+            @if (!releaseCheckDone()) {
+              <span class="text-muted small">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Checking…
+              </span>
+            } @else if (!latestRelease()) {
+              <span class="text-muted small"><i class="bi bi-dash me-1"></i>Not available</span>
+            } @else if (updateAvailable) {
+              <a
+                [href]="latestRelease()!.html_url"
+                target="_blank"
+                rel="noopener"
+                class="badge bg-warning-subtle text-warning-emphasis text-decoration-none"
+              >
+                <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ latestRelease()!.tag_name }} available
+              </a>
+            } @else {
+              <span class="badge bg-success-subtle text-success-emphasis">
+                <i class="bi bi-check-circle-fill me-1"></i>Up to date
+              </span>
+            }
+          </dd>
+
+          <dt class="col-5 col-md-3 text-muted fw-normal">Source code</dt>
+          <dd class="col-7 col-md-9">
+            <a
+              href="https://github.com/cyr-ius/powerdns-ui"
+              target="_blank"
+              rel="noopener"
+              class="text-decoration-none"
+            >
+              <i class="bi bi-github me-1"></i>cyr-ius/powerdns-ui
+            </a>
+          </dd>
+        </dl>
+
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,1672 @@
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item">
+      <a routerLink="/zones" class="text-decoration-none"> <i class="bi bi-globe2 me-1"></i>Zones </a>
+    </li>
+    <li class="breadcrumb-item active">{{ zone()?.name ?? zoneId }}</li>
+  </ol>
+</nav>
+
+@if (isLoading() && !zone()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2">Loading…</p>
+  </div>
+} @else if (error() && !zone()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZone()">Retry</button>
+  </div>
+} @else if (zone()) {
+  <!-- Zone header -->
+  <div class="row g-2 g-md-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="card border-0 bg-primary bg-opacity-10 h-100">
+        <div class="card-body p-2 p-md-3">
+          <div class="small text-muted mb-1">Zone</div>
+          <div class="fw-bold fs-5 text-break">{{ zone()!.name }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 bg-body-secondary h-100">
+        <div class="card-body p-2 p-md-3">
+          <div class="small text-muted mb-1">Type</div>
+          <div class="fw-medium">{{ zone()!.kind }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 bg-body-secondary h-100">
+        <div class="card-body p-2 p-md-3">
+          <div class="small text-muted mb-1">Account</div>
+          <div class="fw-medium">{{ zone()!.account || "—" }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 bg-body-secondary h-100">
+        <div class="card-body p-2 p-md-3">
+          <div class="small text-muted mb-1">DNSSEC</div>
+          @if (zone()!.dnssec) {
+            <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Actif</span>
+          } @else {
+            <span class="text-muted small">Inactif</span>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 bg-body-secondary h-100">
+        <div class="card-body p-2 p-md-3">
+          <div class="small text-muted mb-1">Serial</div>
+          <div class="fw-medium font-monospace small">
+            {{ zone()!.serial ?? "—" }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Zone actions -->
+  @if (actionMessage()) {
+    <div
+      class="alert py-2 small d-flex align-items-center gap-2 mb-3"
+      [class.alert-success]="actionMessage()!.type === 'success'"
+      [class.alert-danger]="actionMessage()!.type === 'error'"
+    >
+      <i
+        class="bi"
+        [class.bi-check-circle-fill]="actionMessage()!.type === 'success'"
+        [class.bi-exclamation-triangle-fill]="actionMessage()!.type === 'error'"
+      ></i>
+      <span>{{ actionMessage()!.text }}</span>
+      <button type="button" class="btn-close btn-sm ms-auto" (click)="actionMessage.set(null)"></button>
+    </div>
+  }
+  <div class="d-flex gap-2 mb-3 flex-wrap">
+    @if (zone()!.kind === "Master" || zone()!.kind === "Primary") {
+      <button
+        class="btn btn-sm btn-outline-primary"
+        (click)="notifySlaves()"
+        [disabled]="isNotifying()"
+        title="Envoyer NOTIFY aux slaves"
+      >
+        @if (isNotifying()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-broadcast me-1"></i>Notify slaves
+      </button>
+    }
+    @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
+      <button
+        class="btn btn-sm btn-outline-primary"
+        (click)="axfrRetrieve()"
+        [disabled]="isRetrieving()"
+        title="Trigger an AXFR from the master"
+      >
+        @if (isRetrieving()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-cloud-download me-1"></i>Retrieve from the master
+      </button>
+    }
+    <button
+      class="btn btn-sm btn-outline-secondary ms-auto"
+      (click)="exportZone()"
+      [disabled]="isExporting()"
+      title="Export zone to text file"
+    >
+      @if (isExporting()) {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+      }
+      <i class="bi bi-download me-1"></i>Export
+    </button>
+  </div>
+
+  <!-- Role badge -->
+  @if (currentRole()) {
+    <div class="mb-2">
+      @if (currentRole() === "admin") {
+        <span class="badge bg-danger-subtle text-danger-emphasis"
+          ><i class="bi bi-shield-fill-check me-1"></i>Administrator</span
+        >
+      } @else if (currentRole() === "manager") {
+        <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-pencil-fill me-1"></i>Manager</span>
+      } @else {
+        <span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-eye-fill me-1"></i>User</span>
+      }
+    </div>
+  }
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-0" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'records'" (click)="setTab('records')">
+        <i class="bi bi-list-ul me-1"></i>Records
+        <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">
+          {{ zone()!.rrsets.length }}
+        </span>
+      </button>
+    </li>
+    @if (isZoneAdmin()) {
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'metadata'" (click)="setTab('metadata')">
+          <i class="bi bi-tags me-1"></i>Metadata
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'dnssec'" (click)="setTab('dnssec')">
+          <i class="bi bi-shield-lock me-1"></i>DNSSEC
+          @if (zone()!.dnssec) {
+            <span class="badge bg-success ms-1" style="font-size: 0.65rem">Active</span>
+          }
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'transfer'" (click)="setTab('transfer')">
+          <i class="bi bi-arrow-left-right me-1"></i>Transfer
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'dnsupdate'" (click)="setTab('dnsupdate')">
+          <i class="bi bi-pencil-square me-1"></i>DNS Update
+          @if (tsigAllowDnsupdate().length > 0 || allowDnsupdateFrom().length > 0) {
+            <span class="badge bg-info ms-1" style="font-size: 0.65rem">Active</span>
+          }
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'settings'" (click)="setTab('settings')">
+          <i class="bi bi-gear me-1"></i>Settings
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'members'" (click)="setTab('members')">
+          <i class="bi bi-people me-1"></i>Members
+          @if (members().length > 0) {
+            <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ members().length }}</span>
+          }
+        </button>
+      </li>
+    }
+  </ul>
+
+  <div class="card shadow-sm border-top-0 rounded-top-0">
+    <!-- ── Tab: Enregistrements ────────────────────────────────────────── -->
+    @if (activeTab() === "records") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <span class="fw-semibold">DNS Records</span>
+        @if (canWrite()) {
+          <button class="btn btn-sm btn-primary" (click)="openRecordModal()">
+            <i class="bi bi-plus-lg me-1"></i>Add
+          </button>
+        }
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+        </div>
+      }
+
+      @if (zone()!.rrsets.length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
+          <p class="text-muted mt-2 mb-0">No records in this zone</p>
+        </div>
+      } @else {
+        <table class="table table-hover align-middle mb-0 w-100">
+          <thead class="table-light">
+            <tr>
+              <th class="col-name user-select-none" style="cursor: pointer" (click)="sortBy('name')">
+                Name
+                <i
+                  class="bi small ms-1"
+                  [class.bi-sort-alpha-down]="sortColumn() === 'name' && sortDirection() === 'asc'"
+                  [class.bi-sort-alpha-up-alt]="sortColumn() === 'name' && sortDirection() === 'desc'"
+                  [class.bi-arrow-down-up]="sortColumn() !== 'name'"
+                ></i>
+              </th>
+              <th class="col-type user-select-none" style="cursor: pointer" (click)="sortBy('type')">
+                Type
+                <i
+                  class="bi small ms-1"
+                  [class.bi-sort-alpha-down]="sortColumn() === 'type' && sortDirection() === 'asc'"
+                  [class.bi-sort-alpha-up-alt]="sortColumn() === 'type' && sortDirection() === 'desc'"
+                  [class.bi-arrow-down-up]="sortColumn() !== 'type'"
+                ></i>
+              </th>
+              <th class="col-ttl user-select-none" style="cursor: pointer" (click)="sortBy('ttl')">
+                TTL
+                <i
+                  class="bi small ms-1"
+                  [class.bi-sort-numeric-down]="sortColumn() === 'ttl' && sortDirection() === 'asc'"
+                  [class.bi-sort-numeric-up-alt]="sortColumn() === 'ttl' && sortDirection() === 'desc'"
+                  [class.bi-arrow-down-up]="sortColumn() !== 'ttl'"
+                ></i>
+              </th>
+              <th>Content</th>
+              <th class="text-end col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (rrset of pagedRRsets(); track trackByRRset($index, rrset)) {
+              <tr>
+                <td class="font-monospace small record-name">
+                  {{ rrset.name }}
+                </td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary-emphasis">{{ rrset.type }}</span>
+                </td>
+                <td class="text-muted small text-nowrap">{{ rrset.ttl }}s</td>
+                <td class="font-monospace small record-content">
+                  @for (rec of rrset.records; track $index) {
+                    <div class="d-flex align-items-center gap-1" [class.text-muted]="rec.disabled">
+                      <span [class.text-decoration-line-through]="rec.disabled">{{ rec.content }}</span>
+                      @if (rec.disabled) {
+                        <span class="badge bg-warning-subtle text-warning-emphasis ms-1">désactivé</span>
+                      }
+                      <button
+                        class="btn btn-link btn-sm p-0 ms-1 text-muted flex-shrink-0"
+                        style="font-size: 0.75rem; line-height: 1"
+                        [title]="rec.disabled ? 'Activer' : 'Désactiver'"
+                        (click)="toggleRecordDisabled(rrset, $index)"
+                      >
+                        <i class="bi" [class.bi-eye-slash-fill]="!rec.disabled" [class.bi-eye-fill]="rec.disabled"></i>
+                      </button>
+                    </div>
+                  }
+                </td>
+                <td class="text-end text-nowrap">
+                  @if (canWrite()) {
+                    <button
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      (click)="openEditModal(rrset)"
+                      title="Modifier"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteRRset(rrset)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (recordsTotalPages() > 1) {
+          <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top bg-body-tertiary">
+            <span class="text-muted small">
+              {{ (recordsPage() - 1) * recordsPageSize + 1 }}–{{
+                recordsPage() * recordsPageSize < zone()!.rrsets.length
+                  ? recordsPage() * recordsPageSize
+                  : zone()!.rrsets.length
+              }}
+              sur {{ zone()!.rrsets.length }} enregistrement(s)
+            </span>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" [class.disabled]="recordsPage() === 1">
+                  <button class="page-link" (click)="goToPage(recordsPage() - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                  </button>
+                </li>
+                @if (pageRange()[0] > 1) {
+                  <li class="page-item">
+                    <button class="page-link" (click)="goToPage(1)">1</button>
+                  </li>
+                  @if (pageRange()[0] > 2) {
+                    <li class="page-item disabled">
+                      <span class="page-link">…</span>
+                    </li>
+                  }
+                }
+                @for (p of pageRange(); track p) {
+                  <li class="page-item" [class.active]="p === recordsPage()">
+                    <button class="page-link" (click)="goToPage(p)">
+                      {{ p }}
+                    </button>
+                  </li>
+                }
+                @if (pageRange()[pageRange().length - 1] < recordsTotalPages()) {
+                  @if (pageRange()[pageRange().length - 1] < recordsTotalPages() - 1) {
+                    <li class="page-item disabled">
+                      <span class="page-link">…</span>
+                    </li>
+                  }
+                  <li class="page-item">
+                    <button class="page-link" (click)="goToPage(recordsTotalPages())">
+                      {{ recordsTotalPages() }}
+                    </button>
+                  </li>
+                }
+                <li class="page-item" [class.disabled]="recordsPage() === recordsTotalPages()">
+                  <button class="page-link" (click)="goToPage(recordsPage() + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        }
+      }
+    }
+
+    <!-- ── Tab: Métadonnées ────────────────────────────────────────────── -->
+    @if (activeTab() === "metadata") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <span class="fw-semibold">Zone metadata</span>
+        <button class="btn btn-sm btn-primary" (click)="openMetaModal()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+      </div>
+
+      @if (metaError()) {
+        <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ metaError() }}
+        </div>
+      }
+
+      @if (isLoadingMeta()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      } @else if (metadata().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-tags text-muted" style="font-size: 2.5rem"></i>
+          <p class="text-muted mt-2 mb-0">No metadata configured</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Type (kind)</th>
+                <th>Values</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (meta of metadata(); track trackByMeta($index, meta)) {
+                <tr>
+                  <td>
+                    <code class="text-primary">{{ meta.kind }}</code>
+                  </td>
+                  <td class="font-monospace small">
+                    @for (v of meta.metadata; track $index) {
+                      <div>{{ v }}</div>
+                    }
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteMeta(meta.kind)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ── Tab: DNSSEC ─────────────────────────────────────────────────── -->
+    @if (activeTab() === "dnssec") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <span class="fw-semibold">DNSSEC cryptographic keys</span>
+        <div class="d-flex gap-2">
+          @if (zone()!.kind !== "Slave" && zone()!.kind !== "Secondary") {
+            <button
+              class="btn btn-sm btn-outline-warning"
+              (click)="rectifyZone()"
+              [disabled]="isRectifying()"
+              title="Recalculate the NSEC/NSEC3 records after a key change"
+            >
+              @if (isRectifying()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-arrow-clockwise me-1"></i>Rectify
+            </button>
+          }
+          <button class="btn btn-sm btn-primary" (click)="openKeyModal()">
+            <i class="bi bi-plus-lg me-1"></i>Generate key
+          </button>
+        </div>
+      </div>
+
+      @if (keyError()) {
+        <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ keyError() }}
+          <button type="button" class="btn-close btn-sm ms-auto" (click)="keyError.set(null)"></button>
+        </div>
+      }
+
+      @if (isLoadingKeys()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      } @else if (cryptoKeys().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-shield text-muted" style="font-size: 2.5rem"></i>
+          <p class="text-muted mt-2 mb-0">No DNSSEC keys configured</p>
+          <p class="text-muted small mt-1">
+            Generate a <strong>KSK</strong> or <strong>CSK</strong> key to enable DNSSEC on this zone
+          </p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Algorithm</th>
+                <th>Bits</th>
+                <th>Active</th>
+                <th>Published</th>
+                <th>DS Records</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (key of cryptoKeys(); track trackByKey($index, key)) {
+                <tr>
+                  <td class="font-monospace text-muted small">{{ key.id }}</td>
+                  <td>
+                    <span class="badge bg-info-subtle text-info-emphasis text-uppercase">{{ key.keytype }}</span>
+                  </td>
+                  <td class="small">{{ key.algorithm }}</td>
+                  <td class="small text-muted">{{ key.bits ?? "—" }}</td>
+                  <td>
+                    @if (key.active) {
+                      <span class="badge bg-success-subtle text-success-emphasis">
+                        <i class="bi bi-check-circle me-1"></i>Active
+                      </span>
+                    } @else {
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactive</span>
+                    }
+                  </td>
+                  <td>
+                    @if (key.published) {
+                      <span class="badge bg-primary-subtle text-primary-emphasis">
+                        <i class="bi bi-broadcast me-1"></i>Published
+                      </span>
+                    } @else {
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Retired</span>
+                    }
+                  </td>
+                  <td style="max-width: 280px">
+                    @if (key.ds && key.ds.length > 0) {
+                      <div class="d-flex flex-column gap-1">
+                        @for (ds of key.ds; track $index) {
+                          <div class="d-flex align-items-center gap-1">
+                            <code class="small text-break flex-grow-1" style="font-size: 0.68rem">{{ ds }}</code>
+                            <button
+                              class="btn btn-sm btn-outline-secondary flex-shrink-0 py-0 px-1"
+                              style="font-size: 0.7rem"
+                              (click)="copyText(ds)"
+                              title="Copy this DS"
+                            >
+                              <i
+                                class="bi"
+                                [class.bi-clipboard]="copiedText() !== ds"
+                                [class.bi-clipboard-check-fill]="copiedText() === ds"
+                              ></i>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-muted small">—</span>
+                    }
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      (click)="toggleExpandKey(key.id)"
+                      [title]="expandedKeyId() === key.id ? 'Hide the DNSKEY' : 'Show the DNSKEY'"
+                    >
+                      <i
+                        class="bi"
+                        [class.bi-eye]="expandedKeyId() !== key.id"
+                        [class.bi-eye-slash]="expandedKeyId() === key.id"
+                      ></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      (click)="toggleKey(key)"
+                      [title]="key.active ? 'Disable' : 'Enable'"
+                    >
+                      <i class="bi" [class.bi-toggle-on]="key.active" [class.bi-toggle-off]="!key.active"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      (click)="togglePublished(key)"
+                      [title]="key.published ? 'Remove from publication' : 'Publish the key'"
+                    >
+                      <i class="bi" [class.bi-broadcast]="key.published" [class.bi-broadcast-pin]="!key.published"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" (click)="deleteKey(key)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+                @if (expandedKeyId() === key.id) {
+                  <tr class="table-light">
+                    <td colspan="8" class="py-2 px-3">
+                      <div class="d-flex align-items-start gap-2">
+                        <div class="flex-grow-1">
+                          <div class="small fw-semibold text-muted mb-1">DNSKEY</div>
+                          @if (key.dnskey) {
+                            <code class="small text-break d-block">{{ key.dnskey }}</code>
+                          } @else {
+                            <span class="text-muted small">Not available</span>
+                          }
+                        </div>
+                        @if (key.dnskey) {
+                          <button
+                            class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                            (click)="copyText(key.dnskey)"
+                            title="Copy the DNSKEY"
+                          >
+                            <i
+                              class="bi"
+                              [class.bi-clipboard]="copiedText() !== key.dnskey"
+                              [class.bi-clipboard-check-fill]="copiedText() === key.dnskey"
+                            ></i>
+                            <span class="ms-1 small">Copy</span>
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ── Tab: Transfert de zone ────────────────────────────────────────── -->
+    @if (activeTab() === "transfer") {
+      <div class="card-header py-3 border-bottom">
+        <span class="fw-semibold"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Transfer of zone (AXFR)</span>
+        <div class="text-muted small mt-1">
+          Configuration of the zone transfer (AXFR). For dynamic updates, use the
+          <strong>DNS Update</strong> tab.
+        </div>
+      </div>
+
+      @if (isLoadingMeta()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      } @else {
+        @if (transferError()) {
+          <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>{{ transferError() }}
+            <button type="button" class="btn-close btn-sm ms-auto" (click)="transferError.set(null)"></button>
+          </div>
+        }
+        @if (transferSuccess()) {
+          <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>{{ transferSuccess() }}
+          </div>
+        }
+
+        <div class="card-body pb-0">
+          <!-- ── Section : Zone primaire (AXFR sortant) ───────────────── -->
+          @if (zone()!.kind === "Master" || zone()!.kind === "Primary" || zone()!.kind === "Native") {
+            <div class="mb-4">
+              <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                <i class="bi bi-upload me-2"></i>Primary zone — Outgoing AXFR transfer
+              </h6>
+
+              <!-- ALLOW-AXFR-FROM -->
+              <div class="mb-4">
+                <label class="form-label fw-medium">
+                  IP addresses/networks allowed to receive the zone
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                    >ALLOW-AXFR-FROM</span
+                  >
+                </label>
+                <div class="form-text mb-2">
+                  CIDR format (e.g., <code>192.168.1.0/24</code>, <code>2001:db8::/32</code>). Prefix with
+                  <code>!</code> to exclude an address (e.g., <code>!10.0.0.5</code>). Leave empty to allow everyone
+                  (<code>0.0.0.0/0</code>).
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  @for (ip of allowAxfrFrom(); track ip) {
+                    <span
+                      class="badge bg-primary-subtle text-primary-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+                    >
+                      <i class="bi bi-hdd-network me-1 small"></i>{{ ip }}
+                      <button
+                        type="button"
+                        class="btn-close btn-close-sm ms-1"
+                        style="font-size: 0.6rem"
+                        [disabled]="isSubmittingTransfer()"
+                        (click)="removeMetadataEntry('ALLOW-AXFR-FROM', ip)"
+                        title="Supprimer"
+                      ></button>
+                    </span>
+                  }
+                  @if (allowAxfrFrom().length === 0) {
+                    <span class="text-muted small fst-italic">No restriction — AXFR allowed from any address</span>
+                  }
+                </div>
+                <div class="input-group" style="max-width: 420px">
+                  <input
+                    type="text"
+                    class="form-control font-monospace"
+                    placeholder="192.168.1.0/24"
+                    [value]="newAllowAxfrFrom()"
+                    (input)="newAllowAxfrFrom.set($any($event.target).value)"
+                    (keyup.enter)="addAllowAxfrFromEntry()"
+                  />
+                  <button
+                    class="btn btn-outline-primary"
+                    type="button"
+                    [disabled]="isSubmittingTransfer() || !newAllowAxfrFrom().trim()"
+                    (click)="addAllowAxfrFromEntry()"
+                  >
+                    <i class="bi bi-plus-lg"></i> Add
+                  </button>
+                </div>
+              </div>
+
+              <!-- TSIG-ALLOW-AXFR -->
+              <div class="mb-4">
+                <label class="form-label fw-medium">
+                  TSIG keys allowed for AXFR
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                    >TSIG-ALLOW-AXFR</span
+                  >
+                </label>
+                <div class="form-text mb-2">
+                  The secondary servers will need to present one of these keys during the transfer. If no key is
+                  configured, the AXFR is not protected by TSIG.
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  @for (keyId of tsigAllowAxfr(); track keyId) {
+                    @let keyInfo = getTsigKeyById(keyId);
+                    <span
+                      class="badge bg-success-subtle text-success-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+                    >
+                      <i class="bi bi-key me-1 small"></i>
+                      {{ keyInfo ? keyInfo.name + " (" + keyInfo.algorithm + ")" : keyId }}
+                      <button
+                        type="button"
+                        class="btn-close btn-close-sm ms-1"
+                        style="font-size: 0.6rem"
+                        [disabled]="isSubmittingTransfer()"
+                        (click)="removeMetadataEntry('TSIG-ALLOW-AXFR', keyId)"
+                        title="Remove"
+                      ></button>
+                    </span>
+                  }
+                  @if (tsigAllowAxfr().length === 0) {
+                    <span class="text-muted small fst-italic">No TSIG key configured</span>
+                  }
+                </div>
+                @if (availableTsigForAxfr().length > 0) {
+                  <div class="input-group" style="max-width: 420px">
+                    <select
+                      class="form-select"
+                      [value]="newTsigAllowAxfr()"
+                      (change)="newTsigAllowAxfr.set($any($event.target).value)"
+                    >
+                      <option value="">— Choose a TSIG key —</option>
+                      @for (k of availableTsigForAxfr(); track k.id) {
+                        <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+                      }
+                    </select>
+                    <button
+                      class="btn btn-outline-success"
+                      type="button"
+                      [disabled]="isSubmittingTransfer() || !newTsigAllowAxfr()"
+                      (click)="addTsigAllowAxfrEntry()"
+                    >
+                      <i class="bi bi-plus-lg"></i> Ajouter
+                    </button>
+                  </div>
+                } @else if (tsigKeys().length === 0) {
+                  <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
+                    <i class="bi bi-info-circle-fill"></i>
+                    No TSIG key available.
+                    <a routerLink="/tsigkeys" class="ms-1">Create a TSIG key →</a>
+                  </div>
+                } @else {
+                  <div class="text-muted small fst-italic">All available TSIG keys are already assigned.</div>
+                }
+                @if (tsigKeys().length > 0) {
+                  <div class="form-text mt-1">
+                    <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>Manage TSIG keys</a>
+                  </div>
+                }
+              </div>
+
+              <!-- ALSO-NOTIFY -->
+              <div class="mb-4">
+                <label class="form-label fw-medium">
+                  Servers to notify (Additional NOTIFY targets)
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                    >ALSO-NOTIFY</span
+                  >
+                </label>
+                <div class="form-text mb-2">
+                  In addition to the NS servers of the zone, PowerDNS will send NOTIFY packets to these addresses.
+                  Format:
+                  <code>IP</code> or <code>IP:port</code>.
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                  @for (addr of alsoNotify(); track addr) {
+                    <span
+                      class="badge bg-warning-subtle text-warning-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+                    >
+                      <i class="bi bi-broadcast me-1 small"></i>{{ addr }}
+                      <button
+                        type="button"
+                        class="btn-close btn-close-sm ms-1"
+                        style="font-size: 0.6rem"
+                        [disabled]="isSubmittingTransfer()"
+                        (click)="removeMetadataEntry('ALSO-NOTIFY', addr)"
+                        title="Supprimer"
+                      ></button>
+                    </span>
+                  }
+                  @if (alsoNotify().length === 0) {
+                    <span class="text-muted small fst-italic">No additional servers configured</span>
+                  }
+                </div>
+                <div class="input-group" style="max-width: 420px">
+                  <input
+                    type="text"
+                    class="form-control font-monospace"
+                    placeholder="198.51.100.1 or 198.51.100.1:5300"
+                    [value]="newAlsoNotify()"
+                    (input)="newAlsoNotify.set($any($event.target).value)"
+                    (keyup.enter)="addAlsoNotifyEntry()"
+                  />
+                  <button
+                    class="btn btn-outline-warning"
+                    type="button"
+                    [disabled]="isSubmittingTransfer() || !newAlsoNotify().trim()"
+                    (click)="addAlsoNotifyEntry()"
+                  >
+                    <i class="bi bi-plus-lg"></i> Add
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          <!-- /zone primaire -->
+
+          <!-- ── Section : Zone secondaire (AXFR entrant) ─────────────── -->
+          @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
+            <div class="mb-4">
+              <h6 class="fw-bold text-warning border-bottom pb-2 mb-3">
+                <i class="bi bi-download me-2"></i>Secondary Zone — Incoming AXFR Transfer
+              </h6>
+
+              <!-- AXFR-MASTER-TSIG -->
+              <div class="mb-4">
+                <label class="form-label fw-medium">
+                  TSIG key to use for the incoming AXFR transfer
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                    >AXFR-MASTER-TSIG</span
+                  >
+                </label>
+                <div class="form-text mb-2">
+                  This key will be presented to the master server during the incoming zone transfer. The master must
+                  have this same key configured in its <code>TSIG-ALLOW-AXFR</code>.
+                </div>
+                @if (axfrMasterTsig()) {
+                  <div class="mb-2">
+                    <span class="badge bg-success-subtle text-success-emphasis fs-6 fw-normal px-2 py-1">
+                      <i class="bi bi-key me-1"></i>
+                      @let currentMasterKey = getTsigKeyById(axfrMasterTsig());
+                      {{
+                        currentMasterKey
+                          ? currentMasterKey.name + " (" + currentMasterKey.algorithm + ")"
+                          : axfrMasterTsig()
+                      }}
+                    </span>
+                  </div>
+                }
+                <div class="input-group" style="max-width: 420px">
+                  <select
+                    class="form-select"
+                    [value]="editAxfrMasterTsig()"
+                    (change)="editAxfrMasterTsig.set($any($event.target).value)"
+                  >
+                    <option value="">— No key —</option>
+                    @for (k of tsigKeys(); track k.id) {
+                      <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+                    }
+                  </select>
+                  <button
+                    class="btn btn-outline-warning"
+                    type="button"
+                    [disabled]="isSubmittingTransfer()"
+                    (click)="saveSingleMetadata('AXFR-MASTER-TSIG', editAxfrMasterTsig())"
+                  >
+                    @if (isSubmittingTransfer()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    <i class="bi bi-floppy me-1"></i>Save
+                  </button>
+                </div>
+                @if (tsigKeys().length === 0) {
+                  <div class="form-text">
+                    <a routerLink="/tsigkeys">Create a TSIG key →</a>
+                  </div>
+                }
+              </div>
+
+              <!-- AXFR-SOURCE -->
+              <div class="mb-4">
+                <label class="form-label fw-medium">
+                  Source address for AXFR queries
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                    >AXFR-SOURCE</span
+                  >
+                </label>
+                <div class="form-text mb-2">
+                  Local IP address to use as the source for outgoing AXFR connections to the master. Useful if the
+                  server has multiple network interfaces. Leave empty to use the default address.
+                </div>
+                <div class="input-group" style="max-width: 420px">
+                  <input
+                    type="text"
+                    class="form-control font-monospace"
+                    placeholder="Local IP Address (optional)"
+                    [value]="editAxfrSource()"
+                    (input)="editAxfrSource.set($any($event.target).value)"
+                  />
+                  <button
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    [disabled]="isSubmittingTransfer()"
+                    (click)="saveSingleMetadata('AXFR-SOURCE', editAxfrSource())"
+                  >
+                    @if (isSubmittingTransfer()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    <i class="bi bi-floppy me-1"></i>Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          <!-- /zone secondaire -->
+        </div>
+        <!-- /card-body -->
+      }
+      <!-- /!isLoadingMeta -->
+    }
+
+    <!-- ── Tab: DNS Update ───────────────────────────────────────────────── -->
+    @if (activeTab() === "dnsupdate") {
+      <div class="card-header py-3 border-bottom">
+        <span class="fw-semibold"><i class="bi bi-pencil-square me-2 text-info"></i>DNS Dynamic Update (RFC 2136)</span>
+        <div class="text-muted small mt-1">
+          Configure the TSIG keys and/or IP restrictions that allow clients to dynamically update the DNS records for
+          this zone.
+        </div>
+      </div>
+
+      @if (isLoadingMeta()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      } @else {
+        @if (transferError()) {
+          <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill"></i>{{ transferError() }}
+            <button type="button" class="btn-close btn-sm ms-auto" (click)="transferError.set(null)"></button>
+          </div>
+        }
+        @if (transferSuccess()) {
+          <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+            <i class="bi bi-check-circle-fill"></i>{{ transferSuccess() }}
+          </div>
+        }
+
+        <div class="card-body">
+          <!-- TSIG-ALLOW-DNSUPDATE -->
+          <div class="mb-4">
+            <label class="form-label fw-medium">
+              Authorized TSIG keys for updates
+              <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                >TSIG-ALLOW-DNSUPDATE</span
+              >
+            </label>
+            <div class="form-text mb-2">
+              Only clients presenting one of these keys will be able to submit dynamic updates.
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (keyId of tsigAllowDnsupdate(); track keyId) {
+                @let keyInfoDu = getTsigKeyById(keyId);
+                <span
+                  class="badge bg-info-subtle text-info-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+                >
+                  <i class="bi bi-key me-1 small"></i>
+                  {{ keyInfoDu ? keyInfoDu.name + " (" + keyInfoDu.algorithm + ")" : keyId }}
+                  <button
+                    type="button"
+                    class="btn-close btn-close-sm ms-1"
+                    style="font-size: 0.6rem"
+                    [disabled]="isSubmittingTransfer()"
+                    (click)="removeMetadataEntry('TSIG-ALLOW-DNSUPDATE', keyId)"
+                    title="Remove"
+                  ></button>
+                </span>
+              }
+              @if (tsigAllowDnsupdate().length === 0) {
+                <span class="text-muted small fst-italic">No TSIG key configured</span>
+              }
+            </div>
+            @if (availableTsigForDnsupdate().length > 0) {
+              <div class="input-group" style="max-width: 420px">
+                <select
+                  class="form-select"
+                  [value]="newTsigAllowDnsupdate()"
+                  (change)="newTsigAllowDnsupdate.set($any($event.target).value)"
+                >
+                  <option value="">— Choose a TSIG key —</option>
+                  @for (k of availableTsigForDnsupdate(); track k.id) {
+                    <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+                  }
+                </select>
+                <button
+                  class="btn btn-outline-info"
+                  type="button"
+                  [disabled]="isSubmittingTransfer() || !newTsigAllowDnsupdate()"
+                  (click)="addTsigAllowDnsupdateEntry()"
+                >
+                  <i class="bi bi-plus-lg"></i> Ajouter
+                </button>
+              </div>
+            } @else if (tsigKeys().length === 0) {
+              <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
+                <i class="bi bi-info-circle-fill"></i>
+                No TSIG key available.
+                <a routerLink="/tsigkeys" class="ms-1">Create a TSIG key →</a>
+              </div>
+            } @else {
+              <div class="text-muted small fst-italic">All available TSIG keys are already assigned.</div>
+            }
+            @if (tsigKeys().length > 0) {
+              <div class="form-text mt-1">
+                <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>Manage TSIG keys</a>
+              </div>
+            }
+          </div>
+
+          <!-- ALLOW-DNSUPDATE-FROM -->
+          <div class="mb-4">
+            <label class="form-label fw-medium">
+              IP addresses allowed for dynamic updates
+              <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                >ALLOW-DNSUPDATE-FROM</span
+              >
+            </label>
+            <div class="form-text mb-2">
+              Restrict dynamic updates to certain address ranges (CIDR format). If empty and no TSIG key is configured,
+              dynamic updates will be rejected.
+            </div>
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              @for (ip of allowDnsupdateFrom(); track ip) {
+                <span
+                  class="badge bg-primary-subtle text-primary-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+                >
+                  <i class="bi bi-hdd-network me-1 small"></i>{{ ip }}
+                  <button
+                    type="button"
+                    class="btn-close btn-close-sm ms-1"
+                    style="font-size: 0.6rem"
+                    [disabled]="isSubmittingTransfer()"
+                    (click)="removeMetadataEntry('ALLOW-DNSUPDATE-FROM', ip)"
+                    title="Remove"
+                  ></button>
+                </span>
+              }
+              @if (allowDnsupdateFrom().length === 0) {
+                <span class="text-muted small fst-italic">No IP restriction configured</span>
+              }
+            </div>
+            <div class="input-group" style="max-width: 420px">
+              <input
+                type="text"
+                class="form-control font-monospace"
+                placeholder="192.168.1.0/24"
+                [value]="newAllowDnsupdateFrom()"
+                (input)="newAllowDnsupdateFrom.set($any($event.target).value)"
+                (keyup.enter)="addAllowDnsupdateFromEntry()"
+              />
+              <button
+                class="btn btn-outline-primary"
+                type="button"
+                [disabled]="isSubmittingTransfer() || !newAllowDnsupdateFrom().trim()"
+                (click)="addAllowDnsupdateFromEntry()"
+              >
+                <i class="bi bi-plus-lg"></i> Add
+              </button>
+            </div>
+          </div>
+
+          <!-- FORWARD-DNSUPDATE -->
+          <div class="mb-4">
+            <label class="form-label fw-medium">
+              Transfer dynamic updates to the master
+              <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
+                >FORWARD-DNSUPDATE</span
+              >
+            </label>
+            <div class="form-text mb-2">
+              IP address of the master server to which dynamic updates received must be forwarded. Leave empty to
+              disable forwarding.
+            </div>
+            <div class="input-group" style="max-width: 420px">
+              <input
+                type="text"
+                class="form-control font-monospace"
+                placeholder="192.0.2.1 (optionnel)"
+                [value]="editForwardDnsupdate()"
+                (input)="editForwardDnsupdate.set($any($event.target).value)"
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                [disabled]="isSubmittingTransfer()"
+                (click)="saveSingleMetadata('FORWARD-DNSUPDATE', editForwardDnsupdate())"
+              >
+                @if (isSubmittingTransfer()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                <i class="bi bi-floppy me-1"></i>Save
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+    <!-- ── Tab: Paramètres ─────────────────────────────────────────────── -->
+    @if (activeTab() === "settings") {
+      <div class="card-body" style="max-width: 560px">
+        <h6 class="fw-bold mb-3">Settings of the zone</h6>
+
+        @if (settingsError()) {
+          <div class="alert alert-danger py-2 small">{{ settingsError() }}</div>
+        }
+        @if (settingsSuccess()) {
+          <div class="alert alert-success py-2 small">
+            <i class="bi bi-check-circle me-1"></i>Settings saved successfully.
+          </div>
+        }
+
+        <div class="mb-3">
+          <label class="form-label fw-medium">Type of zone</label>
+          <select class="form-select" [formField]="settingsForm.kind">
+            <option value="Native">Native</option>
+            <option value="Master">Master</option>
+            <option value="Slave">Slave</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-medium">Account</label>
+          @if (accounts().length > 0) {
+            <select class="form-select" [formField]="settingsForm.account">
+              <option value="">— None —</option>
+              @for (acc of accounts(); track acc) {
+                <option [value]="acc">{{ acc }}</option>
+              }
+            </select>
+          } @else {
+            <input class="form-control" placeholder="Leave empty for no account" [formField]="settingsForm.account" />
+          }
+          <div class="form-text">Allows you to group zones by account/organization.</div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-medium">Master servers</label>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="ns1.example.com, ns2.example.com"
+            [formField]="settingsForm.masters"
+          />
+          <div class="form-text">Required for Slave zones. Separate with commas.</div>
+        </div>
+
+        <button class="btn btn-primary" (click)="onSaveSettings()" [disabled]="isSavingSettings()">
+          @if (isSavingSettings()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          <i class="bi bi-floppy me-1"></i>Save
+        </button>
+
+        <hr class="my-4" />
+
+        <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Automatic DNS Reverse</h6>
+
+        @if (isLoadingMeta()) {
+          <div class="d-flex align-items-center gap-2 text-muted small">
+            <span class="spinner-border spinner-border-sm"></span>Loading…
+          </div>
+        } @else {
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div class="form-check form-switch mb-0">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="autoReverseToggle"
+                role="switch"
+                [checked]="autoReverseEnabled()"
+                [disabled]="isTogglingAutoReverse()"
+                (change)="toggleAutoReverse()"
+              />
+              <label class="form-check-label fw-medium" for="autoReverseToggle">
+                Automatic creation of PTR records
+              </label>
+            </div>
+            @if (isTogglingAutoReverse()) {
+              <span class="spinner-border spinner-border-sm text-primary"></span>
+            }
+          </div>
+          <div class="form-text">
+            When an <strong>A</strong> or <strong>AAAA</strong> record is added, the corresponding PTR record is
+            automatically created in the appropriate reverse zone (<code>in-addr.arpa</code> / <code>ip6.arpa</code>),
+            if it exists.
+          </div>
+        }
+
+        <hr class="my-4" />
+
+        <h6 class="fw-semibold mb-1"><i class="bi bi-card-list me-2 text-primary"></i>Available Record Types</h6>
+        <p class="text-muted small mb-3">
+          Select the types proposed when creating or modifying records in this zone.
+          @if (zoneRecordTypesMeta()?.is_custom === false) {
+            <span class="badge bg-secondary ms-1">Global Defaults</span>
+          } @else if (zoneRecordTypesMeta()?.is_custom) {
+            <span class="badge bg-info ms-1">Custom</span>
+          }
+        </p>
+
+        @if (zoneTypesError()) {
+          <div class="alert alert-danger py-2 small">
+            {{ zoneTypesError() }}
+          </div>
+        }
+        @if (zoneTypesSuccess()) {
+          <div class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>Types saved.</div>
+        }
+
+        @if (availableGlobalTypes().length === 0) {
+          <p class="text-muted small">No types available for this zone type.</p>
+        } @else {
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            @for (rt of availableGlobalTypes(); track rt.id) {
+              <div class="form-check form-check-inline mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  [id]="'rt-' + rt.name"
+                  [checked]="pendingZoneTypes().has(rt.name)"
+                  (change)="toggleZoneType(rt.name)"
+                />
+                <label class="form-check-label font-monospace fw-medium" [for]="'rt-' + rt.name">
+                  {{ rt.name }}
+                </label>
+              </div>
+            }
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-primary" (click)="saveZoneRecordTypes()" [disabled]="isSavingZoneTypes()">
+              @if (isSavingZoneTypes()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-floppy me-1"></i>Save
+            </button>
+            @if (zoneRecordTypesMeta()?.is_custom) {
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                (click)="resetZoneRecordTypes()"
+                [disabled]="isSavingZoneTypes()"
+                title="Reset to global defaults"
+              >
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+    <!-- ── Tab: Membres ──────────────────────────────────────────────────── -->
+    @if (activeTab() === "members") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <span class="fw-semibold"><i class="bi bi-people me-2 text-primary"></i>Zone Members</span>
+      </div>
+
+      @if (membersError()) {
+        <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ membersError() }}
+          <button type="button" class="btn-close btn-sm ms-auto" (click)="membersError.set(null)"></button>
+        </div>
+      }
+      @if (membersSuccess()) {
+        <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle-fill"></i>{{ membersSuccess() }}
+        </div>
+      }
+
+      @if (isLoadingMembers()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary"></div>
+        </div>
+      } @else {
+        <div class="card-body">
+          <!-- Ajouter un membre -->
+          <h6 class="fw-semibold mb-3">Add Member</h6>
+          <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
+            <select
+              class="form-select"
+              style="max-width: 220px"
+              [value]="newMemberUserId() ?? ''"
+              (change)="newMemberUserId.set(+$any($event.target).value || null)"
+            >
+              <option value="">— Choose a user —</option>
+              @for (u of availableUsersToAdd(); track u.id) {
+                <option [value]="u.id">{{ u.username }}</option>
+              }
+            </select>
+            <select
+              class="form-select"
+              style="max-width: 160px"
+              [value]="newMemberRole()"
+              (change)="newMemberRole.set($any($event.target).value)"
+            >
+              <option value="admin">Administrator</option>
+              <option value="manager">Manager</option>
+              <option value="viewer">User</option>
+            </select>
+            <button class="btn btn-primary" [disabled]="!newMemberUserId() || isSavingMember()" (click)="addMember()">
+              @if (isSavingMember()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-person-plus me-1"></i>Add
+            </button>
+          </div>
+
+          <!-- Liste des membres -->
+          @if (members().length === 0) {
+            <div class="text-center py-4">
+              <i class="bi bi-people text-muted" style="font-size: 2rem"></i>
+              <p class="text-muted mt-2 mb-0">No members in this zone</p>
+            </div>
+          } @else {
+            <h6 class="fw-semibold mb-2">Current Members</h6>
+            <table class="table table-hover align-middle mb-0" style="max-width: 640px">
+              <thead class="table-light">
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (m of members(); track m.user_id) {
+                  <tr>
+                    <td>
+                      <span class="fw-medium">{{ m.username }}</span>
+                      @if (m.email) {
+                        <div class="text-muted small">{{ m.email }}</div>
+                      }
+                    </td>
+                    <td>
+                      <select
+                        class="form-select form-select-sm"
+                        style="width: auto"
+                        [value]="m.role"
+                        (change)="updateMemberRole(m, $any($event.target).value)"
+                      >
+                        <option value="admin">Administrator</option>
+                        <option value="manager">Manager</option>
+                        <option value="viewer">User</option>
+                      </select>
+                    </td>
+                    <td class="text-end">
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="removeMember(m)"
+                        title="Remove this member"
+                      >
+                        <i class="bi bi-person-dash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </div>
+      }
+    }
+  </div>
+  <!-- /card -->
+}
+
+<!-- ── Modal: Ajouter un enregistrement ─────────────────────────────────────── -->
+@if (showRecordModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeRecordModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Record</h5>
+          <button type="button" class="btn-close" (click)="closeRecordModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onAddRecord()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (recordError()) {
+              <div class="alert alert-danger py-2 small">
+                {{ recordError() }}
+              </div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Name (FQDN) <span class="text-danger">*</span></label>
+              <input
+                #recordNameInput
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="recordForm.name().touched() && recordForm.name().errors().length"
+                placeholder="www.example.com."
+                [formField]="recordForm.name"
+              />
+              @if (recordForm.name().touched() && recordForm.name().errors().length) {
+                <div class="invalid-feedback">
+                  {{ recordForm.name().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-medium">Type</label>
+                <select class="form-select" [formField]="recordForm.type">
+                  @for (t of dnsTypes(); track t) {
+                    <option [value]="t">{{ t }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-medium">TTL (s)</label>
+                <input type="number" class="form-control" [formField]="recordForm.ttl" />
+              </div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">Content <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="recordForm.content().touched() && recordForm.content().errors().length"
+                placeholder="1.2.3.4"
+                [formField]="recordForm.content"
+              />
+              @if (recordForm.content().touched() && recordForm.content().errors().length) {
+                <div class="invalid-feedback">
+                  {{ recordForm.content().errors()[0].message }}
+                </div>
+              }
+            </div>
+
+            @if (autoReverseEnabled() && reverseZoneForCurrentRecord()) {
+              <div class="alert alert-success py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
+                <i class="bi bi-arrow-repeat"></i>
+                PTR created automatically in reverse zone
+                <code class="ms-1">{{ reverseZoneForCurrentRecord()!.name }}</code>
+              </div>
+            } @else if (
+              autoReverseEnabled() &&
+              (recordModel().type === "A" || recordModel().type === "AAAA") &&
+              recordModel().content.trim()
+            ) {
+              <div class="alert alert-warning py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle"></i>
+                No reverse zone found for this address — PTR not created.
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onAddRecord()" [disabled]="isSubmittingRecord()">
+              @if (isSubmittingRecord()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Add
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Modifier un enregistrement ────────────────────────────────────────── -->
+@if (showEditModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeEditModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Record</h5>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (editError()) {
+            <div class="alert alert-danger py-2 small">{{ editError() }}</div>
+          }
+          <div class="row g-3 mb-3">
+            <div class="col-8">
+              <label class="form-label fw-medium">Name (FQDN)</label>
+              <input
+                type="text"
+                class="form-control font-monospace bg-body-secondary"
+                [value]="editingRRset()?.name"
+                readonly
+              />
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-medium">Type</label>
+              <input type="text" class="form-control bg-body-secondary" [value]="editingRRset()?.type" readonly />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">TTL (s)</label>
+            <input
+              type="number"
+              class="form-control"
+              [value]="editTtl()"
+              (input)="editTtl.set(+$any($event.target).value)"
+            />
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium d-block mb-2">Valeurs</label>
+            <div class="d-flex flex-column gap-2">
+              @for (rec of editRecords(); track $index) {
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control font-monospace"
+                    [class.text-decoration-line-through]="rec.disabled"
+                    [class.text-muted]="rec.disabled"
+                    [value]="rec.content"
+                    (input)="updateEditRecord($index, $any($event.target).value)"
+                    placeholder="Content of the record"
+                  />
+                  <button
+                    class="btn"
+                    [class.btn-outline-secondary]="!rec.disabled"
+                    [class.btn-warning]="rec.disabled"
+                    type="button"
+                    [title]="rec.disabled ? 'Enable' : 'Disable'"
+                    (click)="toggleEditRecordDisabled($index)"
+                  >
+                    <i class="bi" [class.bi-eye-slash]="!rec.disabled" [class.bi-eye]="rec.disabled"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    type="button"
+                    title="Delete this value"
+                    (click)="removeEditRecord($index)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-primary mt-1" type="button" (click)="addEditRecord()">
+            <i class="bi bi-plus-lg me-1"></i>Add Value
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="onSaveEdit()" [disabled]="isSubmittingEdit()">
+            @if (isSubmittingEdit()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Ajouter une métadonnée ─────────────────────────────────────────── -->
+@if (showMetaModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeMetaModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-tag me-2 text-primary"></i>Add Metadata</h5>
+          <button type="button" class="btn-close" (click)="closeMetaModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onSaveMeta()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-medium">Type (kind) <span class="text-danger">*</span></label>
+              <input
+                list="meta-kinds"
+                class="form-control font-monospace"
+                [class.is-invalid]="metaForm.kind().touched() && metaForm.kind().errors().length"
+                placeholder="ALLOW-AXFR-FROM"
+                [formField]="metaForm.kind"
+              />
+              <datalist id="meta-kinds">
+                @for (k of metaKindOptions; track k) {
+                  <option [value]="k"></option>
+                }
+              </datalist>
+              @if (metaForm.kind().touched() && metaForm.kind().errors().length) {
+                <div class="invalid-feedback">
+                  {{ metaForm.kind().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">Value <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="metaForm.value().touched() && metaForm.value().errors().length"
+                placeholder="192.168.0.0/16"
+                [formField]="metaForm.value"
+              />
+              @if (metaForm.value().touched() && metaForm.value().errors().length) {
+                <div class="invalid-feedback">
+                  {{ metaForm.value().errors()[0].message }}
+                </div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeMetaModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onSaveMeta()" [disabled]="isSubmittingMeta()">
+              @if (isSubmittingMeta()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Générer une clé DNSSEC ─────────────────────────────────────────── -->
+@if (showKeyModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeKeyModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-shield-lock me-2 text-primary"></i>Generate a DNSSEC Key</h5>
+          <button type="button" class="btn-close" (click)="closeKeyModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreateKey()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (keyError()) {
+              <div class="alert alert-danger py-2 small">{{ keyError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Key Type</label>
+              <select class="form-select" [formField]="keyForm.keytype">
+                <option value="ksk">KSK — Key Signing Key</option>
+                <option value="zsk">ZSK — Zone Signing Key</option>
+                <option value="csk">CSK — Combined Signing Key</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Algorithm</label>
+              <select class="form-select" [formField]="keyForm.algorithm">
+                @for (a of cryptoAlgorithms; track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">Size (bits) <span class="text-muted small">— optional</span></label>
+              <input
+                type="number"
+                class="form-control"
+                placeholder="Default according to the algorithm"
+                [formField]="keyForm.bits"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeKeyModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onCreateKey()" [disabled]="isSubmittingKey()">
+              @if (isSubmittingKey()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Generate
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

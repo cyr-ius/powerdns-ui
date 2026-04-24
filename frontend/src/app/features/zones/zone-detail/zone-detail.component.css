@@ -1,0 +1,33 @@
+.modal-backdrop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+
+.modal {
+  z-index: 1050;
+}
+
+/* ── Records table ────────────────────────────────────────────────────────── */
+.col-name {
+  width: 30%;
+}
+.col-type {
+  width: 80px;
+}
+.col-ttl {
+  width: 80px;
+}
+.col-actions {
+  width: 60px;
+}
+
+.record-name {
+  word-break: break-all;
+}
+
+.record-content {
+  word-break: break-all;
+  overflow-wrap: break-word;
+}

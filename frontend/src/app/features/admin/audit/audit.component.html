@@ -1,0 +1,312 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>Audit log</h2>
+    <p class="text-muted small mb-0">History of actions and logs from the PowerDNS server</p>
+  </div>
+  <div class="d-flex align-items-center gap-3">
+    <!-- Syslog status badge -->
+    <button
+      class="btn btn-sm d-flex align-items-center gap-2"
+      [class]="syslogSettings().enabled ? 'btn-outline-success' : 'btn-outline-secondary'"
+      title="Configure syslog"
+      (click)="openSyslogModal()"
+    >
+      <i
+        class="bi"
+        [class]="syslogSettings().enabled ? 'bi-broadcast text-success' : 'bi-broadcast-pin text-muted'"
+      ></i>
+      <span>Syslog : {{ syslogSettings().enabled ? "active" : "inactive" }}</span>
+    </button>
+  </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'audit'" (click)="switchTab('audit')">
+      <i class="bi bi-list-check me-1"></i>User actions
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'pdns'" (click)="switchTab('pdns')">
+      <i class="bi bi-terminal me-1"></i>Logs PDNS
+    </button>
+  </li>
+</ul>
+
+<!-- ── Audit logs tab ──────────────────────────────────────────────────────── -->
+@if (activeTab() === "audit") {
+  <!-- Filters -->
+  <div class="card shadow-sm mb-3">
+    <div class="card-body py-2">
+      <div class="row g-2 align-items-end">
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">User</label>
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Filter…"
+            [(ngModel)]="filterUsername"
+            (keyup.enter)="applyFilters()"
+          />
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">Action</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filterAction">
+            <option value="">All</option>
+            <option value="login">Login</option>
+            <option value="change_password">Change Password</option>
+            <option value="reset_password">Reset Password</option>
+            <option value="create">Create</option>
+            <option value="update">Update</option>
+            <option value="delete">Delete</option>
+            <option value="update_records">Update Records</option>
+          </select>
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">Resource</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filterResource">
+            <option value="">All</option>
+            <option value="auth">Authentication</option>
+            <option value="user">User</option>
+            <option value="account">Account</option>
+            <option value="zone">Zone</option>
+            <option value="oidc_settings">OIDC</option>
+          </select>
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">Status</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filterStatus">
+            <option value="">All</option>
+            <option value="success">Success</option>
+            <option value="failure">Failure</option>
+          </select>
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">From</label>
+          <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateFrom" />
+        </div>
+        <div class="col-sm-2">
+          <label class="form-label small mb-1">To</label>
+          <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateTo" />
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-sm btn-primary" (click)="applyFilters()"><i class="bi bi-funnel me-1"></i>Filter</button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="resetFilters()">
+          <i class="bi bi-x-circle me-1"></i>Reset
+        </button>
+        <span class="ms-auto text-muted small align-self-center">{{ totalCount() }} entry(s)</span>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ error() }}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadLogs()">Retry</button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      @if (isLoading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted mt-2 mb-0">Loading…</p>
+        </div>
+      } @else if (logs().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-journal-x text-muted" style="font-size: 2.5rem"></i>
+          <p class="text-muted mt-2 mb-0">No entries found</p>
+        </div>
+      } @else {
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>User</th>
+              <th>Action</th>
+              <th>Resource</th>
+              <th>Resource ID</th>
+              <th>IP</th>
+              <th>Status</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (log of logs(); track log.id) {
+              <tr>
+                <td class="text-muted small font-monospace">{{ formatDate(log.created_at) }}</td>
+                <td class="fw-semibold font-monospace small">{{ log.username }}</td>
+                <td>
+                  <span class="badge bg-primary-subtle text-primary-emphasis">{{ actionLabel(log.action) }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis">{{
+                    resourceLabel(log.resource_type)
+                  }}</span>
+                </td>
+                <td class="font-monospace small text-muted">{{ log.resource_id ?? "—" }}</td>
+                <td class="font-monospace small text-muted">{{ log.ip_address ?? "—" }}</td>
+                <td>
+                  <span class="badge" [class]="statusClass(log.status)">
+                    {{ log.status === "success" ? "Success" : "Failure" }}
+                  </span>
+                </td>
+                <td>
+                  @if (log.details) {
+                    <code class="small text-muted">{{ log.details }}</code>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages > 1) {
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="page === 0" (click)="prevPage()">
+        <i class="bi bi-chevron-left"></i> Previous
+      </button>
+      <span class="text-muted small">Page {{ page + 1 }} / {{ totalPages }}</span>
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="page >= totalPages - 1" (click)="nextPage()">
+        Next <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+  }
+}
+
+<!-- ── PDNS logs tab ───────────────────────────────────────────────────────── -->
+@if (activeTab() === "pdns") {
+  <div class="d-flex justify-content-end mb-2">
+    <button class="btn btn-sm btn-outline-primary" (click)="loadPdnsLogs()" [disabled]="pdnsLoading()">
+      <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+    </button>
+  </div>
+
+  @if (pdnsError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ pdnsError() }}</span>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      @if (pdnsLoading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="text-muted mt-2 mb-0">Loading…</p>
+        </div>
+      } @else if (pdnsLogs().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-terminal text-muted" style="font-size: 2.5rem"></i>
+          <p class="text-muted mt-2 mb-0">No logs available via the PowerDNS API</p>
+          <p class="text-muted small">The ring buffer <code>logmessages</code> is empty or not supported.</p>
+        </div>
+      } @else {
+        <div class="pdns-log-console">
+          @for (entry of pdnsLogs(); track $index) {
+            <div class="pdns-log-line">
+              <span class="pdns-log-time">{{ entry.name }}</span>
+              <span class="pdns-log-msg">{{ entry.value }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- ── Syslog modal ───────────────────────────────────────────────────────── -->
+@if (showSyslogModal()) {
+  <div class="modal-backdrop-overlay" (click)="showSyslogModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-broadcast me-2 text-warning"></i>Configuration Syslog</h5>
+          <button class="btn-close" (click)="showSyslogModal.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          @if (syslogError()) {
+            <div class="alert alert-danger py-2 small">{{ syslogError() }}</div>
+          }
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="syslog_enabled" [(ngModel)]="syslogDraft.enabled" />
+            <label class="form-check-label fw-medium" for="syslog_enabled"> Activate syslog forwarding </label>
+          </div>
+
+          <div [class.opacity-50]="!syslogDraft.enabled">
+            <div class="row g-3">
+              <div class="col-8">
+                <label class="form-label fw-medium">Host</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="syslogDraft.host"
+                  [disabled]="!syslogDraft.enabled"
+                  placeholder="localhost"
+                />
+              </div>
+              <div class="col-4">
+                <label class="form-label fw-medium">Port</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="syslogDraft.port"
+                  [disabled]="!syslogDraft.enabled"
+                  min="1"
+                  max="65535"
+                />
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-medium">Protocol</label>
+                <select class="form-select" [(ngModel)]="syslogDraft.protocol" [disabled]="!syslogDraft.enabled">
+                  <option value="udp">UDP</option>
+                  <option value="tcp">TCP</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-medium">Facility</label>
+                <select class="form-select" [(ngModel)]="syslogDraft.facility" [disabled]="!syslogDraft.enabled">
+                  @for (f of facilities; track f) {
+                    <option [value]="f">{{ f }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-medium">Application Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="syslogDraft.app_name"
+                  [disabled]="!syslogDraft.enabled"
+                  placeholder="pdns-ui"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showSyslogModal.set(false)">Cancel</button>
+          <button class="btn btn-primary" (click)="saveSyslog()" [disabled]="isSavingSyslog()">
+            @if (isSavingSyslog()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            <i class="bi bi-floppy me-1"></i>Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

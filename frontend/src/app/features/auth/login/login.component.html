@@ -1,0 +1,95 @@
+<div class="login-wrapper d-flex align-items-center justify-content-center min-vh-100">
+  <div class="login-card card shadow-sm" style="width: 100%; max-width: 420px">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        <i class="bi bi-hdd-network text-primary" style="font-size: 3rem"></i>
+        <h1 class="h3 mt-2 fw-bold">PowerDNS UI</h1>
+        <p class="text-muted small">Authoritative DNS Server Manager</p>
+      </div>
+
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2" role="alert">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      @if (!localLoginDisabled()) {
+        <form (submit)="onSubmit(); $event.preventDefault()">
+          <div class="mb-3">
+            <label for="username" class="form-label fw-medium">Username</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input
+                id="username"
+                type="text"
+                class="form-control"
+                [formField]="loginForm.username"
+                placeholder="admin"
+                autocomplete="username"
+                [class.is-invalid]="loginForm.username().touched() && loginForm.username().errors().length"
+              />
+            </div>
+            @if (loginForm.username().touched() && loginForm.username().errors().length) {
+              <div class="invalid-feedback d-block">
+                {{ loginForm.username().errors()[0].message }}
+              </div>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label for="password" class="form-label fw-medium">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input
+                id="password"
+                type="password"
+                class="form-control"
+                [formField]="loginForm.password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                [class.is-invalid]="loginForm.password().touched() && loginForm.password().errors().length"
+              />
+            </div>
+            @if (loginForm.password().touched() && loginForm.password().errors().length) {
+              <div class="invalid-feedback d-block">
+                {{ loginForm.password().errors()[0].message }}
+              </div>
+            }
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100" [disabled]="loginForm().submitting() || isLoading()">
+            @if (loginForm().submitting()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            Sign In
+          </button>
+        </form>
+      }
+
+      @if (oidcEnabled()) {
+        @if (!localLoginDisabled()) {
+          <div class="divider my-4 d-flex align-items-center gap-2">
+            <hr class="flex-grow-1 m-0" />
+            <span class="text-muted small">or</span>
+            <hr class="flex-grow-1 m-0" />
+          </div>
+        }
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary w-100"
+          [class.mt-2]="localLoginDisabled()"
+          (click)="onOidcLogin()"
+          [disabled]="isLoading()"
+        >
+          @if (!loginForm().submitting() && isLoading()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          }
+          <i class="bi bi-shield-lock me-2"></i>
+          Sign In with SSO (OpenID Connect)
+        </button>
+      }
+    </div>
+  </div>
+</div>

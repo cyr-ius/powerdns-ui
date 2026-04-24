@@ -1,0 +1,4 @@
+code {
+  font-family: var(--bs-font-monospace);
+  word-break: break-all;
+}

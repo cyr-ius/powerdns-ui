@@ -1,0 +1,247 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-collection me-2 text-primary"></i>DNS catalogs</h2>
+    <p class="text-muted small mb-0">{{ catalogues().length }} catalogue(s) configured</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreateModal()"><i class="bi bi-plus-lg me-1"></i>New catalog</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadCatalogues()">Retry</button>
+  </div>
+}
+
+<div class="row g-4">
+  <!-- Liste des catalogues -->
+  <div class="col-12 col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header border-bottom py-3 fw-medium">
+        <i class="bi bi-collection me-2 text-primary"></i>Catalogs (Producer)
+      </div>
+      <div class="card-body p-0">
+        @if (isLoading()) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-2 mb-0 small">Loading…</p>
+          </div>
+        } @else if (catalogues().length === 0) {
+          <div class="text-center py-5">
+            <i class="bi bi-inbox text-muted" style="font-size: 2rem"></i>
+            <p class="text-muted mt-2 mb-0 small">No catalogs</p>
+          </div>
+        } @else {
+          <ul class="list-group list-group-flush">
+            @for (cat of catalogues(); track trackById($index, cat)) {
+              <li
+                class="list-group-item list-group-item-action d-flex align-items-center justify-content-between px-3"
+                [class.active]="selectedCatalogue()?.id === cat.id"
+                (click)="selectCatalogue(cat)"
+                style="cursor: pointer"
+              >
+                <div class="text-truncate me-2">
+                  <span class="fw-medium">{{ cat.name }}</span>
+                  @if (cat.account) {
+                    <span class="badge bg-secondary-subtle text-secondary-emphasis ms-2 small">{{ cat.account }}</span>
+                  }
+                </div>
+                <button
+                  class="btn btn-sm btn-outline-danger flex-shrink-0"
+                  (click)="$event.stopPropagation(); deleteCatalogue(cat)"
+                  title="Delete catalog"
+                >
+                  <i class="bi bi-trash"></i>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Membres du catalogue sélectionné -->
+  <div class="col-12 col-lg-8">
+    @if (!selectedCatalogue()) {
+      <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="bi bi-arrow-left-circle text-muted" style="font-size: 2rem"></i>
+          <p class="text-muted mt-2 mb-0">Select a catalogue to manage its members</p>
+        </div>
+      </div>
+    } @else {
+      @if (membersError()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ membersError() }}</span>
+        </div>
+      }
+
+      <!-- Membres actuels -->
+      <div class="card shadow-sm mb-4">
+        <div class="card-header border-bottom py-3 fw-medium">
+          <i class="bi bi-list-check me-2 text-success"></i>Members of <strong>{{ selectedCatalogue()!.name }}</strong>
+        </div>
+        <div class="card-body p-0">
+          @if (isLoadingMembers()) {
+            <div class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <span class="text-muted ms-2 small">Loading…</span>
+            </div>
+          } @else if (members().length === 0) {
+            <div class="text-center py-4">
+              <p class="text-muted small mb-0">No member zones</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Zone</th>
+                    <th>Type</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (zone of members(); track trackById($index, zone)) {
+                    <tr>
+                      <td class="fw-medium">{{ zone.name }}</td>
+                      <td>
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ zone.kind }}</span>
+                      </td>
+                      <td class="text-end">
+                        <button
+                          class="btn btn-sm btn-outline-danger"
+                          (click)="removeMember(zone)"
+                          title="Retirer du catalogue"
+                        >
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Zones disponibles à ajouter -->
+      <div class="card shadow-sm">
+        <div class="card-header border-bottom py-3 fw-medium">
+          <i class="bi bi-plus-circle me-2 text-primary"></i>Available zones
+        </div>
+        <div class="card-body p-0">
+          @if (isLoadingMembers()) {
+            <div class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            </div>
+          } @else if (nonMembers().length === 0) {
+            <div class="text-center py-4">
+              <p class="text-muted small mb-0">All zones are already members</p>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Zone</th>
+                    <th>Type</th>
+                    <th class="text-end">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (zone of nonMembers(); track trackById($index, zone)) {
+                    <tr>
+                      <td class="fw-medium">{{ zone.name }}</td>
+                      <td>
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ zone.kind }}</span>
+                      </td>
+                      <td class="text-end">
+                        <button
+                          class="btn btn-sm btn-outline-success"
+                          (click)="addMember(zone)"
+                          title="Add to catalogue"
+                        >
+                          <i class="bi bi-plus-lg"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Create DNS Catalogue</h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreate()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">{{ createError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">Catalogue Name <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+                placeholder="catalog.example.com"
+                [formField]="createForm.name"
+              />
+              @if (createForm.name().touched() && createForm.name().errors().length) {
+                <div class="invalid-feedback">{{ createForm.name().errors()[0].message }}</div>
+              }
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Nameservers</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="ns1.example.com, ns2.example.com"
+                [formField]="createForm.nameservers"
+              />
+              <div class="form-text">Separated by commas</div>
+            </div>
+            @if (accounts().length > 0) {
+              <div class="mb-0">
+                <label class="form-label fw-medium">Account</label>
+                <select class="form-select" [formField]="createForm.account">
+                  <option value="">— None —</option>
+                  @for (acc of accounts(); track acc) {
+                    <option [value]="acc">{{ acc }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

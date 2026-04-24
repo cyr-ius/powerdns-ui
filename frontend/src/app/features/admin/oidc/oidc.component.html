@@ -1,0 +1,142 @@
+<div class="mb-4">
+  <h2 class="h4 mb-0 fw-bold"><i class="bi bi-shield-check me-2 text-primary"></i>OIDC/SSO configuration</h2>
+  <p class="text-muted small mb-0">Configuration of OpenID Connect authentication</p>
+</div>
+
+@if (isLoading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="text-muted mt-2 mb-0">Loading…</p>
+  </div>
+} @else {
+  <div class="card shadow-sm" style="max-width: 680px">
+    <div class="card-body p-4">
+      @if (success()) {
+        <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>Configuration saved. The new settings are active immediately.</span>
+        </div>
+      }
+      @if (error()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form (submit)="onSave(); $event.preventDefault()">
+        <!-- Enable toggle -->
+        <div class="d-flex align-items-center justify-content-between p-3 rounded border mb-3">
+          <div>
+            <div class="fw-semibold">Activate SSO authentication</div>
+            <div class="text-muted small">Allows login via an OpenID Connect provider</div>
+          </div>
+          <div class="form-check form-switch mb-0 ms-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="oidcEnabled"
+              [formField]="oidcForm.enabled"
+            />
+          </div>
+        </div>
+
+        <!-- Disable local login toggle -->
+        <div
+          class="d-flex align-items-center justify-content-between p-3 rounded border mb-4"
+          [class.opacity-80]="!oidcConfig().enabled"
+        >
+          <div>
+            <div class="fw-semibold">Disable local login</div>
+            <div class="text-muted small">Forces users to login only via SSO</div>
+          </div>
+          <div class="form-check form-switch mb-0 ms-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="localLoginDisabled"
+              [formField]="oidcForm.local_login_disabled"
+            />
+          </div>
+        </div>
+
+        <fieldset [disabled]="!oidcConfig().enabled">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Client ID *</label>
+            <input
+              type="text"
+              class="form-control font-monospace"
+              [formField]="oidcForm.client_id"
+              placeholder="votre-client-id"
+              autocomplete="off"
+            />
+            @if (oidcForm.client_id().touched() && oidcForm.client_id().errors().length) {
+              <div class="invalid-feedback">{{ oidcForm.client_id().errors()[0].message }}</div>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Client Secret *</label>
+            <input
+              type="password"
+              class="form-control font-monospace"
+              [formField]="oidcForm.client_secret"
+              autocomplete="new-password"
+            />
+            @if (oidcForm.client_secret().touched() && oidcForm.client_secret().errors().length) {
+              <div class="invalid-feedback">{{ oidcForm.client_secret().errors()[0].message }}</div>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Discovery URL *</label>
+            <input
+              type="url"
+              class="form-control font-monospace"
+              [formField]="oidcForm.discovery_url"
+              placeholder="https://sso.example.com/.well-known/openid-configuration"
+            />
+            <div class="form-text">URL of the OpenID Connect discovery document of your provider</div>
+            @if (oidcForm.discovery_url().touched() && oidcForm.discovery_url().errors().length) {
+              <div class="invalid-feedback">{{ oidcForm.discovery_url().errors()[0].message }}</div>
+            }
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Redirect URI *</label>
+            <input
+              type="url"
+              class="form-control font-monospace"
+              [formField]="oidcForm.redirect_uri"
+              placeholder="https://pdns-ui.example.com/api/auth/oidc/callback"
+            />
+            <div class="form-text">Must be registered in your OIDC provider</div>
+            @if (oidcForm.redirect_uri().touched() && oidcForm.redirect_uri().errors().length) {
+              <div class="invalid-feedback">{{ oidcForm.redirect_uri().errors()[0].message }}</div>
+            }
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-medium">Scopes *</label>
+            <input
+              type="text"
+              class="form-control font-monospace"
+              [formField]="oidcForm.scopes"
+              placeholder="openid email profile"
+            />
+            <div class="form-text">Separated by spaces</div>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary" [disabled]="oidcForm().pending() || isLoading()">
+          @if (oidcForm().submitting() || isLoading()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          }
+          <i class="bi bi-floppy me-1"></i>Save
+        </button>
+      </form>
+    </div>
+  </div>
+}

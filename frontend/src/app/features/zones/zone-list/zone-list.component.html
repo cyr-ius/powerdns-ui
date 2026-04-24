@@ -1,0 +1,224 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-globe2 me-2 text-primary"></i>DNS Zones</h2>
+    <p class="text-muted small mb-0">{{ filteredZones().length }} zone(s) configured</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreateModal()"><i class="bi bi-plus-lg me-1"></i>New Zone</button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZones()">Retry</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="card-header border-bottom py-3">
+    <div class="input-group" style="max-width: 320px">
+      <span class="input-group-text bg-transparent border-end-0">
+        <i class="bi bi-search text-muted"></i>
+      </span>
+      <input
+        type="search"
+        class="form-control border-start-0"
+        placeholder="Search for a zone…"
+        [formField]="searchForm.search"
+      />
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Loading zones…</p>
+      </div>
+    } @else if (filteredZones().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">No zones found</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Zone</th>
+            <th>Type</th>
+            <th>Serial</th>
+            <th>DNSSEC</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (zone of filteredZones(); track trackById($index, zone)) {
+            <tr>
+              <td>
+                <a [routerLink]="['/zones', zone.id]" class="fw-medium text-decoration-none">
+                  {{ zone.name }}
+                </a>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{ zone.kind }}</span>
+              </td>
+              <td class="text-muted small">{{ zone.serial ?? "—" }}</td>
+              <td>
+                @if (zone.dnssec) {
+                  <span class="badge bg-success-subtle text-success-emphasis">
+                    <i class="bi bi-shield-check me-1"></i>Actif
+                  </span>
+                } @else {
+                  <span class="text-muted small">—</span>
+                }
+              </td>
+              <td class="text-end">
+                <a [routerLink]="['/zones', zone.id]" class="btn btn-sm btn-outline-primary me-1">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger" (click)="deleteZone(zone)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Create a DNS Zone</h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreate()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">
+                {{ createError() }}
+              </div>
+            }
+
+            <!-- Mode selector -->
+            <div class="mb-3">
+              <div class="btn-group w-100" role="group">
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="createMode() === 'standard'"
+                  [class.btn-outline-secondary]="createMode() !== 'standard'"
+                  (click)="createMode.set('standard')"
+                >
+                  <i class="bi bi-globe2 me-1"></i>Standard Zone
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm"
+                  [class.btn-primary]="createMode() === 'reverse'"
+                  [class.btn-outline-secondary]="createMode() !== 'reverse'"
+                  (click)="createMode.set('reverse')"
+                >
+                  <i class="bi bi-arrow-repeat me-1"></i>Reverse Zone (PTR)
+                </button>
+              </div>
+            </div>
+
+            @if (createMode() === "standard") {
+              <div class="mb-3">
+                <label class="form-label fw-medium">Zone Name <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+                  placeholder="example.com"
+                  [formField]="createForm.name"
+                />
+                @if (createForm.name().touched() && createForm.name().errors().length) {
+                  <div class="invalid-feedback">
+                    {{ createForm.name().errors()[0].message }}
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="mb-3">
+                <label class="form-label fw-medium"> CIDR Network <span class="text-danger">*</span> </label>
+                <input
+                  type="text"
+                  class="form-control font-monospace"
+                  [class.is-invalid]="reverseCidr().trim() && !reverseZoneName()"
+                  placeholder="192.168.1.0/24 or 2001:db8::/32"
+                  [value]="reverseCidr()"
+                  (input)="reverseCidr.set($any($event.target).value)"
+                />
+                @if (reverseCidr().trim() && !reverseZoneName()) {
+                  <div class="invalid-feedback">Invalid format. Examples: 192.168.1.0/24, 2001:db8::/32</div>
+                }
+                <div class="form-text">IPv4 : /8, /16 or /24 generated. IPv6 : corresponding zone nibble.</div>
+              </div>
+              @if (reverseZoneName()) {
+                <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3">
+                  <i class="bi bi-info-circle-fill"></i>
+                  Zone created :
+                  <code class="ms-1">{{ reverseZoneName() }}</code>
+                </div>
+              }
+            }
+
+            <div class="mb-3">
+              <label class="form-label fw-medium">Type</label>
+              <select class="form-select" [formField]="createForm.kind">
+                <option value="Native">Native</option>
+                <option value="Master">Master</option>
+                <option value="Slave">Slave</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Nameservers <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.nameservers().touched() && createForm.nameservers().errors().length"
+                placeholder="ns1.example.com, ns2.example.com"
+                [formField]="createForm.nameservers"
+              />
+              @if (createForm.nameservers().touched() && createForm.nameservers().errors().length) {
+                <div class="invalid-feedback">
+                  {{ createForm.nameservers().errors()[0].message }}
+                </div>
+              } @else {
+                <div class="form-text">Separated by commas. The first server will be the mname of the SOA.</div>
+              }
+            </div>
+            @if (accounts().length > 0) {
+              <div class="mb-0">
+                <label class="form-label fw-medium">Account</label>
+                <select class="form-select" [formField]="createForm.account">
+                  <option value="">— None —</option>
+                  @for (acc of accounts(); track acc) {
+                    <option [value]="acc">{{ acc }}</option>
+                  }
+                </select>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
