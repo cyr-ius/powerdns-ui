@@ -1,7 +1,9 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { AdminService } from "../../../core/services/admin.service";
+import { PdnsService } from "../../../core/services/pdns.service";
 import { Account, AdminUser } from "../../../shared/models/admin.model";
+import { Zone } from "../../../shared/models/pdns.model";
 import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
@@ -12,6 +14,7 @@ import { TranslateModule } from "@ngx-translate/core";
 })
 export class AdminAccountsComponent implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly pdns = inject(PdnsService);
 
   readonly accounts = signal<Account[]>([]);
   readonly allUsers = signal<AdminUser[]>([]);
@@ -32,6 +35,16 @@ export class AdminAccountsComponent implements OnInit {
   readonly assignTarget = signal<Account | null>(null);
   readonly selectedUserIds = signal<Set<number>>(new Set());
   readonly isSavingAssign = signal(false);
+
+  // Assign zones modal
+  readonly showZonesModal = signal(false);
+  readonly zonesTarget = signal<Account | null>(null);
+  readonly allZones = signal<Zone[]>([]);
+  readonly originalZoneNames = signal<Set<string>>(new Set());
+  readonly selectedZoneNames = signal<Set<string>>(new Set());
+  readonly isLoadingZones = signal(false);
+  readonly isSavingZones = signal(false);
+  readonly zonesError = signal<string | null>(null);
 
   // Delete confirm
   readonly deleteTarget = signal<Account | null>(null);
@@ -81,7 +94,6 @@ export class AdminAccountsComponent implements OnInit {
 
   openAssign(account: Account): void {
     this.assignTarget.set(account);
-    // Preselect users already in this account
     const accountName = account.name;
     const current = new Set(
       this.allUsers()
@@ -95,11 +107,7 @@ export class AdminAccountsComponent implements OnInit {
   toggleUser(userId: number): void {
     this.selectedUserIds.update((set) => {
       const next = new Set(set);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
+      next.has(userId) ? next.delete(userId) : next.add(userId);
       return next;
     });
   }
@@ -121,6 +129,64 @@ export class AdminAccountsComponent implements OnInit {
       this.showAssignModal.set(false);
     } finally {
       this.isSavingAssign.set(false);
+    }
+  }
+
+  async openZones(account: Account): Promise<void> {
+    this.zonesTarget.set(account);
+    this.zonesError.set(null);
+    this.isLoadingZones.set(true);
+    this.showZonesModal.set(true);
+    try {
+      const zones = await this.pdns.getZones();
+      this.allZones.set(zones);
+      const current = new Set(
+        zones.filter((z) => z.account === account.name).map((z) => z.name),
+      );
+      this.originalZoneNames.set(current);
+      this.selectedZoneNames.set(new Set(current));
+    } catch {
+      this.zonesError.set("Unable to load zones.");
+    } finally {
+      this.isLoadingZones.set(false);
+    }
+  }
+
+  toggleZone(zoneName: string): void {
+    this.selectedZoneNames.update((set) => {
+      const next = new Set(set);
+      next.has(zoneName) ? next.delete(zoneName) : next.add(zoneName);
+      return next;
+    });
+  }
+
+  async saveZones(): Promise<void> {
+    const account = this.zonesTarget();
+    if (!account) return;
+    this.isSavingZones.set(true);
+    this.zonesError.set(null);
+    try {
+      const original = this.originalZoneNames();
+      const selected = this.selectedZoneNames();
+      const toAdd = [...selected].filter((n) => !original.has(n));
+      const toRemove = [...original].filter((n) => !selected.has(n));
+      const zoneMap = new Map(this.allZones().map((z) => [z.name, z]));
+      await Promise.all([
+        ...toAdd.map((name) => {
+          const z = zoneMap.get(name)!;
+          return this.pdns.updateZone(name, { name: z.name, kind: z.kind, account: account.name });
+        }),
+        ...toRemove.map((name) => {
+          const z = zoneMap.get(name)!;
+          return this.pdns.updateZone(name, { name: z.name, kind: z.kind, account: null });
+        }),
+      ]);
+      this.showZonesModal.set(false);
+      await this.load();
+    } catch {
+      this.zonesError.set("Error occurred while saving zones.");
+    } finally {
+      this.isSavingZones.set(false);
     }
   }
 

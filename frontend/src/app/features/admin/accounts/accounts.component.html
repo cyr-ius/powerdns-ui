@@ -52,6 +52,13 @@
               <td class="text-end">
                 <div class="d-flex gap-1 justify-content-end">
                   <button
+                    class="btn btn-sm btn-outline-secondary"
+                    [title]="'ACCOUNTS.MANAGE_ZONES' | translate"
+                    (click)="openZones(account)"
+                  >
+                    <i class="bi bi-globe2"></i>
+                  </button>
+                  <button
                     class="btn btn-sm btn-outline-primary"
                     [title]="'ACCOUNTS.MANAGE_USERS' | translate"
                     (click)="openAssign(account)"
@@ -131,6 +138,67 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Assign zones modal -->
+@if (showZonesModal()) {
+  <div class="modal-backdrop-overlay" (click)="showZonesModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-globe2 me-2 text-primary"></i>
+            {{ "ACCOUNTS.MANAGE_ZONES_TITLE" | translate: { name: zonesTarget()?.name } }}
+          </h5>
+          <button class="btn-close" (click)="showZonesModal.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          @if (zonesError()) {
+            <div class="alert alert-danger py-2 small">{{ zonesError() }}</div>
+          }
+          @if (isLoadingZones()) {
+            <div class="text-center py-4">
+              <div class="spinner-border spinner-border-sm text-primary"></div>
+            </div>
+          } @else {
+            <p class="text-muted small mb-3">{{ "ACCOUNTS.ZONES_HELP" | translate }}</p>
+            <div class="list-group list-group-flush" style="max-height: 380px; overflow-y: auto">
+              @for (zone of allZones(); track zone.name) {
+                <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2">
+                  <input
+                    type="checkbox"
+                    class="form-check-input mt-0"
+                    [checked]="selectedZoneNames().has(zone.name)"
+                    (change)="toggleZone(zone.name)"
+                  />
+                  <span class="font-monospace small flex-grow-1">{{ zone.name }}</span>
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis small">{{ zone.kind }}</span>
+                  @if (zone.account && zone.account !== zonesTarget()?.name) {
+                    <span class="badge bg-warning-subtle text-warning-emphasis small">{{ zone.account }}</span>
+                  }
+                </label>
+              }
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <span class="me-auto small text-muted"
+            >{{ selectedZoneNames().size }} {{ "ACCOUNTS.ZONES_SELECTED" | translate }}</span
+          >
+          <button class="btn btn-secondary" (click)="showZonesModal.set(false)">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
+          <button class="btn btn-primary" [disabled]="isSavingZones()" (click)="saveZones()">
+            @if (isSavingZones()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            {{ "COMMON.SAVE" | translate }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
