@@ -222,6 +222,14 @@
           }
         </button>
       </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="setTab('apikeys')">
+          <i class="bi bi-key me-1"></i>{{ "ZONE_DETAIL.TAB_API_KEYS" | translate }}
+          @if (zoneApiKeys().length > 0) {
+            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zoneApiKeys().length }}</span>
+          }
+        </button>
+      </li>
     }
   </ul>
 
@@ -1381,6 +1389,70 @@
               </tbody>
             </table>
           }
+        </div>
+      }
+    }
+
+    <!-- ── Tab: API Keys ──────────────────────────────────────────────────── -->
+    @if (activeTab() === "apikeys") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <span class="fw-semibold">
+          <i class="bi bi-key me-2 text-primary"></i>{{ "ZONE_DETAIL.TAB_API_KEYS" | translate }}
+        </span>
+      </div>
+      @if (isLoadingApiKeys()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        </div>
+      } @else if (zoneApiKeys().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
+          <p class="text-muted mt-2 mb-0 small">{{ "ZONE_DETAIL.API_KEYS_EMPTY" | translate }}</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                @if (auth.isAdmin()) {
+                  <th>{{ "APIKEYS.COL_USER" | translate }}</th>
+                }
+                <th>{{ "COMMON.NAME" | translate }}</th>
+                <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
+                <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
+                <th>{{ "ZONE_DETAIL.API_KEY_SCOPE" | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (key of zoneApiKeys(); track key.id) {
+                <tr>
+                  @if (auth.isAdmin()) {
+                    <td class="text-muted small">{{ key.username }}</td>
+                  }
+                  <td class="fw-medium">{{ key.name }}</td>
+                  <td>
+                    @if (key.key_type === "acme") {
+                      <span class="badge bg-primary-subtle text-primary-emphasis">ACME</span>
+                    } @else {
+                      <span class="badge bg-success-subtle text-success-emphasis">API</span>
+                    }
+                  </td>
+                  <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+                  <td>
+                    @if (key.key_type === "api") {
+                      <span class="text-muted small fst-italic">{{
+                        "ZONE_DETAIL.API_KEY_UNRESTRICTED" | translate
+                      }}</span>
+                    } @else {
+                      <span class="badge bg-success-subtle text-success-emphasis">
+                        <i class="bi bi-check-lg me-1"></i>{{ "ZONE_DETAIL.API_KEY_ZONE_ALLOWED" | translate }}
+                      </span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       }
     }

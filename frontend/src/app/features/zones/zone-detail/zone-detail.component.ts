@@ -3,6 +3,7 @@ import { form, FormField, required, submit } from "@angular/forms/signals";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdminService } from "../../../core/services/admin.service";
 import { AuthService } from "../../../core/services/auth.service";
+import { AcmeApiKey, AcmeKeysService } from "../../../core/services/acme-keys.service";
 import { PdnsService } from "../../../core/services/pdns.service";
 import type { RecordType, ZoneRecordTypes } from "../../../shared/models/admin.model";
 import {
@@ -44,7 +45,7 @@ const METADATA_KINDS = [
   "TSIG-ALLOW-DNSUPDATE",
 ];
 
-export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members";
+export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members" | "apikeys";
 
 @Component({
   selector: "app-zone-detail",
@@ -56,7 +57,8 @@ export class ZoneDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly pdns = inject(PdnsService);
   private readonly adminService = inject(AdminService);
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
+  private readonly acmeKeysSvc = inject(AcmeKeysService);
 
   protected zoneId = "";
 
@@ -76,6 +78,7 @@ export class ZoneDetailComponent implements OnInit {
   readonly newMemberUserId = signal<number | null>(null);
   readonly newMemberRole = signal<ZoneRole>("viewer");
   readonly isSavingMember = signal(false);
+  private membersLoaded = false;
 
   readonly zone = signal<ZoneDetail | null>(null);
   readonly isLoading = signal(false);
@@ -242,6 +245,11 @@ export class ZoneDetailComponent implements OnInit {
     }),
   );
 
+  // ── API Keys ──────────────────────────────────────────────────────────────
+  readonly zoneApiKeys = signal<AcmeApiKey[]>([]);
+  readonly isLoadingApiKeys = signal(false);
+  private apiKeysLoaded = false;
+
   // ── Reverse DNS ──────────────────────────────────────────────────────────
   readonly allZones = signal<Zone[]>([]);
   readonly isTogglingAutoReverse = signal(false);
@@ -262,6 +270,10 @@ export class ZoneDetailComponent implements OnInit {
     await Promise.all([this.loadZone(), this.loadAllZones(), this.loadZoneRole()]);
     void this.loadMetadata();
     void this.loadZoneRecordTypes();
+    if (this.isZoneAdmin()) {
+      void this.loadMembers();
+      void this.loadZoneApiKeys();
+    }
   }
 
   async loadZoneRole(): Promise<void> {
@@ -288,7 +300,30 @@ export class ZoneDetailComponent implements OnInit {
     if ((tab === "transfer" || tab === "dnsupdate") && this.metadataLoaded) this.initTransferForm();
     if (tab === "dnssec" && this.cryptoKeys().length === 0) void this.loadCryptoKeys();
     if ((tab === "transfer" || tab === "dnsupdate") && this.tsigKeys().length === 0) void this.loadTsigKeys();
-    if (tab === "members" && this.members().length === 0) void this.loadMembers();
+    if (tab === "members" && !this.membersLoaded) void this.loadMembers();
+    if (tab === "apikeys" && !this.apiKeysLoaded) void this.loadZoneApiKeys();
+  }
+
+  async loadZoneApiKeys(): Promise<void> {
+    this.isLoadingApiKeys.set(true);
+    try {
+      const all = this.auth.isAdmin()
+        ? await this.acmeKeysSvc.listAllKeys()
+        : await this.acmeKeysSvc.listKeys();
+      const zoneName = (this.zone()?.name ?? "").replace(/\.$/, "");
+      this.zoneApiKeys.set(
+        all.filter(
+          (k) =>
+            k.key_type === "api" ||
+            k.zones.some((z) => z.replace(/\.$/, "") === zoneName),
+        ),
+      );
+      this.apiKeysLoaded = true;
+    } catch {
+      // non-blocking
+    } finally {
+      this.isLoadingApiKeys.set(false);
+    }
   }
 
   async loadZone(): Promise<void> {
@@ -963,6 +998,7 @@ export class ZoneDetailComponent implements OnInit {
       const [members, users] = await Promise.all([this.pdns.getZoneMembers(this.zoneId), this.pdns.getUsers()]);
       this.members.set(members);
       this.allUsers.set(users);
+      this.membersLoaded = true;
     } catch {
       this.membersError.set("Error occurred while loading the members.");
     } finally {
