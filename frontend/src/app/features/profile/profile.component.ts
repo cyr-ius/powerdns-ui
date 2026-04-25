@@ -16,6 +16,7 @@ type Tab = "info" | "appearance" | "password" | "apikeys";
 interface AppInfo {
   version: string;
   github: string;
+  github_repository: string;
   docs_url: string;
 }
 
@@ -122,7 +123,7 @@ export class ProfileComponent implements OnInit {
       try {
         const release = await firstValueFrom(
           this.http.get<GithubRelease>(
-            "https://api.github.com/repos/cyr-ius/powerdns-ui/releases/latest",
+            `https://api.github.com/repos/${info.github_repository}/releases/latest`,
           ),
         );
         this.latestRelease.set(release);

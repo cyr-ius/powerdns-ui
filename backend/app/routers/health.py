@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Request
 
+from app.config import GITHUB_REPOSITORY
+
 router = APIRouter()
 
 
@@ -12,6 +14,7 @@ async def health() -> dict:
 async def info(request: Request) -> dict:
     return {
         "version": request.app.version,
-        "github": "https://github.com/cyr-ius/powerdns-ui",
+        "github": f"https://github.com/{GITHUB_REPOSITORY}",
+        "github_repository": GITHUB_REPOSITORY,
         "docs_url": "/api/docs",
     }

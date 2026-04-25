@@ -138,14 +138,13 @@
 
             <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.SOURCE_CODE" | translate }}</dt>
             <dd class="col-7 col-md-8">
-              <a
-                href="https://github.com/cyr-ius/powerdns-ui"
-                target="_blank"
-                rel="noopener"
-                class="text-decoration-none"
-              >
-                <i class="bi bi-github me-1"></i>cyr-ius/powerdns-ui
-              </a>
+              @if (appInfo()) {
+                <a [href]="appInfo()!.github" target="_blank" rel="noopener" class="text-decoration-none">
+                  <i class="bi bi-github me-1"></i>{{ appInfo()!.github_repository }}
+                </a>
+              } @else {
+                <span class="text-muted small">—</span>
+              }
             </dd>
           </dl>
           <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">

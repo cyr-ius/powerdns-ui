@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DATA_DIR = os.getenv("DATA_DIR", "/var/lib/powerdns-ui")
 DEFAULT_DATABASE_URL = f"sqlite+aiosqlite:///{DATA_DIR}/database.db"
+GITHUB_REPOSITORY = "cyr-ius/powerdns-ui"
 
 
 class Settings(BaseSettings):
