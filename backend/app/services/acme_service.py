@@ -22,15 +22,21 @@ def _decode_zones(key: AcmeApiKey) -> list[str]:
 
 
 async def create_key(
-    db: AsyncSession, user_id: int, name: str, raw: str | None = None
+    db: AsyncSession,
+    user_id: int,
+    name: str,
+    raw: str | None = None,
+    key_type: str = "acme",
 ) -> tuple[AcmeApiKey, str]:
     if not raw:
-        raw = "ak_" + secrets.token_urlsafe(32)
+        prefix = "apk_" if key_type == "api" else "ak_"
+        raw = prefix + secrets.token_urlsafe(32)
     key = AcmeApiKey(
         user_id=user_id,
         name=name,
         key_prefix=raw[:11],
         key_hash=_hash(raw),
+        key_type=key_type,
     )
     db.add(key)
     await db.commit()
@@ -107,5 +113,6 @@ def key_to_response(key: AcmeApiKey) -> dict:
         "name": key.name,
         "key_prefix": key.key_prefix,
         "zones": _decode_zones(key),
+        "key_type": key.key_type,
         "created_at": key.created_at,
     }

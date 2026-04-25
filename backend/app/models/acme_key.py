@@ -12,4 +12,5 @@ class AcmeApiKey(SQLModel, table=True):
     key_prefix: str = Field(max_length=12)
     key_hash: str = Field(unique=True, index=True)
     zones: str = Field(default="[]")
+    key_type: str = Field(default="acme", max_length=10)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

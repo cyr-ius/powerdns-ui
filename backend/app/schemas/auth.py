@@ -18,6 +18,7 @@ class UserResponse(BaseModel):
     is_active: bool
     is_oidc: bool
     is_admin: bool
+    is_account_admin: bool = False
 
 
 class OidcLoginResponse(BaseModel):

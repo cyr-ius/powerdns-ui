@@ -177,6 +177,16 @@ async def get_user_account_roles(db: AsyncSession, user_id: int) -> dict[str, st
     return output
 
 
+async def user_is_account_admin(db: AsyncSession, user_id: int) -> bool:
+    result = await db.exec(
+        select(UserAccount).where(
+            UserAccount.user_id == user_id,
+            UserAccount.role == ZoneRole.admin,
+        )
+    )
+    return result.first() is not None
+
+
 async def get_user_role_for_account(
     db: AsyncSession, user_id: int, account_name: str
 ) -> UserAccount | None:

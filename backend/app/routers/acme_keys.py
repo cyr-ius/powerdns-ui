@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -11,7 +11,7 @@ from app.schemas.acme import (
     AcmeApiKeyResponse,
     AcmeApiKeyZonesUpdate,
 )
-from app.services import acme_service
+from app.services import acme_service, admin_service
 
 router = APIRouter(prefix="/api/acme-keys", dependencies=[Depends(get_current_user)])
 
@@ -44,8 +44,17 @@ async def create_acme_key(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    if payload.key_type == "acme":
+        if not current_user.is_admin and not await admin_service.user_is_account_admin(
+            db,
+            current_user.id,  # type: ignore[arg-type]
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Account admin or super admin required to create ACME keys",
+            )
     key, raw = await acme_service.create_key(
-        db, current_user.id, payload.name, payload.key or None
+        db, current_user.id, payload.name, payload.key or None, payload.key_type
     )
     return {**acme_service.key_to_response(key), "key": raw}
 
@@ -57,10 +66,17 @@ async def update_acme_key_zones(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    key = await acme_service.update_zones(db, key_id, current_user.id, payload.zones)
+    key = await acme_service.get_key(db, key_id, current_user.id)
     if key is None:
-        raise HTTPException(status_code=404, detail="ACME key not found")
-    return acme_service.key_to_response(key)
+        raise HTTPException(status_code=404, detail="API key not found")
+    if key.key_type != "acme":
+        raise HTTPException(
+            status_code=400, detail="Zone assignment is only available for ACME keys"
+        )
+    updated = await acme_service.update_zones(
+        db, key_id, current_user.id, payload.zones
+    )
+    return acme_service.key_to_response(updated)  # type: ignore[arg-type]
 
 
 @router.delete("/{key_id}", status_code=204)
@@ -74,4 +90,4 @@ async def delete_acme_key(
     else:
         deleted = await acme_service.delete_key(db, key_id, current_user.id)
     if not deleted:
-        raise HTTPException(status_code=404, detail="ACME key not found")
+        raise HTTPException(status_code=404, detail="API key not found")

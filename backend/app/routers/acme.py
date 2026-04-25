@@ -37,7 +37,7 @@ async def _get_acme_key(
     db: AsyncSession = Depends(get_db),
 ) -> AcmeApiKey:
     key = await acme_service.verify_key(db, raw_key)
-    if key is None:
+    if key is None or key.key_type != "acme":
         raise HTTPException(status_code=401, detail="Invalid ACME API key")
     return key
 

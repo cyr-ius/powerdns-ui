@@ -60,6 +60,7 @@ export const routes: Routes = [
       },
       {
         path: 'acme-keys',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./features/acme-keys/acme-keys.component').then((m) => m.AcmeKeysComponent),
       },

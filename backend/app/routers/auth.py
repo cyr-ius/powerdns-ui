@@ -82,7 +82,11 @@ async def login(
 
 
 @router.get("/me", response_model=UserResponse)
-async def me(current_user: User = Depends(get_current_user)) -> UserResponse:
+async def me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserResponse:
+    is_account_admin = await admin_service.user_is_account_admin(db, current_user.id)  # type: ignore[arg-type]
     return UserResponse(
         id=current_user.id,  # type: ignore[arg-type]
         username=current_user.username,
@@ -90,6 +94,7 @@ async def me(current_user: User = Depends(get_current_user)) -> UserResponse:
         is_active=current_user.is_active,
         is_oidc=current_user.is_oidc,
         is_admin=current_user.is_admin,
+        is_account_admin=is_account_admin,
     )
 
 

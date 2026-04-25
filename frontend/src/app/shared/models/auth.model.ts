@@ -5,6 +5,7 @@ export interface User {
   is_active: boolean;
   is_oidc: boolean;
   is_admin: boolean;
+  is_account_admin: boolean;
 }
 
 export interface TokenResponse {

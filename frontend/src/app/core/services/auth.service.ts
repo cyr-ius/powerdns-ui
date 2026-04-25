@@ -17,6 +17,7 @@ export class AuthService {
   readonly isAuthenticated = computed(() => !!this._token());
   readonly currentUser = computed(() => this._user());
   readonly isAdmin = computed(() => this._user()?.is_admin ?? false);
+  readonly isAcmeCreator = computed(() => (this._user()?.is_admin || this._user()?.is_account_admin) ?? false);
   readonly oidcConfig = computed(() => this._oidcConfig());
   readonly sessionExpired = signal(false);
 
