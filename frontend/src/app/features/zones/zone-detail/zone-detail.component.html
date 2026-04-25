@@ -127,6 +127,20 @@
       }
       <i class="bi bi-download me-1"></i>{{ "ZONE_DETAIL.EXPORT" | translate }}
     </button>
+    @if (isZoneAdmin()) {
+      <input #fileInput type="file" accept=".zone,.txt" class="d-none" (change)="onFileSelected($event)" />
+      <button
+        class="btn btn-sm btn-outline-secondary"
+        (click)="triggerImport()"
+        [disabled]="isImporting()"
+        [title]="'ZONE_DETAIL.IMPORT' | translate"
+      >
+        @if (isImporting()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-upload me-1"></i>{{ "ZONE_DETAIL.IMPORT" | translate }}
+      </button>
+    }
   </div>
 
   <!-- Role badge -->

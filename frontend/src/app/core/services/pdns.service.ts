@@ -68,6 +68,12 @@ export class PdnsService {
     return firstValueFrom(this.http.get(`/api/zones/${zoneId}/export`, { responseType: "text" }));
   }
 
+  importZone(zoneId: string, file: File): Promise<void> {
+    const formData = new FormData();
+    formData.append("file", file);
+    return firstValueFrom(this.http.post<void>(`/api/zones/${zoneId}/import`, formData));
+  }
+
   // ── Metadata ─────────────────────────────────────────────────────────────
 
   getMetadata(zoneId: string): Promise<Metadata[]> {

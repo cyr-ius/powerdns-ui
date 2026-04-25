@@ -1,5 +1,13 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -499,6 +507,71 @@ async def rectify_zone(
         return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/rectify")
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
+
+
+@router.post("/{zone_id}/import", status_code=204)
+async def import_zone(
+    zone_id: str,
+    file: UploadFile,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    _, role = await _check_zone_access(zone_id, current_user, db)
+    _require_min_role(role, "admin")
+    try:
+        content = (await file.read()).decode("utf-8")
+        imported_rrsets = _parse_zone_file(zone_id, content)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422, detail=f"Invalid zone file: {exc}"
+        ) from exc
+    try:
+        current_zone = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
+        current_rrsets = current_zone.get("rrsets", [])
+        # SOA and NS are managed by PowerDNS — never touch them during import.
+        safe_rrsets = [r for r in imported_rrsets if r["type"] not in ("SOA", "NS")]
+        imported_keys = {(r["name"], r["type"]) for r in safe_rrsets}
+        patch: list[dict] = [{"changetype": "REPLACE", **r} for r in safe_rrsets]
+        for rrset in current_rrsets:
+            if rrset["type"] in ("SOA", "NS"):
+                continue
+            if (rrset["name"], rrset["type"]) not in imported_keys:
+                patch.append(
+                    {
+                        "changetype": "DELETE",
+                        "name": rrset["name"],
+                        "type": rrset["type"],
+                    }
+                )
+        await pdns_request(
+            "PATCH", f"{_SERVER}/zones/{zone_id}", json={"rrsets": patch}
+        )
+    except httpx.HTTPStatusError as exc:
+        raise _pdns_error_handler(exc) from exc
+
+
+def _parse_zone_file(zone_name: str, content: str) -> list[dict]:
+    import dns.name
+    import dns.rdatatype
+    import dns.zone
+
+    origin = dns.name.from_text(zone_name)
+    zone = dns.zone.from_text(content, origin=origin, check_origin=False)
+    rrsets = []
+    for rel_name, node in zone.nodes.items():
+        fqdn = str(rel_name.derelativize(origin))
+        for rdataset in node.rdatasets:
+            rrsets.append(
+                {
+                    "name": fqdn,
+                    "type": dns.rdatatype.to_text(rdataset.rdtype),
+                    "ttl": rdataset.ttl,
+                    "records": [
+                        {"content": r.to_text(), "disabled": False} for r in rdataset
+                    ],
+                }
+            )
+    return rrsets
 
 
 @router.get("/{zone_id}/export")

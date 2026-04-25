@@ -208,6 +208,8 @@ export class ZoneDetailComponent implements OnInit {
   readonly isNotifying = signal(false);
   readonly isRetrieving = signal(false);
   readonly isExporting = signal(false);
+  readonly isImporting = signal(false);
+  readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>("fileInput");
 
   // ── Settings ─────────────────────────────────────────────────────────────
   readonly isSavingSettings = signal(false);
@@ -939,6 +941,28 @@ export class ZoneDetailComponent implements OnInit {
       });
     } finally {
       this.isExporting.set(false);
+    }
+  }
+
+  triggerImport(): void {
+    this.fileInput().nativeElement.click();
+  }
+
+  async onFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    input.value = "";
+    this.isImporting.set(true);
+    this.actionMessage.set(null);
+    try {
+      await this.pdns.importZone(this.zoneId, file);
+      this.actionMessage.set({ type: "success", text: "Zone imported successfully." });
+      await this.loadZone();
+    } catch {
+      this.actionMessage.set({ type: "error", text: "Error occurred while importing the zone." });
+    } finally {
+      this.isImporting.set(false);
     }
   }
 

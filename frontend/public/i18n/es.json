@@ -93,6 +93,7 @@
     "NOTIFY_SLAVES": "Notificar a los esclavos",
     "RETRIEVE_MASTER": "Obtener desde el maestro",
     "EXPORT": "Exportar",
+    "IMPORT": "Importar",
     "ROLE_ADMIN": "Administrador",
     "ROLE_MANAGER": "Gestor",
     "ROLE_USER": "Usuario",
