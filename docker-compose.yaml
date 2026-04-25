@@ -1,16 +1,29 @@
 services:
   pdns:
-    image: powerdns/pdns-auth-50
+    image: powerdns/pdns-auth-50:5.0.4
     restart: unless-stopped
-    environment:
-      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
+    depends_on:
+      - pdns-db
     volumes:
       - powerdns_data:/var/lib/powerdns
-      - ./pdns.conf:/etc/powerdns/pdns.d/pdns.conf
     ports:
       # - 53:53
       # - 53:53/udp
       - 8081:8081
+    command:
+      - "--no-config"
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}"
+      - "--launch=gmysql"
+      - "--gmysql-host=pdns-db"
+      - "--gmysql-user=${MARIADB_USER:-powerdns}"
+      - "--gmysql-password=${MARIADB_PASSWORD:-pdns}"
+      - "--gmysql-dbname=${MARIADB_DATABASE:-powerdns}"
+      - "--gmysql-dnssec=yes"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--webserver-allow-from=0.0.0.0/0"
 
   pdns-ui:
     build:
@@ -31,6 +44,20 @@ services:
     ports:
       - 8080:8080/tcp
 
+  pdns-db:
+    image: mariadb:latest
+    container_name: pdns_db
+    restart: unless-stopped
+    volumes:
+      - powerdns_db:/var/lib/mysql:Z
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD:-root_password}
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}
+      - MARIADB_USER=${MARIADB_USER:-powerdns}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
+      - MARIADB_INNODB_FORCE_RECOVERY=3
+
 volumes:
   powerdns_data:
   powerdns-ui_data:
+  powerdns_db:

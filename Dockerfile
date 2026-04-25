@@ -46,6 +46,9 @@ COPY --from=frontend-builder /build/frontend/dist/frontend/browser ./frontend
 
 COPY backend ./backend
 
+RUN mkdir -p /var/lib/powerdns \
+    && curl -o /var/lib/powerdns/schema.sql https://raw.githubusercontent.com/PowerDNS/pdns/refs/heads/master/modules/gmysqlbackend/schema.mysql.sql
+
 ARG VERSION
 ENV APP_VERSION=${VERSION:-"1.0.0"}
 
