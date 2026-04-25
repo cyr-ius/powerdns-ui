@@ -13,6 +13,7 @@ async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit
 # Import all models so SQLModel.metadata is complete before create_all
 from app.models import (  # noqa: F401, E402
     account,
+    acme_key,
     audit_log,
     oidc_settings,
     record_type,

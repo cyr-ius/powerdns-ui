@@ -1,0 +1,257 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="h4 mb-0 fw-bold">
+      <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ACMEKEYS.TITLE" | translate }}
+    </h2>
+    <p class="text-muted small mb-0">{{ "ACMEKEYS.SUBTITLE" | translate }}</p>
+  </div>
+  <button class="btn btn-primary" (click)="openCreateModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "ACMEKEYS.NEW_KEY" | translate }}
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <span>{{ error() | translate }}</span>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadKeys()">{{ "COMMON.RETRY" | translate }}</button>
+  </div>
+}
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    @if (isLoading()) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-muted mt-2 mb-0">{{ "ACMEKEYS.LOADING" | translate }}</p>
+      </div>
+    } @else if (keys().length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-shield-lock text-muted" style="font-size: 2.5rem"></i>
+        <p class="text-muted mt-2 mb-0">{{ "ACMEKEYS.NO_KEYS" | translate }}</p>
+        <p class="text-muted small">{{ "ACMEKEYS.NO_KEYS_HELP" | translate }}</p>
+      </div>
+    } @else {
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            @if (auth.isAdmin()) {
+              <th>{{ "ACMEKEYS.COL_USER" | translate }}</th>
+            }
+            <th>{{ "COMMON.NAME" | translate }}</th>
+            <th>{{ "ACMEKEYS.COL_PREFIX" | translate }}</th>
+            <th>{{ "ACMEKEYS.COL_ZONES" | translate }}</th>
+            <th>{{ "ACMEKEYS.COL_CREATED" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (key of keys(); track trackById($index, key)) {
+            <tr>
+              @if (auth.isAdmin()) {
+                <td class="text-muted small">{{ key.username }}</td>
+              }
+              <td class="fw-medium">{{ key.name }}</td>
+              <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+              <td>
+                @if (key.zones.length === 0) {
+                  <span class="text-muted small fst-italic">{{ "ACMEKEYS.NO_ZONES" | translate }}</span>
+                } @else {
+                  <div class="d-flex flex-wrap gap-1">
+                    @for (z of key.zones; track z) {
+                      <span class="badge bg-primary-subtle text-primary-emphasis font-monospace">{{ z }}</span>
+                    }
+                  </div>
+                }
+              </td>
+              <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
+              <td class="text-end">
+                <div class="d-flex gap-1 justify-content-end">
+                  <button
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="openZoneModal(key)"
+                    [title]="'ACMEKEYS.MANAGE_ZONES' | translate"
+                  >
+                    <i class="bi bi-globe2"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="deleteKey(key)"
+                    [title]="'COMMON.DELETE' | translate"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Hint block -->
+<div class="alert alert-info mt-4 small">
+  <i class="bi bi-info-circle me-2"></i>
+  <strong>{{ "ACMEKEYS.CERTBOT_HINT_TITLE" | translate }}</strong>
+  <pre class="mb-0 mt-2 bg-transparent border-0 p-0 small font-monospace">{{
+    "ACMEKEYS.CERTBOT_HINT_BODY" | translate
+  }}</pre>
+</div>
+
+<!-- ── Create modal ───────────────────────────────────────────────────────── -->
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ACMEKEYS.CREATE_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreate()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">{{ createError() | translate }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "COMMON.NAME" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+                placeholder="traefik-prod"
+                [formField]="createForm.name"
+              />
+              @if (createForm.name().touched() && createForm.name().errors().length) {
+                <div class="invalid-feedback">{{ createForm.name().errors()[0].message | translate }}</div>
+              }
+              <div class="form-text">{{ "ACMEKEYS.NAME_HELP" | translate }}</div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">
+                {{ "ACMEKEYS.SECRET" | translate }}
+                <span class="text-muted small">{{ "ACMEKEYS.SECRET_OPTIONAL" | translate }}</span>
+              </label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [placeholder]="'ACMEKEYS.SECRET_PLACEHOLDER' | translate"
+                [formField]="createForm.secret"
+              />
+              <div class="form-text">{{ "ACMEKEYS.SECRET_HELP" | translate }}</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.CREATE" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Created key display modal ─────────────────────────────────────────── -->
+@if (createdKey()) {
+  <div class="modal-backdrop-overlay"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-key me-2 text-success"></i>{{ "ACMEKEYS.KEY_CREATED_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning py-2 small">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ "ACMEKEYS.KEY_ONCE_WARNING" | translate }}
+          </div>
+          <label class="form-label fw-medium">{{ "ACMEKEYS.YOUR_KEY" | translate }}</label>
+          <div class="input-group">
+            <input type="text" class="form-control font-monospace" [value]="createdKey()" readonly />
+            <button class="btn btn-outline-secondary" type="button" (click)="copyKey()">
+              <i class="bi" [class]="copied() ? 'bi-check-lg text-success' : 'bi-clipboard'"></i>
+            </button>
+          </div>
+          <div class="form-text mt-2">{{ "ACMEKEYS.CREDENTIALS_HINT" | translate }}</div>
+          <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
+dns_pdns_endpoint  = https://&lt;your-powerdns-ui-url&gt;
+dns_pdns_api_key   = {{ createdKey() }}
+dns_pdns_server_id = localhost</pre
+          >
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" (click)="closeCreatedKeyModal()">
+            {{ "COMMON.CLOSE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Zone assignment modal ─────────────────────────────────────────────── -->
+@if (editingKey()) {
+  <div class="modal-backdrop-overlay" (click)="closeZoneModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-globe2 me-2 text-primary"></i
+            >{{ "ACMEKEYS.MANAGE_ZONES_TITLE" | translate: { name: editingKey()!.name } }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeZoneModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (zonesError()) {
+            <div class="alert alert-danger py-2 small">{{ zonesError() | translate }}</div>
+          }
+          <p class="text-muted small">{{ "ACMEKEYS.ZONES_HELP" | translate }}</p>
+          <div class="list-group list-group-flush" style="max-height: 360px; overflow-y: auto">
+            @for (zone of availableZones(); track zone.name) {
+              <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2">
+                <input
+                  type="checkbox"
+                  class="form-check-input mt-0"
+                  [checked]="selectedZones().has(zone.name)"
+                  (change)="toggleZone(zone.name)"
+                />
+                <span class="font-monospace small">{{ zone.name }}</span>
+                <span class="ms-auto badge bg-secondary-subtle text-secondary-emphasis small">{{ zone.kind }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span class="me-auto small text-muted"
+            >{{ selectedZones().size }} {{ "ACMEKEYS.ZONES_SELECTED" | translate }}</span
+          >
+          <button type="button" class="btn btn-secondary" (click)="closeZoneModal()">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveZones()" [disabled]="isSavingZones()">
+            @if (isSavingZones()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            {{ "COMMON.SAVE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

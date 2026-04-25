@@ -59,6 +59,11 @@ export const routes: Routes = [
           import('./features/profile/profile.component').then((m) => m.ProfileComponent),
       },
       {
+        path: 'acme-keys',
+        loadComponent: () =>
+          import('./features/acme-keys/acme-keys.component').then((m) => m.AcmeKeysComponent),
+      },
+      {
         path: 'server-config',
         canActivate: [adminGuard],
         loadComponent: () =>

@@ -14,6 +14,8 @@ from fastapi.responses import FileResponse
 from app.config import settings
 from app.database import async_session, init_db
 from app.routers import (
+    acme,
+    acme_keys,
     admin,
     audit,
     auth,
@@ -72,6 +74,8 @@ app = FastAPI(
 app.add_middleware(SecurityHeadersMiddleware)
 
 # ── API routers ───────────────────────────────────────────────────────────────
+app.include_router(acme.router)
+app.include_router(acme_keys.router)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)

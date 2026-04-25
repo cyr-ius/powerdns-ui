@@ -57,7 +57,14 @@
   <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
   <aside class="pdns-sidebar" [class.open]="sidebarOpen()">
     <nav class="pdns-sidenav">
-      <p class="pdns-sidenav-label">{{ "NAV.DNS_ZONES" | translate }}</p>
+      <p class="pdns-sidenav-label">{{ "NAV.PERSONAL" | translate }}</p>
+
+      <a class="pdns-sidenav-link" routerLink="/acme-keys" routerLinkActive="active" (click)="closeSidebar()">
+        <i class="bi bi-shield-lock"></i>
+        <span>{{ "NAV.ACME_KEYS" | translate }}</span>
+      </a>
+
+      <p class="pdns-sidenav-label mt-3">{{ "NAV.DNS_ZONES" | translate }}</p>
 
       <a
         class="pdns-sidenav-link"
