@@ -10,266 +10,144 @@
   </div>
 </div>
 
-<div class="row g-4">
-  <!-- User info -->
-  <div class="col-12 col-lg-5">
-    <div class="card shadow-sm h-100">
-      <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold">
-          <i class="bi bi-person-circle me-2 text-primary"></i>{{ "PROFILE.INFO_TITLE" | translate }}
-        </h5>
-      </div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.USER" | translate }}</dt>
-          <dd class="col-7 fw-semibold">{{ auth.currentUser()?.username }}</dd>
-
-          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.EMAIL" | translate }}</dt>
-          <dd class="col-7">{{ auth.currentUser()?.email ?? "—" }}</dd>
-
-          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.AUTH" | translate }}</dt>
-          <dd class="col-7">
-            @if (auth.currentUser()?.is_oidc) {
-              <span class="badge bg-info">SSO / OIDC</span>
-            } @else {
-              <span class="badge bg-secondary">Local</span>
-            }
-          </dd>
-        </dl>
-      </div>
-    </div>
-  </div>
-
-  <!-- Language selector -->
-  <div class="col-12 col-lg-7">
-    <div class="card shadow-sm">
-      <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold">
-          <i class="bi bi-translate me-2 text-primary"></i>{{ "PROFILE.LANGUAGE_TITLE" | translate }}
-        </h5>
-      </div>
-      <div class="card-body">
-        <div class="d-flex gap-2 flex-wrap">
-          <button
-            type="button"
-            class="btn btn-sm"
-            [class.btn-primary]="currentLang() === 'en'"
-            [class.btn-outline-secondary]="currentLang() !== 'en'"
-            (click)="setLanguage('en')"
-          >
-            🇬🇧 English
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm"
-            [class.btn-primary]="currentLang() === 'fr'"
-            [class.btn-outline-secondary]="currentLang() !== 'fr'"
-            (click)="setLanguage('fr')"
-          >
-            🇫🇷 Français
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm"
-            [class.btn-primary]="currentLang() === 'es'"
-            [class.btn-outline-secondary]="currentLang() !== 'es'"
-            (click)="setLanguage('es')"
-          >
-            🇪🇸 Español
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Appearance -->
-  <div class="col-12 col-lg-7">
-    <div class="card shadow-sm">
-      <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold">
-          <i class="bi bi-palette me-2 text-primary"></i>{{ "PROFILE.APPEARANCE_TITLE" | translate }}
-        </h5>
-      </div>
-      <div class="card-body">
-        <p class="text-muted small mb-3">{{ "PROFILE.APPEARANCE_HELP" | translate }}</p>
-        <div class="d-flex gap-3 flex-wrap">
-          @for (t of themes; track t.value) {
-            <button
-              type="button"
-              class="btn btn-sm theme-btn"
-              [class.active]="themeService.theme() === t.value"
-              (click)="setTheme(t.value)"
-            >
-              <i class="bi me-2" [class]="t.icon"></i>{{ t.label }}
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Change password -->
+<!-- ── Tabs ─────────────────────────────────────────────────────────────────── -->
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'info'" (click)="activeTab.set('info')">
+      <i class="bi bi-person-circle me-1"></i>{{ "PROFILE.TAB_INFO" | translate }}
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'appearance'" (click)="activeTab.set('appearance')">
+      <i class="bi bi-palette me-1"></i>{{ "PROFILE.TAB_APPEARANCE" | translate }}
+    </button>
+  </li>
   @if (!auth.currentUser()?.is_oidc) {
-    <div class="col-12">
-      <div class="card shadow-sm">
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'password'" (click)="activeTab.set('password')">
+        <i class="bi bi-shield-lock me-1"></i>{{ "PROFILE.TAB_PASSWORD" | translate }}
+      </button>
+    </li>
+  }
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
+      <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
+      @if (keys().length > 0) {
+        <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
+      }
+    </button>
+  </li>
+</ul>
+
+<!-- ══ Tab: Information & About ════════════════════════════════════════════ -->
+@if (activeTab() === "info") {
+  <div class="row g-4">
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm h-100">
         <div class="card-header py-3">
           <h5 class="mb-0 fw-semibold">
-            <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "PROFILE.CHANGE_PASSWORD_TITLE" | translate }}
+            <i class="bi bi-person-circle me-2 text-primary"></i>{{ "PROFILE.INFO_TITLE" | translate }}
           </h5>
         </div>
         <div class="card-body">
-          @if (passwordSuccess()) {
-            <div class="alert alert-success d-flex align-items-center gap-2 py-2">
-              <i class="bi bi-check-circle-fill"></i>
-              <span>{{ "PROFILE.PASSWORD_CHANGED" | translate }}</span>
-            </div>
-          }
-          @if (passwordError()) {
-            <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-              <span>{{ passwordError() }}</span>
-            </div>
-          }
+          <dl class="row mb-0">
+            <dt class="col-5 text-muted fw-normal">{{ "PROFILE.USER" | translate }}</dt>
+            <dd class="col-7 fw-semibold">{{ auth.currentUser()?.username }}</dd>
 
-          <form (ngSubmit)="onChangePassword()" novalidate>
-            <div class="row g-3">
-              <div class="col-12 col-md-4">
-                <label class="form-label fw-medium">
-                  {{ "PROFILE.CURRENT_PASSWORD" | translate }} <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  class="form-control"
-                  [class.is-invalid]="
-                    passwordForm.current_password().touched() && passwordForm.current_password().errors().length
-                  "
-                  autocomplete="current-password"
-                  [formField]="passwordForm.current_password"
-                />
-                @if (passwordForm.current_password().touched() && passwordForm.current_password().errors().length) {
-                  <div class="invalid-feedback">
-                    {{ passwordForm.current_password().errors()[0].message }}
-                  </div>
-                }
-              </div>
-              <div class="col-12 col-md-4">
-                <label class="form-label fw-medium">
-                  {{ "PROFILE.NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  class="form-control"
-                  [class.is-invalid]="
-                    passwordForm.new_password().touched() && passwordForm.new_password().errors().length
-                  "
-                  autocomplete="new-password"
-                  [formField]="passwordForm.new_password"
-                />
-                @if (passwordForm.new_password().touched() && passwordForm.new_password().errors().length) {
-                  <div class="invalid-feedback">
-                    {{ passwordForm.new_password().errors()[0].message }}
-                  </div>
-                }
-              </div>
-              <div class="col-12 col-md-4">
-                <label class="form-label fw-medium">
-                  {{ "PROFILE.CONFIRM_NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
-                </label>
-                <input
-                  type="password"
-                  class="form-control"
-                  [class.is-invalid]="
-                    passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length
-                  "
-                  autocomplete="new-password"
-                  [formField]="passwordForm.confirm_password"
-                />
-                @if (passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length) {
-                  <div class="invalid-feedback">
-                    {{ passwordForm.confirm_password().errors()[0].message }}
-                  </div>
-                }
-              </div>
-            </div>
-            <div class="mt-3">
-              <button type="submit" class="btn btn-primary" [disabled]="isChangingPassword()">
-                @if (isChangingPassword()) {
-                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                }
-                <i class="bi bi-check-lg me-1"></i>{{ "COMMON.SAVE_CHANGES" | translate }}
-              </button>
-            </div>
-          </form>
+            <dt class="col-5 text-muted fw-normal">{{ "PROFILE.EMAIL" | translate }}</dt>
+            <dd class="col-7">{{ auth.currentUser()?.email ?? "—" }}</dd>
+
+            <dt class="col-5 text-muted fw-normal">{{ "PROFILE.AUTH" | translate }}</dt>
+            <dd class="col-7">
+              @if (auth.currentUser()?.is_oidc) {
+                <span class="badge bg-info">SSO / OIDC</span>
+              } @else {
+                <span class="badge bg-secondary">Local</span>
+              }
+            </dd>
+
+            @if (auth.isAdmin()) {
+              <dt class="col-5 text-muted fw-normal">{{ "PROFILE.ROLE" | translate }}</dt>
+              <dd class="col-7">
+                <span class="badge bg-danger-subtle text-danger-emphasis">
+                  <i class="bi bi-shield-fill me-1"></i>{{ "PROFILE.ROLE_ADMIN" | translate }}
+                </span>
+              </dd>
+            } @else if (auth.isAcmeCreator()) {
+              <dt class="col-5 text-muted fw-normal">{{ "PROFILE.ROLE" | translate }}</dt>
+              <dd class="col-7">
+                <span class="badge bg-warning-subtle text-warning-emphasis">
+                  <i class="bi bi-person-gear me-1"></i>{{ "PROFILE.ROLE_ACCOUNT_ADMIN" | translate }}
+                </span>
+              </dd>
+            }
+          </dl>
         </div>
       </div>
     </div>
-  }
 
-  <!-- About -->
-  <div class="col-12">
-    <div class="card shadow-sm">
-      <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold">
-          <i class="bi bi-info-circle me-2 text-primary"></i>{{ "PROFILE.ABOUT_TITLE" | translate }}
-        </h5>
-      </div>
-      <div class="card-body">
-        <dl class="row mb-3">
-          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.APPLICATION" | translate }}</dt>
-          <dd class="col-7 col-md-9 fw-semibold">PowerDNS UI</dd>
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header py-3">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-info-circle me-2 text-primary"></i>{{ "PROFILE.ABOUT_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-3">
+            <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.APPLICATION" | translate }}</dt>
+            <dd class="col-7 col-md-8 fw-semibold">PowerDNS UI</dd>
 
-          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.VERSION" | translate }}</dt>
-          <dd class="col-7 col-md-9">
-            @if (appInfo()) {
-              <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">
-                v{{ appInfo()!.version }}
-              </span>
-            } @else {
-              <span class="text-muted small">—</span>
-            }
-          </dd>
+            <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.VERSION" | translate }}</dt>
+            <dd class="col-7 col-md-8">
+              @if (appInfo()) {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">
+                  v{{ appInfo()!.version }}
+                </span>
+              } @else {
+                <span class="text-muted small">—</span>
+              }
+            </dd>
 
-          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.UPDATE" | translate }}</dt>
-          <dd class="col-7 col-md-9">
-            @if (!releaseCheckDone()) {
-              <span class="text-muted small">
-                <span class="spinner-border spinner-border-sm me-1" role="status"></span
-                >{{ "PROFILE.CHECKING" | translate }}
-              </span>
-            } @else if (!latestRelease()) {
-              <span class="text-muted small"
-                ><i class="bi bi-dash me-1"></i>{{ "PROFILE.NOT_AVAILABLE" | translate }}</span
-              >
-            } @else if (updateAvailable) {
+            <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.UPDATE" | translate }}</dt>
+            <dd class="col-7 col-md-8">
+              @if (!releaseCheckDone()) {
+                <span class="text-muted small">
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span
+                  >{{ "PROFILE.CHECKING" | translate }}
+                </span>
+              } @else if (!latestRelease()) {
+                <span class="text-muted small"
+                  ><i class="bi bi-dash me-1"></i>{{ "PROFILE.NOT_AVAILABLE" | translate }}</span
+                >
+              } @else if (updateAvailable) {
+                <a
+                  [href]="latestRelease()!.html_url"
+                  target="_blank"
+                  rel="noopener"
+                  class="badge bg-warning-subtle text-warning-emphasis text-decoration-none"
+                >
+                  <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ latestRelease()!.tag_name }} available
+                </a>
+              } @else {
+                <span class="badge bg-success-subtle text-success-emphasis">
+                  <i class="bi bi-check-circle-fill me-1"></i>{{ "PROFILE.UP_TO_DATE" | translate }}
+                </span>
+              }
+            </dd>
+
+            <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.SOURCE_CODE" | translate }}</dt>
+            <dd class="col-7 col-md-8">
               <a
-                [href]="latestRelease()!.html_url"
+                href="https://github.com/cyr-ius/powerdns-ui"
                 target="_blank"
                 rel="noopener"
-                class="badge bg-warning-subtle text-warning-emphasis text-decoration-none"
+                class="text-decoration-none"
               >
-                <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ latestRelease()!.tag_name }} available
+                <i class="bi bi-github me-1"></i>cyr-ius/powerdns-ui
               </a>
-            } @else {
-              <span class="badge bg-success-subtle text-success-emphasis">
-                <i class="bi bi-check-circle-fill me-1"></i>{{ "PROFILE.UP_TO_DATE" | translate }}
-              </span>
-            }
-          </dd>
-
-          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.SOURCE_CODE" | translate }}</dt>
-          <dd class="col-7 col-md-9">
-            <a
-              href="https://github.com/cyr-ius/powerdns-ui"
-              target="_blank"
-              rel="noopener"
-              class="text-decoration-none"
-            >
-              <i class="bi bi-github me-1"></i>cyr-ius/powerdns-ui
-            </a>
-          </dd>
-        </dl>
-
-        <div class="d-flex flex-wrap gap-2">
+            </dd>
+          </dl>
           <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
           </a>
@@ -277,4 +155,478 @@
       </div>
     </div>
   </div>
-</div>
+}
+
+<!-- ══ Tab: Appearance & Language ══════════════════════════════════════════ -->
+@if (activeTab() === "appearance") {
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header py-3">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-palette me-2 text-primary"></i>{{ "PROFILE.APPEARANCE_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">{{ "PROFILE.APPEARANCE_HELP" | translate }}</p>
+          <div class="d-flex gap-3 flex-wrap">
+            @for (t of themes; track t.value) {
+              <button
+                type="button"
+                class="btn btn-sm theme-btn"
+                [class.active]="themeService.theme() === t.value"
+                (click)="setTheme(t.value)"
+              >
+                <i class="bi me-2" [class]="t.icon"></i>{{ t.label }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header py-3">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-translate me-2 text-primary"></i>{{ "PROFILE.LANGUAGE_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex gap-2 flex-wrap">
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="currentLang() === 'en'"
+              [class.btn-outline-secondary]="currentLang() !== 'en'"
+              (click)="setLanguage('en')"
+            >
+              🇬🇧 English
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="currentLang() === 'fr'"
+              [class.btn-outline-secondary]="currentLang() !== 'fr'"
+              (click)="setLanguage('fr')"
+            >
+              🇫🇷 Français
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm"
+              [class.btn-primary]="currentLang() === 'es'"
+              [class.btn-outline-secondary]="currentLang() !== 'es'"
+              (click)="setLanguage('es')"
+            >
+              🇪🇸 Español
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ══ Tab: Change Password ════════════════════════════════════════════════ -->
+@if (activeTab() === "password" && !auth.currentUser()?.is_oidc) {
+  <div class="card shadow-sm">
+    <div class="card-header py-3">
+      <h5 class="mb-0 fw-semibold">
+        <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "PROFILE.CHANGE_PASSWORD_TITLE" | translate }}
+      </h5>
+    </div>
+    <div class="card-body">
+      @if (passwordSuccess()) {
+        <div class="alert alert-success d-flex align-items-center gap-2 py-2">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>{{ "PROFILE.PASSWORD_CHANGED" | translate }}</span>
+        </div>
+      }
+      @if (passwordError()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ passwordError() }}</span>
+        </div>
+      }
+      <form (ngSubmit)="onChangePassword()" novalidate>
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-medium">
+              {{ "PROFILE.CURRENT_PASSWORD" | translate }} <span class="text-danger">*</span>
+            </label>
+            <input
+              type="password"
+              class="form-control"
+              [class.is-invalid]="
+                passwordForm.current_password().touched() && passwordForm.current_password().errors().length
+              "
+              autocomplete="current-password"
+              [formField]="passwordForm.current_password"
+            />
+            @if (passwordForm.current_password().touched() && passwordForm.current_password().errors().length) {
+              <div class="invalid-feedback">
+                {{ passwordForm.current_password().errors()[0].message }}
+              </div>
+            }
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-medium">
+              {{ "PROFILE.NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
+            </label>
+            <input
+              type="password"
+              class="form-control"
+              [class.is-invalid]="passwordForm.new_password().touched() && passwordForm.new_password().errors().length"
+              autocomplete="new-password"
+              [formField]="passwordForm.new_password"
+            />
+            @if (passwordForm.new_password().touched() && passwordForm.new_password().errors().length) {
+              <div class="invalid-feedback">
+                {{ passwordForm.new_password().errors()[0].message }}
+              </div>
+            }
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-medium">
+              {{ "PROFILE.CONFIRM_NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
+            </label>
+            <input
+              type="password"
+              class="form-control"
+              [class.is-invalid]="
+                passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length
+              "
+              autocomplete="new-password"
+              [formField]="passwordForm.confirm_password"
+            />
+            @if (passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length) {
+              <div class="invalid-feedback">
+                {{ passwordForm.confirm_password().errors()[0].message }}
+              </div>
+            }
+          </div>
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary" [disabled]="isChangingPassword()">
+            @if (isChangingPassword()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            <i class="bi bi-check-lg me-1"></i>{{ "COMMON.SAVE_CHANGES" | translate }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- ══ Tab: My API Keys ════════════════════════════════════════════════════ -->
+@if (activeTab() === "apikeys") {
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE" | translate }}</p>
+    <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+      <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
+    </button>
+  </div>
+
+  @if (keysError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ keysError() | translate }}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadApiKeys()">
+        {{ "COMMON.RETRY" | translate }}
+      </button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      @if (isLoadingKeys()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
+        </div>
+      } @else if (keys().length === 0) {
+        <div class="text-center py-4">
+          <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
+          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_KEYS" | translate }}</p>
+          <p class="text-muted small">{{ "APIKEYS.NO_KEYS_HELP" | translate }}</p>
+        </div>
+      } @else {
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>{{ "COMMON.NAME" | translate }}</th>
+              <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
+              <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
+              <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
+              <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+              <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (key of keys(); track trackById($index, key)) {
+              <tr>
+                <td class="fw-medium">{{ key.name }}</td>
+                <td>
+                  @if (key.key_type === "acme") {
+                    <span class="badge bg-primary-subtle text-primary-emphasis">ACME</span>
+                  } @else {
+                    <span class="badge bg-success-subtle text-success-emphasis">API</span>
+                  }
+                </td>
+                <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+                <td>
+                  @if (key.key_type === "acme") {
+                    @if (key.zones.length === 0) {
+                      <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
+                    } @else {
+                      <div class="d-flex flex-wrap gap-1">
+                        @for (z of key.zones; track z) {
+                          <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <span class="text-muted small">—</span>
+                  }
+                </td>
+                <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
+                <td class="text-end">
+                  <div class="d-flex gap-1 justify-content-end">
+                    @if (key.key_type === "acme") {
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        (click)="openZoneModal(key)"
+                        [title]="'APIKEYS.MANAGE_ZONES' | translate"
+                      >
+                        <i class="bi bi-globe2"></i>
+                      </button>
+                    }
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteKey(key)"
+                      [title]="'COMMON.DELETE' | translate"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+}
+
+<!-- ── Create modal ───────────────────────────────────────────────────────── -->
+@if (showCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-key me-2 text-primary"></i>{{ "APIKEYS.CREATE_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreate()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (createError()) {
+              <div class="alert alert-danger py-2 small">{{ createError() | translate }}</div>
+            }
+
+            @if (auth.isAcmeCreator()) {
+              <div class="mb-3">
+                <label class="form-label fw-medium">{{ "APIKEYS.TYPE_LABEL" | translate }}</label>
+                <div class="d-flex flex-column gap-2">
+                  <div
+                    class="form-check border rounded p-3 key-type-option"
+                    [class.border-success]="createModel().keyType === 'api'"
+                    [class.bg-success-subtle]="createModel().keyType === 'api'"
+                    (click)="setKeyType('api')"
+                  >
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="keyType"
+                      value="api"
+                      [checked]="createModel().keyType === 'api'"
+                      (change)="setKeyType('api')"
+                    />
+                    <label class="form-check-label ms-1 fw-medium">
+                      {{ "APIKEYS.TYPE_API_LABEL" | translate }}
+                    </label>
+                    <div class="text-muted small mt-1">{{ "APIKEYS.TYPE_API_DESC" | translate }}</div>
+                  </div>
+                  <div
+                    class="form-check border rounded p-3 key-type-option"
+                    [class.border-primary]="createModel().keyType === 'acme'"
+                    [class.bg-primary-subtle]="createModel().keyType === 'acme'"
+                    (click)="setKeyType('acme')"
+                  >
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="keyType"
+                      value="acme"
+                      [checked]="createModel().keyType === 'acme'"
+                      (change)="setKeyType('acme')"
+                    />
+                    <label class="form-check-label ms-1 fw-medium">
+                      {{ "APIKEYS.TYPE_ACME_LABEL" | translate }}
+                    </label>
+                    <div class="text-muted small mt-1">{{ "APIKEYS.TYPE_ACME_DESC" | translate }}</div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "COMMON.NAME" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="createForm.name().touched() && createForm.name().errors().length"
+                placeholder="traefik-prod"
+                [formField]="createForm.name"
+              />
+              @if (createForm.name().touched() && createForm.name().errors().length) {
+                <div class="invalid-feedback">{{ createForm.name().errors()[0].message | translate }}</div>
+              }
+              <div class="form-text">{{ "APIKEYS.NAME_HELP" | translate }}</div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">
+                {{ "APIKEYS.SECRET" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.SECRET_OPTIONAL" | translate }}</span>
+              </label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [placeholder]="'APIKEYS.SECRET_PLACEHOLDER' | translate"
+                [formField]="createForm.secret"
+              />
+              <div class="form-text">{{ "APIKEYS.SECRET_HELP" | translate }}</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+              @if (isCreating()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.CREATE" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Created key display modal ─────────────────────────────────────────── -->
+@if (createdKey()) {
+  <div class="modal-backdrop-overlay"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-key me-2 text-success"></i>{{ "APIKEYS.KEY_CREATED_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning py-2 small">
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ "APIKEYS.KEY_ONCE_WARNING" | translate }}
+          </div>
+          <label class="form-label fw-medium">{{ "APIKEYS.YOUR_KEY" | translate }}</label>
+          <div class="input-group">
+            <input type="text" class="form-control font-monospace" [value]="createdKey()" readonly />
+            <button class="btn btn-outline-secondary" type="button" (click)="copyKey()">
+              <i class="bi" [class]="copied() ? 'bi-check-lg text-success' : 'bi-clipboard'"></i>
+            </button>
+          </div>
+          @if (createdKeyType() === "acme") {
+            <div class="form-text mt-2">{{ "APIKEYS.CERTBOT_CREDENTIALS_HINT" | translate }}</div>
+            <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
+dns_pdns_endpoint  = https://&lt;your-powerdns-ui-url&gt;
+dns_pdns_api_key   = {{ createdKey() }}
+dns_pdns_server_id = localhost</pre
+            >
+          } @else {
+            <div class="form-text mt-2">{{ "APIKEYS.API_CREDENTIALS_HINT" | translate }}</div>
+            <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
+curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones</pre
+            >
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" (click)="closeCreatedKeyModal()">
+            {{ "COMMON.CLOSE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Zone assignment modal ─────────────────────────────────────────────── -->
+@if (editingKey()) {
+  <div class="modal-backdrop-overlay" (click)="closeZoneModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-globe2 me-2 text-primary"></i
+            >{{ "APIKEYS.MANAGE_ZONES_TITLE" | translate: { name: editingKey()!.name } }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeZoneModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (zonesError()) {
+            <div class="alert alert-danger py-2 small">{{ zonesError() | translate }}</div>
+          }
+          <p class="text-muted small">{{ "APIKEYS.ZONES_HELP" | translate }}</p>
+          <div class="list-group list-group-flush" style="max-height: 360px; overflow-y: auto">
+            @for (zone of availableZones(); track zone.name) {
+              <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2">
+                <input
+                  type="checkbox"
+                  class="form-check-input mt-0"
+                  [checked]="selectedZones().has(zone.name)"
+                  (change)="toggleZone(zone.name)"
+                />
+                <span class="font-monospace small">{{ zone.name }}</span>
+                <span class="ms-auto badge bg-secondary-subtle text-secondary-emphasis small">{{ zone.kind }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span class="me-auto small text-muted"
+            >{{ selectedZones().size }} {{ "APIKEYS.ZONES_SELECTED" | translate }}</span
+          >
+          <button type="button" class="btn btn-secondary" (click)="closeZoneModal()">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
+          <button type="button" class="btn btn-primary" (click)="saveZones()" [disabled]="isSavingZones()">
+            @if (isSavingZones()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            {{ "COMMON.SAVE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

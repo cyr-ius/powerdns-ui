@@ -17,3 +17,10 @@
 .theme-btn:hover:not(.active) {
   border-color: var(--bs-primary);
 }
+
+.key-type-option {
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
