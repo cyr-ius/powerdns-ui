@@ -1,16 +1,20 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-globe2 me-2 text-primary"></i>DNS Zones</h2>
-    <p class="text-muted small mb-0">{{ filteredZones().length }} zone(s) configured</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-globe2 me-2 text-primary"></i>{{ "ZONES.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "ZONES.SUBTITLE" | translate: { count: filteredZones().length } }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openCreateModal()"><i class="bi bi-plus-lg me-1"></i>New Zone</button>
+  <button class="btn btn-primary" (click)="openCreateModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "ZONES.NEW_ZONE" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZones()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZones()">
+      {{ "COMMON.RETRY" | translate }}
+    </button>
   </div>
 }
 
@@ -23,7 +27,7 @@
       <input
         type="search"
         class="form-control border-start-0"
-        placeholder="Search for a zone…"
+        [placeholder]="'ZONES.SEARCH_PLACEHOLDER' | translate"
         [formField]="searchForm.search"
       />
     </div>
@@ -33,22 +37,22 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading zones…</p>
+        <p class="text-muted mt-2 mb-0">{{ "ZONES.LOADING" | translate }}</p>
       </div>
     } @else if (filteredZones().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No zones found</p>
+        <p class="text-muted mt-2 mb-0">{{ "ZONES.NO_ZONES" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Zone</th>
-            <th>Type</th>
-            <th>Serial</th>
-            <th>DNSSEC</th>
-            <th class="text-end">Actions</th>
+            <th>{{ "ZONES.ZONE" | translate }}</th>
+            <th>{{ "COMMON.TYPE" | translate }}</th>
+            <th>{{ "ZONES.SERIAL" | translate }}</th>
+            <th>{{ "ZONES.DNSSEC" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -66,7 +70,7 @@
               <td>
                 @if (zone.dnssec) {
                   <span class="badge bg-success-subtle text-success-emphasis">
-                    <i class="bi bi-shield-check me-1"></i>Actif
+                    <i class="bi bi-shield-check me-1"></i>{{ "ZONES.DNSSEC_ACTIVE" | translate }}
                   </span>
                 } @else {
                   <span class="text-muted small">—</span>
@@ -94,7 +98,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Create a DNS Zone</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>{{ "ZONES.CREATE_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onCreate()">
@@ -116,7 +122,7 @@
                   [class.btn-outline-secondary]="createMode() !== 'standard'"
                   (click)="createMode.set('standard')"
                 >
-                  <i class="bi bi-globe2 me-1"></i>Standard Zone
+                  <i class="bi bi-globe2 me-1"></i>{{ "ZONES.STANDARD_ZONE" | translate }}
                 </button>
                 <button
                   type="button"
@@ -125,14 +131,16 @@
                   [class.btn-outline-secondary]="createMode() !== 'reverse'"
                   (click)="createMode.set('reverse')"
                 >
-                  <i class="bi bi-arrow-repeat me-1"></i>Reverse Zone (PTR)
+                  <i class="bi bi-arrow-repeat me-1"></i>{{ "ZONES.REVERSE_ZONE" | translate }}
                 </button>
               </div>
             </div>
 
             @if (createMode() === "standard") {
               <div class="mb-3">
-                <label class="form-label fw-medium">Zone Name <span class="text-danger">*</span></label>
+                <label class="form-label fw-medium"
+                  >{{ "ZONES.ZONE_NAME" | translate }} <span class="text-danger">*</span></label
+                >
                 <input
                   type="text"
                   class="form-control"
@@ -148,7 +156,9 @@
               </div>
             } @else {
               <div class="mb-3">
-                <label class="form-label fw-medium"> CIDR Network <span class="text-danger">*</span> </label>
+                <label class="form-label fw-medium">
+                  {{ "ZONES.CIDR_NETWORK" | translate }} <span class="text-danger">*</span>
+                </label>
                 <input
                   type="text"
                   class="form-control font-monospace"
@@ -158,21 +168,21 @@
                   (input)="reverseCidr.set($any($event.target).value)"
                 />
                 @if (reverseCidr().trim() && !reverseZoneName()) {
-                  <div class="invalid-feedback">Invalid format. Examples: 192.168.1.0/24, 2001:db8::/32</div>
+                  <div class="invalid-feedback">{{ "ZONES.CIDR_INVALID" | translate }}</div>
                 }
-                <div class="form-text">IPv4 : /8, /16 or /24 generated. IPv6 : corresponding zone nibble.</div>
+                <div class="form-text">{{ "ZONES.CIDR_HELP" | translate }}</div>
               </div>
               @if (reverseZoneName()) {
                 <div class="alert alert-info py-2 small d-flex align-items-center gap-2 mb-3">
                   <i class="bi bi-info-circle-fill"></i>
-                  Zone created :
+                  {{ "ZONES.ZONE_CREATED" | translate }}
                   <code class="ms-1">{{ reverseZoneName() }}</code>
                 </div>
               }
             }
 
             <div class="mb-3">
-              <label class="form-label fw-medium">Type</label>
+              <label class="form-label fw-medium">{{ "COMMON.TYPE" | translate }}</label>
               <select class="form-select" [formField]="createForm.kind">
                 <option value="Native">Native</option>
                 <option value="Master">Master</option>
@@ -180,7 +190,9 @@
               </select>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-medium">Nameservers <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONES.NAMESERVERS" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control"
@@ -193,14 +205,14 @@
                   {{ createForm.nameservers().errors()[0].message }}
                 </div>
               } @else {
-                <div class="form-text">Separated by commas. The first server will be the mname of the SOA.</div>
+                <div class="form-text">{{ "ZONES.NAMESERVERS_HELP" | translate }}</div>
               }
             </div>
             @if (accounts().length > 0) {
               <div class="mb-0">
-                <label class="form-label fw-medium">Account</label>
+                <label class="form-label fw-medium">{{ "COMMON.ACCOUNT" | translate }}</label>
                 <select class="form-select" [formField]="createForm.account">
-                  <option value="">— None —</option>
+                  <option value="">{{ "COMMON.NONE" | translate }}</option>
                   @for (acc of accounts(); track acc) {
                     <option [value]="acc">{{ acc }}</option>
                   }
@@ -209,12 +221,14 @@
             }
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
               @if (isCreating()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Create
+              {{ "COMMON.CREATE" | translate }}
             </button>
           </div>
         </form>

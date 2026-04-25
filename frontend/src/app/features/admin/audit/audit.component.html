@@ -1,21 +1,29 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>Audit log</h2>
-    <p class="text-muted small mb-0">History of actions and logs from the PowerDNS server</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-journal-text me-2 text-primary"></i>{{ "AUDIT.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "AUDIT.SUBTITLE" | translate }}</p>
   </div>
   <div class="d-flex align-items-center gap-3">
     <!-- Syslog status badge -->
     <button
       class="btn btn-sm d-flex align-items-center gap-2"
       [class]="syslogSettings().enabled ? 'btn-outline-success' : 'btn-outline-secondary'"
-      title="Configure syslog"
+      [title]="'AUDIT.SYSLOG_TITLE' | translate"
       (click)="openSyslogModal()"
     >
       <i
         class="bi"
         [class]="syslogSettings().enabled ? 'bi-broadcast text-success' : 'bi-broadcast-pin text-muted'"
       ></i>
-      <span>Syslog : {{ syslogSettings().enabled ? "active" : "inactive" }}</span>
+      <span>{{
+        "AUDIT.SYSLOG_LABEL"
+          | translate
+            : {
+                status: syslogSettings().enabled
+                  ? ("AUDIT.SYSLOG_ACTIVE" | translate)
+                  : ("AUDIT.SYSLOG_INACTIVE" | translate),
+              }
+      }}</span>
     </button>
   </div>
 </div>
@@ -24,12 +32,12 @@
 <ul class="nav nav-tabs mb-4">
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'audit'" (click)="switchTab('audit')">
-      <i class="bi bi-list-check me-1"></i>User actions
+      <i class="bi bi-list-check me-1"></i>{{ "AUDIT.TAB_USER_ACTIONS" | translate }}
     </button>
   </li>
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'pdns'" (click)="switchTab('pdns')">
-      <i class="bi bi-terminal me-1"></i>Logs PDNS
+      <i class="bi bi-terminal me-1"></i>{{ "AUDIT.TAB_PDNS_LOGS" | translate }}
     </button>
   </li>
 </ul>
@@ -41,62 +49,66 @@
     <div class="card-body py-2">
       <div class="row g-2 align-items-end">
         <div class="col-sm-2">
-          <label class="form-label small mb-1">User</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_USER" | translate }}</label>
           <input
             type="text"
             class="form-control form-control-sm"
-            placeholder="Filter…"
+            [placeholder]="'AUDIT.FILTER_PLACEHOLDER' | translate"
             [(ngModel)]="filterUsername"
             (keyup.enter)="applyFilters()"
           />
         </div>
         <div class="col-sm-2">
-          <label class="form-label small mb-1">Action</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_ACTION" | translate }}</label>
           <select class="form-select form-select-sm" [(ngModel)]="filterAction">
-            <option value="">All</option>
-            <option value="login">Login</option>
-            <option value="change_password">Change Password</option>
-            <option value="reset_password">Reset Password</option>
-            <option value="create">Create</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
-            <option value="update_records">Update Records</option>
+            <option value="">{{ "AUDIT.ALL" | translate }}</option>
+            <option value="login">{{ "AUDIT.ACTION_LOGIN" | translate }}</option>
+            <option value="change_password">{{ "AUDIT.ACTION_CHANGE_PASSWORD" | translate }}</option>
+            <option value="reset_password">{{ "AUDIT.ACTION_RESET_PASSWORD" | translate }}</option>
+            <option value="create">{{ "AUDIT.ACTION_CREATE" | translate }}</option>
+            <option value="update">{{ "AUDIT.ACTION_UPDATE" | translate }}</option>
+            <option value="delete">{{ "AUDIT.ACTION_DELETE" | translate }}</option>
+            <option value="update_records">{{ "AUDIT.ACTION_UPDATE_RECORDS" | translate }}</option>
           </select>
         </div>
         <div class="col-sm-2">
-          <label class="form-label small mb-1">Resource</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_RESOURCE" | translate }}</label>
           <select class="form-select form-select-sm" [(ngModel)]="filterResource">
-            <option value="">All</option>
-            <option value="auth">Authentication</option>
-            <option value="user">User</option>
-            <option value="account">Account</option>
-            <option value="zone">Zone</option>
-            <option value="oidc_settings">OIDC</option>
+            <option value="">{{ "AUDIT.ALL" | translate }}</option>
+            <option value="auth">{{ "AUDIT.RESOURCE_AUTH" | translate }}</option>
+            <option value="user">{{ "AUDIT.RESOURCE_USER" | translate }}</option>
+            <option value="account">{{ "AUDIT.RESOURCE_ACCOUNT" | translate }}</option>
+            <option value="zone">{{ "AUDIT.RESOURCE_ZONE" | translate }}</option>
+            <option value="oidc_settings">{{ "AUDIT.RESOURCE_OIDC" | translate }}</option>
           </select>
         </div>
         <div class="col-sm-2">
-          <label class="form-label small mb-1">Status</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_STATUS" | translate }}</label>
           <select class="form-select form-select-sm" [(ngModel)]="filterStatus">
-            <option value="">All</option>
-            <option value="success">Success</option>
-            <option value="failure">Failure</option>
+            <option value="">{{ "AUDIT.ALL" | translate }}</option>
+            <option value="success">{{ "AUDIT.STATUS_SUCCESS" | translate }}</option>
+            <option value="failure">{{ "AUDIT.STATUS_FAILURE" | translate }}</option>
           </select>
         </div>
         <div class="col-sm-2">
-          <label class="form-label small mb-1">From</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_FROM" | translate }}</label>
           <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateFrom" />
         </div>
         <div class="col-sm-2">
-          <label class="form-label small mb-1">To</label>
+          <label class="form-label small mb-1">{{ "AUDIT.FILTER_TO" | translate }}</label>
           <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateTo" />
         </div>
       </div>
       <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-sm btn-primary" (click)="applyFilters()"><i class="bi bi-funnel me-1"></i>Filter</button>
-        <button class="btn btn-sm btn-outline-secondary" (click)="resetFilters()">
-          <i class="bi bi-x-circle me-1"></i>Reset
+        <button class="btn btn-sm btn-primary" (click)="applyFilters()">
+          <i class="bi bi-funnel me-1"></i>{{ "COMMON.FILTER" | translate }}
         </button>
-        <span class="ms-auto text-muted small align-self-center">{{ totalCount() }} entry(s)</span>
+        <button class="btn btn-sm btn-outline-secondary" (click)="resetFilters()">
+          <i class="bi bi-x-circle me-1"></i>{{ "COMMON.RESET" | translate }}
+        </button>
+        <span class="ms-auto text-muted small align-self-center">{{
+          "AUDIT.ENTRIES" | translate: { count: totalCount() }
+        }}</span>
       </div>
     </div>
   </div>
@@ -105,7 +117,9 @@
     <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
       <i class="bi bi-exclamation-triangle-fill"></i>
       <span>{{ error() }}</span>
-      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadLogs()">Retry</button>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadLogs()">
+        {{ "COMMON.RETRY" | translate }}
+      </button>
     </div>
   }
 
@@ -114,25 +128,25 @@
       @if (isLoading()) {
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0">Loading…</p>
+          <p class="text-muted mt-2 mb-0">{{ "COMMON.LOADING" | translate }}</p>
         </div>
       } @else if (logs().length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-journal-x text-muted" style="font-size: 2.5rem"></i>
-          <p class="text-muted mt-2 mb-0">No entries found</p>
+          <p class="text-muted mt-2 mb-0">{{ "AUDIT.NO_ENTRIES" | translate }}</p>
         </div>
       } @else {
         <table class="table table-hover table-sm align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Date</th>
-              <th>User</th>
-              <th>Action</th>
-              <th>Resource</th>
-              <th>Resource ID</th>
-              <th>IP</th>
-              <th>Status</th>
-              <th>Details</th>
+              <th>{{ "AUDIT.COL_DATE" | translate }}</th>
+              <th>{{ "AUDIT.COL_USER" | translate }}</th>
+              <th>{{ "AUDIT.COL_ACTION" | translate }}</th>
+              <th>{{ "AUDIT.COL_RESOURCE" | translate }}</th>
+              <th>{{ "AUDIT.COL_RESOURCE_ID" | translate }}</th>
+              <th>{{ "AUDIT.COL_IP" | translate }}</th>
+              <th>{{ "AUDIT.COL_STATUS" | translate }}</th>
+              <th>{{ "AUDIT.COL_DETAILS" | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -152,7 +166,11 @@
                 <td class="font-monospace small text-muted">{{ log.ip_address ?? "—" }}</td>
                 <td>
                   <span class="badge" [class]="statusClass(log.status)">
-                    {{ log.status === "success" ? "Success" : "Failure" }}
+                    {{
+                      log.status === "success"
+                        ? ("AUDIT.STATUS_SUCCESS" | translate)
+                        : ("AUDIT.STATUS_FAILURE" | translate)
+                    }}
                   </span>
                 </td>
                 <td>
@@ -174,11 +192,11 @@
   @if (totalPages > 1) {
     <div class="d-flex justify-content-between align-items-center mt-3">
       <button class="btn btn-sm btn-outline-secondary" [disabled]="page === 0" (click)="prevPage()">
-        <i class="bi bi-chevron-left"></i> Previous
+        <i class="bi bi-chevron-left"></i> {{ "COMMON.PREVIOUS" | translate }}
       </button>
-      <span class="text-muted small">Page {{ page + 1 }} / {{ totalPages }}</span>
+      <span class="text-muted small">{{ "AUDIT.PAGE" | translate: { page: page + 1, total: totalPages } }}</span>
       <button class="btn btn-sm btn-outline-secondary" [disabled]="page >= totalPages - 1" (click)="nextPage()">
-        Next <i class="bi bi-chevron-right"></i>
+        {{ "COMMON.NEXT" | translate }} <i class="bi bi-chevron-right"></i>
       </button>
     </div>
   }
@@ -188,7 +206,7 @@
 @if (activeTab() === "pdns") {
   <div class="d-flex justify-content-end mb-2">
     <button class="btn btn-sm btn-outline-primary" (click)="loadPdnsLogs()" [disabled]="pdnsLoading()">
-      <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+      <i class="bi bi-arrow-clockwise me-1"></i>{{ "COMMON.REFRESH" | translate }}
     </button>
   </div>
 
@@ -204,13 +222,13 @@
       @if (pdnsLoading()) {
         <div class="text-center py-5">
           <div class="spinner-border text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0">Loading…</p>
+          <p class="text-muted mt-2 mb-0">{{ "COMMON.LOADING" | translate }}</p>
         </div>
       } @else if (pdnsLogs().length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-terminal text-muted" style="font-size: 2.5rem"></i>
-          <p class="text-muted mt-2 mb-0">No logs available via the PowerDNS API</p>
-          <p class="text-muted small">The ring buffer <code>logmessages</code> is empty or not supported.</p>
+          <p class="text-muted mt-2 mb-0">{{ "AUDIT.PDNS_NO_LOGS" | translate }}</p>
+          <p class="text-muted small">{{ "AUDIT.PDNS_RING_EMPTY" | translate }}</p>
         </div>
       } @else {
         <div class="pdns-log-console">
@@ -233,7 +251,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-broadcast me-2 text-warning"></i>Configuration Syslog</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-broadcast me-2 text-warning"></i>{{ "AUDIT.SYSLOG_TITLE" | translate }}
+          </h5>
           <button class="btn-close" (click)="showSyslogModal.set(false)"></button>
         </div>
         <div class="modal-body">
@@ -243,13 +263,15 @@
 
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="syslog_enabled" [(ngModel)]="syslogDraft.enabled" />
-            <label class="form-check-label fw-medium" for="syslog_enabled"> Activate syslog forwarding </label>
+            <label class="form-check-label fw-medium" for="syslog_enabled">{{
+              "AUDIT.SYSLOG_ACTIVATE" | translate
+            }}</label>
           </div>
 
           <div [class.opacity-50]="!syslogDraft.enabled">
             <div class="row g-3">
               <div class="col-8">
-                <label class="form-label fw-medium">Host</label>
+                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_HOST" | translate }}</label>
                 <input
                   type="text"
                   class="form-control"
@@ -259,7 +281,7 @@
                 />
               </div>
               <div class="col-4">
-                <label class="form-label fw-medium">Port</label>
+                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PORT" | translate }}</label>
                 <input
                   type="number"
                   class="form-control"
@@ -270,14 +292,14 @@
                 />
               </div>
               <div class="col-6">
-                <label class="form-label fw-medium">Protocol</label>
+                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PROTOCOL" | translate }}</label>
                 <select class="form-select" [(ngModel)]="syslogDraft.protocol" [disabled]="!syslogDraft.enabled">
                   <option value="udp">UDP</option>
                   <option value="tcp">TCP</option>
                 </select>
               </div>
               <div class="col-6">
-                <label class="form-label fw-medium">Facility</label>
+                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_FACILITY" | translate }}</label>
                 <select class="form-select" [(ngModel)]="syslogDraft.facility" [disabled]="!syslogDraft.enabled">
                   @for (f of facilities; track f) {
                     <option [value]="f">{{ f }}</option>
@@ -285,7 +307,7 @@
                 </select>
               </div>
               <div class="col-12">
-                <label class="form-label fw-medium">Application Name</label>
+                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_APP_NAME" | translate }}</label>
                 <input
                   type="text"
                   class="form-control"
@@ -298,12 +320,14 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showSyslogModal.set(false)">Cancel</button>
+          <button class="btn btn-secondary" (click)="showSyslogModal.set(false)">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
           <button class="btn btn-primary" (click)="saveSyslog()" [disabled]="isSavingSyslog()">
             @if (isSavingSyslog()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
-            <i class="bi bi-floppy me-1"></i>Save
+            <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
           </button>
         </div>
       </div>

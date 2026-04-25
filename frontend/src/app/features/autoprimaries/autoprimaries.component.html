@@ -1,16 +1,20 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-hdd-rack me-2 text-primary"></i>Autoprimaries</h2>
-    <p class="text-muted small mb-0">Authoritative DNS servers allowed to automatically create secondary zones</p>
+    <h2 class="h4 mb-0 fw-bold">
+      <i class="bi bi-hdd-rack me-2 text-primary"></i>{{ "AUTOPRIMARIES.TITLE" | translate }}
+    </h2>
+    <p class="text-muted small mb-0">{{ "AUTOPRIMARIES.SUBTITLE" | translate }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openCreateModal()"><i class="bi bi-plus-lg me-1"></i>Add Autoprimary</button>
+  <button class="btn btn-primary" (click)="openCreateModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "AUTOPRIMARIES.ADD" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">{{ "COMMON.RETRY" | translate }}</button>
   </div>
 }
 
@@ -19,22 +23,22 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading autoprimaries…</p>
+        <p class="text-muted mt-2 mb-0">{{ "AUTOPRIMARIES.LOADING" | translate }}</p>
       </div>
     } @else if (autoprimaries().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-hdd-rack text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No autoprimaries configured</p>
-        <p class="text-muted small">Autoprimaries allow automatic creation of secondary zones.</p>
+        <p class="text-muted mt-2 mb-0">{{ "AUTOPRIMARIES.NO_AUTOPRIMARIES" | translate }}</p>
+        <p class="text-muted small">{{ "AUTOPRIMARIES.NO_AUTOPRIMARIES_HELP" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>IP Address</th>
-            <th>DNS Server</th>
-            <th>Account</th>
-            <th class="text-end">Actions</th>
+            <th>{{ "AUTOPRIMARIES.COL_IP" | translate }}</th>
+            <th>{{ "AUTOPRIMARIES.COL_DNS_SERVER" | translate }}</th>
+            <th>{{ "COMMON.ACCOUNT" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -50,7 +54,11 @@
                 }
               </td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-danger" (click)="delete(ap)" title="Delete autoprimary">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="delete(ap)"
+                  [title]="'COMMON.DELETE' | translate"
+                >
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -68,7 +76,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-hdd-rack me-2 text-primary"></i>Add Autoprimary</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-hdd-rack me-2 text-primary"></i>{{ "AUTOPRIMARIES.ADD_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onCreate()">
@@ -78,7 +88,9 @@
               <div class="alert alert-danger py-2 small">{{ createError() }}</div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">IP Address <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "AUTOPRIMARIES.IP_ADDRESS" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -91,7 +103,9 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-medium">DNS Server <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "AUTOPRIMARIES.DNS_SERVER" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control"
@@ -105,20 +119,22 @@
             </div>
             <div class="mb-0">
               <label class="form-label fw-medium">
-                Account
-                <span class="text-muted small">— optional</span>
+                {{ "AUTOPRIMARIES.ACCOUNT_OPTIONAL" | translate }}
+                <span class="text-muted small">{{ "COMMON.OPTIONAL" | translate }}</span>
               </label>
               <input type="text" class="form-control" placeholder="my-account" [formField]="createForm.account" />
-              <div class="form-text">Associated account for filtering automatically created secondary zones.</div>
+              <div class="form-text">{{ "AUTOPRIMARIES.ACCOUNT_HELP" | translate }}</div>
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
               @if (isCreating()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Add Autoprimary
+              {{ "AUTOPRIMARIES.ADD" | translate }}
             </button>
           </div>
         </form>

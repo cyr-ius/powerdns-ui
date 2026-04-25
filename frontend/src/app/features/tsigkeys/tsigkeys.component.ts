@@ -2,12 +2,13 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { TsigKey } from "../../shared/models/pdns.model";
+import { TranslateModule } from "@ngx-translate/core";
 
 const TSIG_ALGORITHMS = ["hmac-sha256", "hmac-sha512", "hmac-sha384", "hmac-sha224", "hmac-sha1", "hmac-md5"];
 
 @Component({
   selector: "app-tsigkeys",
-  imports: [FormField],
+  imports: [FormField, TranslateModule],
   templateUrl: "./tsigkeys.component.html",
   styleUrl: "./tsigkeys.component.css",
 })

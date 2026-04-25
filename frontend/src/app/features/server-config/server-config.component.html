@@ -1,10 +1,14 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-sliders me-2 text-primary"></i>Server Configuration</h2>
-    <p class="text-muted small mb-0">{{ filtered().length }} / {{ settings().length }} setting(s)</p>
+    <h2 class="h4 mb-0 fw-bold">
+      <i class="bi bi-sliders me-2 text-primary"></i>{{ "SERVER_CONFIG.TITLE" | translate }}
+    </h2>
+    <p class="text-muted small mb-0">
+      {{ "SERVER_CONFIG.SUBTITLE" | translate: { filtered: filtered().length, total: settings().length } }}
+    </p>
   </div>
   <button class="btn btn-outline-secondary btn-sm" (click)="load()" [disabled]="isLoading()">
-    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+    <i class="bi bi-arrow-clockwise me-1"></i>{{ "COMMON.REFRESH" | translate }}
   </button>
 </div>
 
@@ -12,7 +16,7 @@
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">{{ "COMMON.RETRY" | translate }}</button>
   </div>
 }
 
@@ -26,11 +30,13 @@
         <input
           type="search"
           class="form-control border-start-0"
-          placeholder="Filter by name or value…"
+          [placeholder]="'SERVER_CONFIG.FILTER_PLACEHOLDER' | translate"
           [formField]="filterForm.filter"
         />
       </div>
-      <span class="badge bg-secondary-subtle text-secondary-emphasis"> <i class="bi bi-lock me-1"></i>Read Only </span>
+      <span class="badge bg-secondary-subtle text-secondary-emphasis">
+        <i class="bi bi-lock me-1"></i>{{ "SERVER_CONFIG.READ_ONLY" | translate }}
+      </span>
     </div>
   </div>
 
@@ -38,19 +44,19 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading configuration…</p>
+        <p class="text-muted mt-2 mb-0">{{ "SERVER_CONFIG.LOADING" | translate }}</p>
       </div>
     } @else if (filtered().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No settings found</p>
+        <p class="text-muted mt-2 mb-0">{{ "SERVER_CONFIG.NO_SETTINGS" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0 font-monospace-values">
         <thead class="table-light">
           <tr>
-            <th style="width: 40%">Parameter</th>
-            <th>Value</th>
+            <th style="width: 40%">{{ "SERVER_CONFIG.COL_PARAMETER" | translate }}</th>
+            <th>{{ "SERVER_CONFIG.COL_VALUE" | translate }}</th>
           </tr>
         </thead>
         <tbody>

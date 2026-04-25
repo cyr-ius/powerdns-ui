@@ -1,16 +1,18 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>Users</h2>
-    <p class="text-muted small mb-0">{{ users().length }} user(s) registered</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-people me-2 text-primary"></i>{{ "USERS.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "USERS.SUBTITLE" | translate: { count: users().length } }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openCreate()"><i class="bi bi-person-plus me-1"></i>New User</button>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="bi bi-person-plus me-1"></i>{{ "USERS.NEW_USER" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">{{ "COMMON.RETRY" | translate }}</button>
   </div>
 }
 
@@ -19,24 +21,24 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading…</p>
+        <p class="text-muted mt-2 mb-0">{{ "USERS.LOADING" | translate }}</p>
       </div>
     } @else if (users().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-people text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No users found</p>
+        <p class="text-muted mt-2 mb-0">{{ "USERS.NO_USERS" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>User</th>
-            <th>Email</th>
-            <th>Auth</th>
-            <th>Role</th>
-            <th>Accounts</th>
-            <th>Status</th>
-            <th class="text-end">Actions</th>
+            <th>{{ "USERS.COL_USER" | translate }}</th>
+            <th>{{ "USERS.COL_EMAIL" | translate }}</th>
+            <th>{{ "USERS.COL_AUTH" | translate }}</th>
+            <th>{{ "USERS.COL_ROLE" | translate }}</th>
+            <th>{{ "USERS.COL_ACCOUNTS" | translate }}</th>
+            <th>{{ "USERS.COL_STATUS" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -49,9 +51,11 @@
               </td>
               <td>
                 @if (user.is_admin) {
-                  <span class="badge bg-danger">Super Admin</span>
+                  <span class="badge bg-danger">{{ "USERS.ROLE_SUPER_ADMIN" | translate }}</span>
                 } @else {
-                  <span class="badge bg-secondary-subtle text-secondary-emphasis border">User</span>
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis border">{{
+                    "USERS.ROLE_USER" | translate
+                  }}</span>
                 }
               </td>
               <td>
@@ -79,17 +83,25 @@
                   <button
                     class="btn btn-sm"
                     [class]="user.is_admin ? 'btn-outline-danger' : 'btn-outline-warning'"
-                    title="{{ user.is_admin ? 'Remove admin' : 'Promote admin' }}"
+                    [title]="user.is_admin ? ('USERS.REMOVE_ADMIN' | translate) : ('USERS.PROMOTE_ADMIN' | translate)"
                     (click)="toggleAdmin(user)"
                   >
                     <i class="bi bi-shield-{{ user.is_admin ? 'minus' : 'plus' }}"></i>
                   </button>
                   @if (!user.is_oidc) {
-                    <button class="btn btn-sm btn-outline-secondary" title="Reset password" (click)="openReset(user)">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      [title]="'USERS.RESET_PASSWORD' | translate"
+                      (click)="openReset(user)"
+                    >
                       <i class="bi bi-key"></i>
                     </button>
                   }
-                  <button class="btn btn-sm btn-outline-danger" title="Delete" (click)="confirmDelete(user)">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    [title]="'COMMON.DELETE' | translate"
+                    (click)="confirmDelete(user)"
+                  >
                     <i class="bi bi-trash"></i>
                   </button>
                 </div>
@@ -109,7 +121,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-primary"></i>New User</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-person-plus me-2 text-primary"></i>{{ "USERS.CREATE_TITLE" | translate }}
+          </h5>
           <button class="btn-close" (click)="showCreateModal.set(false)"></button>
         </div>
         <form (submit)="$event.preventDefault(); onCreateSubmit()">
@@ -119,7 +133,9 @@
               <div class="alert alert-danger py-2 small">{{ createError() }}</div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">Username <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "USERS.USERNAME" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control"
@@ -132,7 +148,9 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-medium">Password <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "USERS.PASSWORD" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="password"
                 class="form-control"
@@ -145,7 +163,7 @@
               }
             </div>
             <div class="mb-3">
-              <label class="form-label fw-medium">E-mail</label>
+              <label class="form-label fw-medium">{{ "USERS.EMAIL" | translate }}</label>
               <input type="email" class="form-control" [formField]="createForm.email" />
             </div>
             <div class="form-check mb-0">
@@ -156,16 +174,18 @@
                 [checked]="createModel().is_admin"
                 (change)="createModel.update((m) => ({ ...m, is_admin: !m.is_admin }))"
               />
-              <label class="form-check-label" for="is_admin">Super Administrator</label>
+              <label class="form-check-label" for="is_admin">{{ "USERS.SUPER_ADMIN" | translate }}</label>
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="showCreateModal.set(false)">Cancel</button>
+            <button class="btn btn-secondary" (click)="showCreateModal.set(false)">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button class="btn btn-primary" [disabled]="isCreating()" (click)="onCreateSubmit()">
               @if (isCreating()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Create
+              {{ "COMMON.CREATE" | translate }}
             </button>
           </div>
         </form>
@@ -182,7 +202,8 @@
       <div class="modal-content shadow">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-key me-2 text-primary"></i>Reset Password — {{ resetTarget()?.username }}
+            <i class="bi bi-key me-2 text-primary"></i
+            >{{ "USERS.RESET_PASSWORD_TITLE" | translate: { username: resetTarget()?.username } }}
           </h5>
           <button class="btn-close" (click)="showResetModal.set(false)"></button>
         </div>
@@ -193,7 +214,9 @@
               <div class="alert alert-danger py-2 small">{{ resetError() }}</div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">New Password <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "USERS.NEW_PASSWORD" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="password"
                 class="form-control"
@@ -206,7 +229,9 @@
               }
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">Confirm Password <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "USERS.CONFIRM_PASSWORD" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="password"
                 class="form-control"
@@ -220,12 +245,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="showResetModal.set(false)">Cancel</button>
+            <button class="btn btn-secondary" (click)="showResetModal.set(false)">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button class="btn btn-primary" [disabled]="isResetting()" (click)="onResetSubmit()">
               @if (isResetting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Reset Password
+              {{ "USERS.RESET_PASSWORD" | translate }}
             </button>
           </div>
         </form>
@@ -241,19 +268,21 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header border-0">
-          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Confirm deletion</h5>
+          <h5 class="modal-title text-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ "USERS.CONFIRM_DELETION" | translate }}
+          </h5>
           <button class="btn-close" (click)="deleteTarget.set(null)"></button>
         </div>
         <div class="modal-body">
-          Delete the user <strong>{{ deleteTarget()?.username }}</strong> ? This action is irreversible.
+          {{ "USERS.DELETE_CONFIRM" | translate: { username: deleteTarget()?.username } }}
         </div>
         <div class="modal-footer border-0">
-          <button class="btn btn-secondary" (click)="deleteTarget.set(null)">Cancel</button>
+          <button class="btn btn-secondary" (click)="deleteTarget.set(null)">{{ "COMMON.CANCEL" | translate }}</button>
           <button class="btn btn-danger" [disabled]="isDeleting()" (click)="doDelete()">
             @if (isDeleting()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
-            Delete
+            {{ "COMMON.DELETE" | translate }}
           </button>
         </div>
       </div>

@@ -2,10 +2,11 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { Network } from "../../shared/models/pdns.model";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-networks",
-  imports: [FormField],
+  imports: [FormField, TranslateModule],
   templateUrl: "./networks.component.html",
 })
 export class NetworksComponent implements OnInit {

@@ -1,16 +1,20 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-card-list me-2 text-primary"></i>DNS Record Types</h2>
-    <p class="text-muted small mb-0">Define the types available when creating records</p>
+    <h2 class="h4 mb-0 fw-bold">
+      <i class="bi bi-card-list me-2 text-primary"></i>{{ "RECORD_TYPES.TITLE" | translate }}
+    </h2>
+    <p class="text-muted small mb-0">{{ "RECORD_TYPES.SUBTITLE" | translate }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openCreate()"><i class="bi bi-plus-lg me-1"></i>New Type</button>
+  <button class="btn btn-primary" (click)="openCreate()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "RECORD_TYPES.NEW_TYPE" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="load()">{{ "COMMON.RETRY" | translate }}</button>
   </div>
 }
 
@@ -19,21 +23,21 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading…</p>
+        <p class="text-muted mt-2 mb-0">{{ "RECORD_TYPES.LOADING" | translate }}</p>
       </div>
     } @else if (recordTypes().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-card-list text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No record types defined</p>
+        <p class="text-muted mt-2 mb-0">{{ "RECORD_TYPES.NO_TYPES" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Type</th>
-            <th>Applicable to</th>
-            <th>Enabled</th>
-            <th class="text-end">Actions</th>
+            <th>{{ "RECORD_TYPES.COL_TYPE" | translate }}</th>
+            <th>{{ "RECORD_TYPES.COL_APPLICABLE" | translate }}</th>
+            <th>{{ "RECORD_TYPES.COL_ENABLED" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -65,7 +69,11 @@
                 </div>
               </td>
               <td class="text-end">
-                <button class="btn btn-sm btn-outline-danger" title="Supprimer" (click)="confirmDelete(rt)">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  [title]="'COMMON.DELETE' | translate"
+                  (click)="confirmDelete(rt)"
+                >
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -84,7 +92,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>New Record Type</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>{{ "RECORD_TYPES.CREATE_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="showCreateModal.set(false)"></button>
         </div>
         <div class="modal-body">
@@ -92,7 +102,9 @@
             <div class="alert alert-danger py-2 small">{{ createError() }}</div>
           }
           <div class="mb-3">
-            <label class="form-label fw-medium">Type Name <span class="text-danger">*</span></label>
+            <label class="form-label fw-medium"
+              >{{ "RECORD_TYPES.TYPE_NAME" | translate }} <span class="text-danger">*</span></label
+            >
             <input
               type="text"
               class="form-control font-monospace text-uppercase"
@@ -105,7 +117,7 @@
             }
           </div>
           <div class="mb-3">
-            <label class="form-label fw-medium">Applicable à</label>
+            <label class="form-label fw-medium">{{ "RECORD_TYPES.APPLICABLE_TO" | translate }}</label>
             <select class="form-select" [formField]="createForm.applicable_to">
               @for (opt of applicableOptions; track opt.value) {
                 <option [value]="opt.value">{{ opt.label }}</option>
@@ -121,16 +133,18 @@
               [checked]="createModel().enabled"
               (change)="createModel.update((m) => ({ ...m, enabled: $any($event.target).checked }))"
             />
-            <label class="form-check-label" for="createEnabled">Enabled by default</label>
+            <label class="form-check-label" for="createEnabled">{{ "RECORD_TYPES.ENABLED_DEFAULT" | translate }}</label>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="showCreateModal.set(false)">Cancel</button>
+          <button type="button" class="btn btn-secondary" (click)="showCreateModal.set(false)">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
           <button type="button" class="btn btn-primary" (click)="onCreateSubmit()" [disabled]="isCreating()">
             @if (isCreating()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
-            Create
+            {{ "COMMON.CREATE" | translate }}
           </button>
         </div>
       </div>
@@ -145,20 +159,24 @@
     <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Delete</h5>
+          <h5 class="modal-title text-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>{{ "RECORD_TYPES.DELETE_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="deleteTarget.set(null)"></button>
         </div>
         <div class="modal-body">
-          Delete the type <strong class="font-monospace">{{ deleteTarget()!.name }}</strong> ?
-          <div class="text-muted small mt-2">Zones with this type selected will need to be updated manually.</div>
+          {{ "RECORD_TYPES.DELETE_CONFIRM" | translate: { name: deleteTarget()!.name } }}
+          <div class="text-muted small mt-2">{{ "RECORD_TYPES.DELETE_HELP" | translate }}</div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" (click)="deleteTarget.set(null)">Cancel</button>
+          <button type="button" class="btn btn-secondary btn-sm" (click)="deleteTarget.set(null)">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
           <button type="button" class="btn btn-danger btn-sm" (click)="doDelete()" [disabled]="isDeleting()">
             @if (isDeleting()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
-            Delete
+            {{ "COMMON.DELETE" | translate }}
           </button>
         </div>
       </div>

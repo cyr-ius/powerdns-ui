@@ -1,27 +1,33 @@
 <div class="d-flex align-items-center mb-4">
-  <a routerLink="/zones" class="btn btn-sm btn-outline-secondary me-3"> <i class="bi bi-arrow-left me-1"></i>Back </a>
+  <a routerLink="/zones" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left me-1"></i>{{ "COMMON.BACK" | translate }}
+  </a>
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-person-gear me-2 text-primary"></i>Profile</h2>
-    <p class="text-muted small mb-0">Manage your preferences and security</p>
+    <h2 class="h4 mb-0 fw-bold">
+      <i class="bi bi-person-gear me-2 text-primary"></i>{{ "PROFILE.TITLE" | translate }}
+    </h2>
+    <p class="text-muted small mb-0">{{ "PROFILE.SUBTITLE" | translate }}</p>
   </div>
 </div>
 
 <div class="row g-4">
-  <!-- Informations utilisateur -->
+  <!-- User info -->
   <div class="col-12 col-lg-5">
     <div class="card shadow-sm h-100">
       <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold"><i class="bi bi-person-circle me-2 text-primary"></i>Information</h5>
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-person-circle me-2 text-primary"></i>{{ "PROFILE.INFO_TITLE" | translate }}
+        </h5>
       </div>
       <div class="card-body">
         <dl class="row mb-0">
-          <dt class="col-5 text-muted fw-normal">User</dt>
+          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.USER" | translate }}</dt>
           <dd class="col-7 fw-semibold">{{ auth.currentUser()?.username }}</dd>
 
-          <dt class="col-5 text-muted fw-normal">Email</dt>
+          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.EMAIL" | translate }}</dt>
           <dd class="col-7">{{ auth.currentUser()?.email ?? "—" }}</dd>
 
-          <dt class="col-5 text-muted fw-normal">Authentication</dt>
+          <dt class="col-5 text-muted fw-normal">{{ "PROFILE.AUTH" | translate }}</dt>
           <dd class="col-7">
             @if (auth.currentUser()?.is_oidc) {
               <span class="badge bg-info">SSO / OIDC</span>
@@ -34,14 +40,58 @@
     </div>
   </div>
 
-  <!-- Apparence -->
+  <!-- Language selector -->
   <div class="col-12 col-lg-7">
     <div class="card shadow-sm">
       <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold"><i class="bi bi-palette me-2 text-primary"></i>Appearance</h5>
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-translate me-2 text-primary"></i>{{ "PROFILE.LANGUAGE_TITLE" | translate }}
+        </h5>
       </div>
       <div class="card-body">
-        <p class="text-muted small mb-3">Choose the theme for the interface.</p>
+        <div class="d-flex gap-2 flex-wrap">
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="currentLang() === 'en'"
+            [class.btn-outline-secondary]="currentLang() !== 'en'"
+            (click)="setLanguage('en')"
+          >
+            🇬🇧 English
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="currentLang() === 'fr'"
+            [class.btn-outline-secondary]="currentLang() !== 'fr'"
+            (click)="setLanguage('fr')"
+          >
+            🇫🇷 Français
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm"
+            [class.btn-primary]="currentLang() === 'es'"
+            [class.btn-outline-secondary]="currentLang() !== 'es'"
+            (click)="setLanguage('es')"
+          >
+            🇪🇸 Español
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appearance -->
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-palette me-2 text-primary"></i>{{ "PROFILE.APPEARANCE_TITLE" | translate }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">{{ "PROFILE.APPEARANCE_HELP" | translate }}</p>
         <div class="d-flex gap-3 flex-wrap">
           @for (t of themes; track t.value) {
             <button
@@ -58,18 +108,20 @@
     </div>
   </div>
 
-  <!-- Changement de mot de passe -->
+  <!-- Change password -->
   @if (!auth.currentUser()?.is_oidc) {
     <div class="col-12">
       <div class="card shadow-sm">
         <div class="card-header py-3">
-          <h5 class="mb-0 fw-semibold"><i class="bi bi-shield-lock me-2 text-primary"></i>Change Password</h5>
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "PROFILE.CHANGE_PASSWORD_TITLE" | translate }}
+          </h5>
         </div>
         <div class="card-body">
           @if (passwordSuccess()) {
             <div class="alert alert-success d-flex align-items-center gap-2 py-2">
               <i class="bi bi-check-circle-fill"></i>
-              <span>Password changed successfully.</span>
+              <span>{{ "PROFILE.PASSWORD_CHANGED" | translate }}</span>
             </div>
           }
           @if (passwordError()) {
@@ -82,7 +134,9 @@
           <form (ngSubmit)="onChangePassword()" novalidate>
             <div class="row g-3">
               <div class="col-12 col-md-4">
-                <label class="form-label fw-medium"> Current Password <span class="text-danger">*</span> </label>
+                <label class="form-label fw-medium">
+                  {{ "PROFILE.CURRENT_PASSWORD" | translate }} <span class="text-danger">*</span>
+                </label>
                 <input
                   type="password"
                   class="form-control"
@@ -99,7 +153,9 @@
                 }
               </div>
               <div class="col-12 col-md-4">
-                <label class="form-label fw-medium"> New Password <span class="text-danger">*</span> </label>
+                <label class="form-label fw-medium">
+                  {{ "PROFILE.NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
+                </label>
                 <input
                   type="password"
                   class="form-control"
@@ -116,7 +172,9 @@
                 }
               </div>
               <div class="col-12 col-md-4">
-                <label class="form-label fw-medium"> Confirm New Password <span class="text-danger">*</span> </label>
+                <label class="form-label fw-medium">
+                  {{ "PROFILE.CONFIRM_NEW_PASSWORD" | translate }} <span class="text-danger">*</span>
+                </label>
                 <input
                   type="password"
                   class="form-control"
@@ -138,7 +196,7 @@
                 @if (isChangingPassword()) {
                   <span class="spinner-border spinner-border-sm me-2" role="status"></span>
                 }
-                <i class="bi bi-check-lg me-1"></i>Save Changes
+                <i class="bi bi-check-lg me-1"></i>{{ "COMMON.SAVE_CHANGES" | translate }}
               </button>
             </div>
           </form>
@@ -147,18 +205,20 @@
     </div>
   }
 
-  <!-- À propos -->
+  <!-- About -->
   <div class="col-12">
     <div class="card shadow-sm">
       <div class="card-header py-3">
-        <h5 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2 text-primary"></i>About</h5>
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-info-circle me-2 text-primary"></i>{{ "PROFILE.ABOUT_TITLE" | translate }}
+        </h5>
       </div>
       <div class="card-body">
         <dl class="row mb-3">
-          <dt class="col-5 col-md-3 text-muted fw-normal">Application</dt>
+          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.APPLICATION" | translate }}</dt>
           <dd class="col-7 col-md-9 fw-semibold">PowerDNS UI</dd>
 
-          <dt class="col-5 col-md-3 text-muted fw-normal">Version</dt>
+          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.VERSION" | translate }}</dt>
           <dd class="col-7 col-md-9">
             @if (appInfo()) {
               <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">
@@ -169,14 +229,17 @@
             }
           </dd>
 
-          <dt class="col-5 col-md-3 text-muted fw-normal">Update</dt>
+          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.UPDATE" | translate }}</dt>
           <dd class="col-7 col-md-9">
             @if (!releaseCheckDone()) {
               <span class="text-muted small">
-                <span class="spinner-border spinner-border-sm me-1" role="status"></span>Checking…
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span
+                >{{ "PROFILE.CHECKING" | translate }}
               </span>
             } @else if (!latestRelease()) {
-              <span class="text-muted small"><i class="bi bi-dash me-1"></i>Not available</span>
+              <span class="text-muted small"
+                ><i class="bi bi-dash me-1"></i>{{ "PROFILE.NOT_AVAILABLE" | translate }}</span
+              >
             } @else if (updateAvailable) {
               <a
                 [href]="latestRelease()!.html_url"
@@ -188,12 +251,12 @@
               </a>
             } @else {
               <span class="badge bg-success-subtle text-success-emphasis">
-                <i class="bi bi-check-circle-fill me-1"></i>Up to date
+                <i class="bi bi-check-circle-fill me-1"></i>{{ "PROFILE.UP_TO_DATE" | translate }}
               </span>
             }
           </dd>
 
-          <dt class="col-5 col-md-3 text-muted fw-normal">Source code</dt>
+          <dt class="col-5 col-md-3 text-muted fw-normal">{{ "PROFILE.SOURCE_CODE" | translate }}</dt>
           <dd class="col-7 col-md-9">
             <a
               href="https://github.com/cyr-ius/powerdns-ui"

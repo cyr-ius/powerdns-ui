@@ -15,7 +15,7 @@
     <input
       type="search"
       class="pdns-search-input"
-      placeholder="Search… (*, ?)"
+      [placeholder]="'NAV.SEARCH_PLACEHOLDER' | translate"
       [(ngModel)]="searchQuery"
       name="globalSearch"
     />
@@ -25,7 +25,7 @@
     <button
       class="pdns-icon-btn"
       type="button"
-      title="Theme : {{ themeService.themeLabel() }}"
+      [title]="'NAV.THEME' | translate: { label: themeService.themeLabel() }"
       (click)="themeService.cycleTheme()"
     >
       <i class="bi" [class]="themeService.themeIcon()"></i>
@@ -41,7 +41,7 @@
       </a>
     }
 
-    <button class="pdns-icon-btn pdns-logout" title="Logout" (click)="logout()">
+    <button class="pdns-icon-btn pdns-logout" [title]="'NAV.LOGOUT' | translate" (click)="logout()">
       <i class="bi bi-box-arrow-right"></i>
     </button>
   </div>
@@ -57,7 +57,7 @@
   <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
   <aside class="pdns-sidebar" [class.open]="sidebarOpen()">
     <nav class="pdns-sidenav">
-      <p class="pdns-sidenav-label">Principal</p>
+      <p class="pdns-sidenav-label">{{ "NAV.DNS_ZONES" | translate }}</p>
 
       <a
         class="pdns-sidenav-link"
@@ -67,64 +67,64 @@
         (click)="closeSidebar()"
       >
         <i class="bi bi-globe2"></i>
-        <span>DNS Zones</span>
+        <span>{{ "NAV.DNS_ZONES" | translate }}</span>
       </a>
 
       <a class="pdns-sidenav-link" routerLink="/catalogues" routerLinkActive="active" (click)="closeSidebar()">
         <i class="bi bi-collection"></i>
-        <span>Catalogues</span>
+        <span>{{ "NAV.CATALOGUES" | translate }}</span>
       </a>
 
       <a class="pdns-sidenav-link" routerLink="/statistics" routerLinkActive="active" (click)="closeSidebar()">
         <i class="bi bi-bar-chart-line"></i>
-        <span>Statistics</span>
+        <span>{{ "NAV.STATISTICS" | translate }}</span>
       </a>
 
       @if (auth.isAdmin()) {
-        <p class="pdns-sidenav-label mt-3">Server</p>
+        <p class="pdns-sidenav-label mt-3">{{ "NAV.SERVER" | translate }}</p>
 
         <a class="pdns-sidenav-link" routerLink="/tsigkeys" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-key"></i>
-          <span>TSIG Keys</span>
+          <span>{{ "NAV.TSIG_KEYS" | translate }}</span>
         </a>
 
         <a class="pdns-sidenav-link" routerLink="/server-config" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-sliders"></i>
-          <span>Configuration</span>
+          <span>{{ "NAV.CONFIGURATION" | translate }}</span>
         </a>
 
         <a class="pdns-sidenav-link" routerLink="/autoprimaries" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-hdd-rack"></i>
-          <span>Autoprimaries</span>
+          <span>{{ "NAV.AUTOPRIMARIES" | translate }}</span>
         </a>
 
         @if (server.supportsViewsAndNetworks()) {
           <a class="pdns-sidenav-link" routerLink="/views" routerLinkActive="active" (click)="closeSidebar()">
             <i class="bi bi-eye"></i>
-            <span>Views</span>
+            <span>{{ "NAV.VIEWS" | translate }}</span>
           </a>
 
           <a class="pdns-sidenav-link" routerLink="/networks" routerLinkActive="active" (click)="closeSidebar()">
             <i class="bi bi-diagram-3"></i>
-            <span>Networks</span>
+            <span>{{ "NAV.NETWORKS" | translate }}</span>
           </a>
         }
 
-        <p class="pdns-sidenav-label mt-3">Administration</p>
+        <p class="pdns-sidenav-label mt-3">{{ "NAV.ADMINISTRATION" | translate }}</p>
 
         <a class="pdns-sidenav-link" routerLink="/admin/users" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-people"></i>
-          <span>Users</span>
+          <span>{{ "NAV.USERS" | translate }}</span>
         </a>
 
         <a class="pdns-sidenav-link" routerLink="/admin/accounts" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-folder2-open"></i>
-          <span>Accounts</span>
+          <span>{{ "NAV.ACCOUNTS" | translate }}</span>
         </a>
 
         <a class="pdns-sidenav-link" routerLink="/admin/oidc" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-shield-check"></i>
-          <span>OIDC</span>
+          <span>{{ "NAV.OIDC" | translate }}</span>
         </a>
 
         <a
@@ -134,12 +134,12 @@
           (click)="closeSidebar()"
         >
           <i class="bi bi-card-list"></i>
-          <span>DNS Types</span>
+          <span>{{ "NAV.DNS_TYPES" | translate }}</span>
         </a>
 
         <a class="pdns-sidenav-link" routerLink="/admin/audit" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-journal-text"></i>
-          <span>Audit Journal</span>
+          <span>{{ "NAV.AUDIT_JOURNAL" | translate }}</span>
         </a>
       }
     </nav>
@@ -160,14 +160,16 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title"><i class="bi bi-lock-fill me-2 text-warning"></i>Session expirée</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-lock-fill me-2 text-warning"></i>{{ "SESSION.EXPIRED_TITLE" | translate }}
+          </h5>
         </div>
         <div class="modal-body">
-          <p class="mb-0 text-muted">Your session has expired. Please log in again to continue.</p>
+          <p class="mb-0 text-muted">{{ "SESSION.EXPIRED_BODY" | translate }}</p>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-primary" (click)="logout()">
-            <i class="bi bi-box-arrow-in-right me-1"></i>Log in
+            <i class="bi bi-box-arrow-in-right me-1"></i>{{ "SESSION.LOGIN" | translate }}
           </button>
         </div>
       </div>

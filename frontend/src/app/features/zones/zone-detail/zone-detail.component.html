@@ -1,7 +1,9 @@
 <nav aria-label="breadcrumb" class="mb-3">
   <ol class="breadcrumb">
     <li class="breadcrumb-item">
-      <a routerLink="/zones" class="text-decoration-none"> <i class="bi bi-globe2 me-1"></i>Zones </a>
+      <a routerLink="/zones" class="text-decoration-none">
+        <i class="bi bi-globe2 me-1"></i>{{ "NAV.DNS_ZONES" | translate }}
+      </a>
     </li>
     <li class="breadcrumb-item active">{{ zone()?.name ?? zoneId }}</li>
   </ol>
@@ -10,13 +12,13 @@
 @if (isLoading() && !zone()) {
   <div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2">Loading…</p>
+    <p class="text-muted mt-2">{{ "COMMON.LOADING" | translate }}</p>
   </div>
 } @else if (error() && !zone()) {
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZone()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadZone()">{{ "COMMON.RETRY" | translate }}</button>
   </div>
 } @else if (zone()) {
   <!-- Zone header -->
@@ -24,7 +26,7 @@
     <div class="col-12 col-md-4">
       <div class="card border-0 bg-primary bg-opacity-10 h-100">
         <div class="card-body p-2 p-md-3">
-          <div class="small text-muted mb-1">Zone</div>
+          <div class="small text-muted mb-1">{{ "ZONE_DETAIL.ZONE" | translate }}</div>
           <div class="fw-bold fs-5 text-break">{{ zone()!.name }}</div>
         </div>
       </div>
@@ -32,7 +34,7 @@
     <div class="col-6 col-md-2">
       <div class="card border-0 bg-body-secondary h-100">
         <div class="card-body p-2 p-md-3">
-          <div class="small text-muted mb-1">Type</div>
+          <div class="small text-muted mb-1">{{ "COMMON.TYPE" | translate }}</div>
           <div class="fw-medium">{{ zone()!.kind }}</div>
         </div>
       </div>
@@ -40,7 +42,7 @@
     <div class="col-6 col-md-2">
       <div class="card border-0 bg-body-secondary h-100">
         <div class="card-body p-2 p-md-3">
-          <div class="small text-muted mb-1">Account</div>
+          <div class="small text-muted mb-1">{{ "ZONE_DETAIL.ACCOUNT" | translate }}</div>
           <div class="fw-medium">{{ zone()!.account || "—" }}</div>
         </div>
       </div>
@@ -50,9 +52,11 @@
         <div class="card-body p-2 p-md-3">
           <div class="small text-muted mb-1">DNSSEC</div>
           @if (zone()!.dnssec) {
-            <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i>Actif</span>
+            <span class="badge bg-success"
+              ><i class="bi bi-shield-check me-1"></i>{{ "ZONE_DETAIL.DNSSEC_ACTIVE" | translate }}</span
+            >
           } @else {
-            <span class="text-muted small">Inactif</span>
+            <span class="text-muted small">{{ "ZONE_DETAIL.DNSSEC_INACTIVE" | translate }}</span>
           }
         </div>
       </div>
@@ -60,7 +64,7 @@
     <div class="col-6 col-md-2">
       <div class="card border-0 bg-body-secondary h-100">
         <div class="card-body p-2 p-md-3">
-          <div class="small text-muted mb-1">Serial</div>
+          <div class="small text-muted mb-1">{{ "ZONE_DETAIL.SERIAL" | translate }}</div>
           <div class="fw-medium font-monospace small">
             {{ zone()!.serial ?? "—" }}
           </div>
@@ -91,12 +95,12 @@
         class="btn btn-sm btn-outline-primary"
         (click)="notifySlaves()"
         [disabled]="isNotifying()"
-        title="Envoyer NOTIFY aux slaves"
+        [title]="'ZONE_DETAIL.NOTIFY_SLAVES' | translate"
       >
         @if (isNotifying()) {
           <span class="spinner-border spinner-border-sm me-1"></span>
         }
-        <i class="bi bi-broadcast me-1"></i>Notify slaves
+        <i class="bi bi-broadcast me-1"></i>{{ "ZONE_DETAIL.NOTIFY_SLAVES" | translate }}
       </button>
     }
     @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
@@ -104,24 +108,24 @@
         class="btn btn-sm btn-outline-primary"
         (click)="axfrRetrieve()"
         [disabled]="isRetrieving()"
-        title="Trigger an AXFR from the master"
+        [title]="'ZONE_DETAIL.RETRIEVE_MASTER' | translate"
       >
         @if (isRetrieving()) {
           <span class="spinner-border spinner-border-sm me-1"></span>
         }
-        <i class="bi bi-cloud-download me-1"></i>Retrieve from the master
+        <i class="bi bi-cloud-download me-1"></i>{{ "ZONE_DETAIL.RETRIEVE_MASTER" | translate }}
       </button>
     }
     <button
       class="btn btn-sm btn-outline-secondary ms-auto"
       (click)="exportZone()"
       [disabled]="isExporting()"
-      title="Export zone to text file"
+      [title]="'ZONE_DETAIL.EXPORT' | translate"
     >
       @if (isExporting()) {
         <span class="spinner-border spinner-border-sm me-1"></span>
       }
-      <i class="bi bi-download me-1"></i>Export
+      <i class="bi bi-download me-1"></i>{{ "ZONE_DETAIL.EXPORT" | translate }}
     </button>
   </div>
 
@@ -130,12 +134,16 @@
     <div class="mb-2">
       @if (currentRole() === "admin") {
         <span class="badge bg-danger-subtle text-danger-emphasis"
-          ><i class="bi bi-shield-fill-check me-1"></i>Administrator</span
+          ><i class="bi bi-shield-fill-check me-1"></i>{{ "ZONE_DETAIL.ROLE_ADMIN" | translate }}</span
         >
       } @else if (currentRole() === "manager") {
-        <span class="badge bg-warning-subtle text-warning-emphasis"><i class="bi bi-pencil-fill me-1"></i>Manager</span>
+        <span class="badge bg-warning-subtle text-warning-emphasis"
+          ><i class="bi bi-pencil-fill me-1"></i>{{ "ZONE_DETAIL.ROLE_MANAGER" | translate }}</span
+        >
       } @else {
-        <span class="badge bg-secondary-subtle text-secondary-emphasis"><i class="bi bi-eye-fill me-1"></i>User</span>
+        <span class="badge bg-secondary-subtle text-secondary-emphasis"
+          ><i class="bi bi-eye-fill me-1"></i>{{ "ZONE_DETAIL.ROLE_USER" | translate }}</span
+        >
       }
     </div>
   }
@@ -144,7 +152,7 @@
   <ul class="nav nav-tabs mb-0" role="tablist">
     <li class="nav-item">
       <button class="nav-link" [class.active]="activeTab() === 'records'" (click)="setTab('records')">
-        <i class="bi bi-list-ul me-1"></i>Records
+        <i class="bi bi-list-ul me-1"></i>{{ "ZONE_DETAIL.TAB_RECORDS" | translate }}
         <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">
           {{ zone()!.rrsets.length }}
         </span>
@@ -153,38 +161,42 @@
     @if (isZoneAdmin()) {
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'metadata'" (click)="setTab('metadata')">
-          <i class="bi bi-tags me-1"></i>Metadata
+          <i class="bi bi-tags me-1"></i>{{ "ZONE_DETAIL.TAB_METADATA" | translate }}
         </button>
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'dnssec'" (click)="setTab('dnssec')">
-          <i class="bi bi-shield-lock me-1"></i>DNSSEC
+          <i class="bi bi-shield-lock me-1"></i>{{ "ZONE_DETAIL.TAB_DNSSEC" | translate }}
           @if (zone()!.dnssec) {
-            <span class="badge bg-success ms-1" style="font-size: 0.65rem">Active</span>
+            <span class="badge bg-success ms-1" style="font-size: 0.65rem">{{
+              "ZONE_DETAIL.KEY_ACTIVE" | translate
+            }}</span>
           }
         </button>
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'transfer'" (click)="setTab('transfer')">
-          <i class="bi bi-arrow-left-right me-1"></i>Transfer
+          <i class="bi bi-arrow-left-right me-1"></i>{{ "ZONE_DETAIL.TAB_TRANSFER" | translate }}
         </button>
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'dnsupdate'" (click)="setTab('dnsupdate')">
-          <i class="bi bi-pencil-square me-1"></i>DNS Update
+          <i class="bi bi-pencil-square me-1"></i>{{ "ZONE_DETAIL.TAB_DNSUPDATE" | translate }}
           @if (tsigAllowDnsupdate().length > 0 || allowDnsupdateFrom().length > 0) {
-            <span class="badge bg-info ms-1" style="font-size: 0.65rem">Active</span>
+            <span class="badge bg-info ms-1" style="font-size: 0.65rem">{{
+              "ZONE_DETAIL.KEY_ACTIVE" | translate
+            }}</span>
           }
         </button>
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'settings'" (click)="setTab('settings')">
-          <i class="bi bi-gear me-1"></i>Settings
+          <i class="bi bi-gear me-1"></i>{{ "ZONE_DETAIL.TAB_SETTINGS" | translate }}
         </button>
       </li>
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'members'" (click)="setTab('members')">
-          <i class="bi bi-people me-1"></i>Members
+          <i class="bi bi-people me-1"></i>{{ "ZONE_DETAIL.TAB_MEMBERS" | translate }}
           @if (members().length > 0) {
             <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ members().length }}</span>
           }
@@ -194,13 +206,13 @@
   </ul>
 
   <div class="card shadow-sm border-top-0 rounded-top-0">
-    <!-- ── Tab: Enregistrements ────────────────────────────────────────── -->
+    <!-- ── Tab: Records ────────────────────────────────────────── -->
     @if (activeTab() === "records") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">DNS Records</span>
+        <span class="fw-semibold">{{ "ZONE_DETAIL.RECORDS_TITLE" | translate }}</span>
         @if (canWrite()) {
           <button class="btn btn-sm btn-primary" (click)="openRecordModal()">
-            <i class="bi bi-plus-lg me-1"></i>Add
+            <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ADD_RECORD" | translate }}
           </button>
         }
       </div>
@@ -214,14 +226,14 @@
       @if (zone()!.rrsets.length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
-          <p class="text-muted mt-2 mb-0">No records in this zone</p>
+          <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_RECORDS" | translate }}</p>
         </div>
       } @else {
         <table class="table table-hover align-middle mb-0 w-100">
           <thead class="table-light">
             <tr>
               <th class="col-name user-select-none" style="cursor: pointer" (click)="sortBy('name')">
-                Name
+                {{ "COMMON.NAME" | translate }}
                 <i
                   class="bi small ms-1"
                   [class.bi-sort-alpha-down]="sortColumn() === 'name' && sortDirection() === 'asc'"
@@ -230,7 +242,7 @@
                 ></i>
               </th>
               <th class="col-type user-select-none" style="cursor: pointer" (click)="sortBy('type')">
-                Type
+                {{ "COMMON.TYPE" | translate }}
                 <i
                   class="bi small ms-1"
                   [class.bi-sort-alpha-down]="sortColumn() === 'type' && sortDirection() === 'asc'"
@@ -247,8 +259,8 @@
                   [class.bi-arrow-down-up]="sortColumn() !== 'ttl'"
                 ></i>
               </th>
-              <th>Content</th>
-              <th class="text-end col-actions">Actions</th>
+              <th>{{ "ZONE_DETAIL.CONTENT" | translate }}</th>
+              <th class="text-end col-actions">{{ "COMMON.ACTIONS" | translate }}</th>
             </tr>
           </thead>
           <tbody>
@@ -266,12 +278,16 @@
                     <div class="d-flex align-items-center gap-1" [class.text-muted]="rec.disabled">
                       <span [class.text-decoration-line-through]="rec.disabled">{{ rec.content }}</span>
                       @if (rec.disabled) {
-                        <span class="badge bg-warning-subtle text-warning-emphasis ms-1">désactivé</span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis ms-1">{{
+                          "ZONE_DETAIL.DISABLED" | translate
+                        }}</span>
                       }
                       <button
                         class="btn btn-link btn-sm p-0 ms-1 text-muted flex-shrink-0"
                         style="font-size: 0.75rem; line-height: 1"
-                        [title]="rec.disabled ? 'Activer' : 'Désactiver'"
+                        [title]="
+                          rec.disabled ? ('ZONE_DETAIL.ENABLE' | translate) : ('ZONE_DETAIL.DISABLE' | translate)
+                        "
                         (click)="toggleRecordDisabled(rrset, $index)"
                       >
                         <i class="bi" [class.bi-eye-slash-fill]="!rec.disabled" [class.bi-eye-fill]="rec.disabled"></i>
@@ -284,7 +300,7 @@
                     <button
                       class="btn btn-sm btn-outline-secondary me-1"
                       (click)="openEditModal(rrset)"
-                      title="Modifier"
+                      [title]="'COMMON.EDIT' | translate"
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
@@ -301,12 +317,18 @@
         @if (recordsTotalPages() > 1) {
           <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top bg-body-tertiary">
             <span class="text-muted small">
-              {{ (recordsPage() - 1) * recordsPageSize + 1 }}–{{
-                recordsPage() * recordsPageSize < zone()!.rrsets.length
-                  ? recordsPage() * recordsPageSize
-                  : zone()!.rrsets.length
+              {{
+                "ZONE_DETAIL.RECORDS_RANGE"
+                  | translate
+                    : {
+                        from: (recordsPage() - 1) * recordsPageSize + 1,
+                        to:
+                          recordsPage() * recordsPageSize < zone()!.rrsets.length
+                            ? recordsPage() * recordsPageSize
+                            : zone()!.rrsets.length,
+                        total: zone()!.rrsets.length,
+                      }
               }}
-              sur {{ zone()!.rrsets.length }} enregistrement(s)
             </span>
             <nav>
               <ul class="pagination pagination-sm mb-0">
@@ -356,11 +378,13 @@
       }
     }
 
-    <!-- ── Tab: Métadonnées ────────────────────────────────────────────── -->
+    <!-- ── Tab: Metadata ────────────────────────────────────────────── -->
     @if (activeTab() === "metadata") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">Zone metadata</span>
-        <button class="btn btn-sm btn-primary" (click)="openMetaModal()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+        <span class="fw-semibold">{{ "ZONE_DETAIL.METADATA_TITLE" | translate }}</span>
+        <button class="btn btn-sm btn-primary" (click)="openMetaModal()">
+          <i class="bi bi-plus-lg me-1"></i>{{ "COMMON.ADD" | translate }}
+        </button>
       </div>
 
       @if (metaError()) {
@@ -376,16 +400,16 @@
       } @else if (metadata().length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-tags text-muted" style="font-size: 2.5rem"></i>
-          <p class="text-muted mt-2 mb-0">No metadata configured</p>
+          <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_METADATA" | translate }}</p>
         </div>
       } @else {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
-                <th>Type (kind)</th>
-                <th>Values</th>
-                <th class="text-end">Actions</th>
+                <th>{{ "ZONE_DETAIL.META_TYPE" | translate }}</th>
+                <th>{{ "ZONE_DETAIL.META_VALUES" | translate }}</th>
+                <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -415,23 +439,23 @@
     <!-- ── Tab: DNSSEC ─────────────────────────────────────────────────── -->
     @if (activeTab() === "dnssec") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">DNSSEC cryptographic keys</span>
+        <span class="fw-semibold">{{ "ZONE_DETAIL.DNSSEC_TITLE" | translate }}</span>
         <div class="d-flex gap-2">
           @if (zone()!.kind !== "Slave" && zone()!.kind !== "Secondary") {
             <button
               class="btn btn-sm btn-outline-warning"
               (click)="rectifyZone()"
               [disabled]="isRectifying()"
-              title="Recalculate the NSEC/NSEC3 records after a key change"
+              [title]="'ZONE_DETAIL.RECTIFY' | translate"
             >
               @if (isRectifying()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              <i class="bi bi-arrow-clockwise me-1"></i>Rectify
+              <i class="bi bi-arrow-clockwise me-1"></i>{{ "ZONE_DETAIL.RECTIFY" | translate }}
             </button>
           }
           <button class="btn btn-sm btn-primary" (click)="openKeyModal()">
-            <i class="bi bi-plus-lg me-1"></i>Generate key
+            <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.GENERATE_KEY" | translate }}
           </button>
         </div>
       </div>
@@ -450,10 +474,8 @@
       } @else if (cryptoKeys().length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-shield text-muted" style="font-size: 2.5rem"></i>
-          <p class="text-muted mt-2 mb-0">No DNSSEC keys configured</p>
-          <p class="text-muted small mt-1">
-            Generate a <strong>KSK</strong> or <strong>CSK</strong> key to enable DNSSEC on this zone
-          </p>
+          <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_DNSSEC_KEYS" | translate }}</p>
+          <p class="text-muted small mt-1">{{ "ZONE_DETAIL.DNSSEC_HELP" | translate }}</p>
         </div>
       } @else {
         <div class="table-responsive">
@@ -461,13 +483,13 @@
             <thead class="table-light">
               <tr>
                 <th>ID</th>
-                <th>Type</th>
+                <th>{{ "COMMON.TYPE" | translate }}</th>
                 <th>Algorithm</th>
                 <th>Bits</th>
-                <th>Active</th>
-                <th>Published</th>
-                <th>DS Records</th>
-                <th class="text-end">Actions</th>
+                <th>{{ "ZONE_DETAIL.KEY_ACTIVE" | translate }}</th>
+                <th>{{ "ZONE_DETAIL.KEY_PUBLISHED" | translate }}</th>
+                <th>{{ "ZONE_DETAIL.KEY_DS" | translate }}</th>
+                <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
               </tr>
             </thead>
             <tbody>
@@ -482,19 +504,23 @@
                   <td>
                     @if (key.active) {
                       <span class="badge bg-success-subtle text-success-emphasis">
-                        <i class="bi bi-check-circle me-1"></i>Active
+                        <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.KEY_ACTIVE" | translate }}
                       </span>
                     } @else {
-                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactive</span>
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">{{
+                        "ZONE_DETAIL.KEY_INACTIVE" | translate
+                      }}</span>
                     }
                   </td>
                   <td>
                     @if (key.published) {
                       <span class="badge bg-primary-subtle text-primary-emphasis">
-                        <i class="bi bi-broadcast me-1"></i>Published
+                        <i class="bi bi-broadcast me-1"></i>{{ "ZONE_DETAIL.KEY_PUBLISHED" | translate }}
                       </span>
                     } @else {
-                      <span class="badge bg-secondary-subtle text-secondary-emphasis">Retired</span>
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">{{
+                        "ZONE_DETAIL.KEY_RETIRED" | translate
+                      }}</span>
                     }
                   </td>
                   <td style="max-width: 280px">
@@ -507,7 +533,7 @@
                               class="btn btn-sm btn-outline-secondary flex-shrink-0 py-0 px-1"
                               style="font-size: 0.7rem"
                               (click)="copyText(ds)"
-                              title="Copy this DS"
+                              [title]="'ZONE_DETAIL.COPY' | translate"
                             >
                               <i
                                 class="bi"
@@ -523,11 +549,7 @@
                     }
                   </td>
                   <td class="text-end text-nowrap">
-                    <button
-                      class="btn btn-sm btn-outline-secondary me-1"
-                      (click)="toggleExpandKey(key.id)"
-                      [title]="expandedKeyId() === key.id ? 'Hide the DNSKEY' : 'Show the DNSKEY'"
-                    >
+                    <button class="btn btn-sm btn-outline-secondary me-1" (click)="toggleExpandKey(key.id)">
                       <i
                         class="bi"
                         [class.bi-eye]="expandedKeyId() !== key.id"
@@ -537,15 +559,11 @@
                     <button
                       class="btn btn-sm btn-outline-secondary me-1"
                       (click)="toggleKey(key)"
-                      [title]="key.active ? 'Disable' : 'Enable'"
+                      [title]="key.active ? ('ZONE_DETAIL.DISABLE' | translate) : ('ZONE_DETAIL.ENABLE' | translate)"
                     >
                       <i class="bi" [class.bi-toggle-on]="key.active" [class.bi-toggle-off]="!key.active"></i>
                     </button>
-                    <button
-                      class="btn btn-sm btn-outline-secondary me-1"
-                      (click)="togglePublished(key)"
-                      [title]="key.published ? 'Remove from publication' : 'Publish the key'"
-                    >
+                    <button class="btn btn-sm btn-outline-secondary me-1" (click)="togglePublished(key)">
                       <i class="bi" [class.bi-broadcast]="key.published" [class.bi-broadcast-pin]="!key.published"></i>
                     </button>
                     <button class="btn btn-sm btn-outline-danger" (click)="deleteKey(key)">
@@ -562,21 +580,21 @@
                           @if (key.dnskey) {
                             <code class="small text-break d-block">{{ key.dnskey }}</code>
                           } @else {
-                            <span class="text-muted small">Not available</span>
+                            <span class="text-muted small">{{ "ZONE_DETAIL.KEY_NOT_AVAILABLE" | translate }}</span>
                           }
                         </div>
                         @if (key.dnskey) {
                           <button
                             class="btn btn-sm btn-outline-secondary flex-shrink-0"
                             (click)="copyText(key.dnskey)"
-                            title="Copy the DNSKEY"
+                            [title]="'ZONE_DETAIL.COPY' | translate"
                           >
                             <i
                               class="bi"
                               [class.bi-clipboard]="copiedText() !== key.dnskey"
                               [class.bi-clipboard-check-fill]="copiedText() === key.dnskey"
                             ></i>
-                            <span class="ms-1 small">Copy</span>
+                            <span class="ms-1 small">{{ "ZONE_DETAIL.COPY" | translate }}</span>
                           </button>
                         }
                       </div>
@@ -590,13 +608,14 @@
       }
     }
 
-    <!-- ── Tab: Transfert de zone ────────────────────────────────────────── -->
+    <!-- ── Tab: Transfer ────────────────────────────────────────── -->
     @if (activeTab() === "transfer") {
       <div class="card-header py-3 border-bottom">
-        <span class="fw-semibold"><i class="bi bi-arrow-left-right me-2 text-primary"></i>Transfer of zone (AXFR)</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-arrow-left-right me-2 text-primary"></i>{{ "ZONE_DETAIL.TRANSFER_TITLE" | translate }}</span
+        >
         <div class="text-muted small mt-1">
-          Configuration of the zone transfer (AXFR). For dynamic updates, use the
-          <strong>DNS Update</strong> tab.
+          {{ "ZONE_DETAIL.TRANSFER_DESC" | translate }}
         </div>
       </div>
 
@@ -618,25 +637,23 @@
         }
 
         <div class="card-body pb-0">
-          <!-- ── Section : Zone primaire (AXFR sortant) ───────────────── -->
+          <!-- ── Primary zone (Outgoing AXFR) ───────────────── -->
           @if (zone()!.kind === "Master" || zone()!.kind === "Primary" || zone()!.kind === "Native") {
             <div class="mb-4">
               <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
-                <i class="bi bi-upload me-2"></i>Primary zone — Outgoing AXFR transfer
+                <i class="bi bi-upload me-2"></i>{{ "ZONE_DETAIL.PRIMARY_ZONE" | translate }}
               </h6>
 
               <!-- ALLOW-AXFR-FROM -->
               <div class="mb-4">
                 <label class="form-label fw-medium">
-                  IP addresses/networks allowed to receive the zone
+                  {{ "ZONE_DETAIL.ALLOW_AXFR_FROM" | translate }}
                   <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                     >ALLOW-AXFR-FROM</span
                   >
                 </label>
                 <div class="form-text mb-2">
-                  CIDR format (e.g., <code>192.168.1.0/24</code>, <code>2001:db8::/32</code>). Prefix with
-                  <code>!</code> to exclude an address (e.g., <code>!10.0.0.5</code>). Leave empty to allow everyone
-                  (<code>0.0.0.0/0</code>).
+                  {{ "ZONE_DETAIL.ALLOW_AXFR_FROM_HELP" | translate }}
                 </div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   @for (ip of allowAxfrFrom(); track ip) {
@@ -650,12 +667,12 @@
                         style="font-size: 0.6rem"
                         [disabled]="isSubmittingTransfer()"
                         (click)="removeMetadataEntry('ALLOW-AXFR-FROM', ip)"
-                        title="Supprimer"
+                        [title]="'COMMON.DELETE' | translate"
                       ></button>
                     </span>
                   }
                   @if (allowAxfrFrom().length === 0) {
-                    <span class="text-muted small fst-italic">No restriction — AXFR allowed from any address</span>
+                    <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_AXFR_RESTRICTION" | translate }}</span>
                   }
                 </div>
                 <div class="input-group" style="max-width: 420px">
@@ -673,7 +690,7 @@
                     [disabled]="isSubmittingTransfer() || !newAllowAxfrFrom().trim()"
                     (click)="addAllowAxfrFromEntry()"
                   >
-                    <i class="bi bi-plus-lg"></i> Add
+                    <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
                   </button>
                 </div>
               </div>
@@ -681,14 +698,13 @@
               <!-- TSIG-ALLOW-AXFR -->
               <div class="mb-4">
                 <label class="form-label fw-medium">
-                  TSIG keys allowed for AXFR
+                  {{ "ZONE_DETAIL.TSIG_ALLOW_AXFR" | translate }}
                   <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                     >TSIG-ALLOW-AXFR</span
                   >
                 </label>
                 <div class="form-text mb-2">
-                  The secondary servers will need to present one of these keys during the transfer. If no key is
-                  configured, the AXFR is not protected by TSIG.
+                  {{ "ZONE_DETAIL.TSIG_ALLOW_AXFR_HELP" | translate }}
                 </div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   @for (keyId of tsigAllowAxfr(); track keyId) {
@@ -704,12 +720,12 @@
                         style="font-size: 0.6rem"
                         [disabled]="isSubmittingTransfer()"
                         (click)="removeMetadataEntry('TSIG-ALLOW-AXFR', keyId)"
-                        title="Remove"
+                        [title]="'COMMON.DELETE' | translate"
                       ></button>
                     </span>
                   }
                   @if (tsigAllowAxfr().length === 0) {
-                    <span class="text-muted small fst-italic">No TSIG key configured</span>
+                    <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_TSIG_KEY" | translate }}</span>
                   }
                 </div>
                 @if (availableTsigForAxfr().length > 0) {
@@ -719,7 +735,7 @@
                       [value]="newTsigAllowAxfr()"
                       (change)="newTsigAllowAxfr.set($any($event.target).value)"
                     >
-                      <option value="">— Choose a TSIG key —</option>
+                      <option value="">{{ "ZONE_DETAIL.CHOOSE_TSIG" | translate }}</option>
                       @for (k of availableTsigForAxfr(); track k.id) {
                         <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
                       }
@@ -730,21 +746,23 @@
                       [disabled]="isSubmittingTransfer() || !newTsigAllowAxfr()"
                       (click)="addTsigAllowAxfrEntry()"
                     >
-                      <i class="bi bi-plus-lg"></i> Ajouter
+                      <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
                     </button>
                   </div>
                 } @else if (tsigKeys().length === 0) {
                   <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
                     <i class="bi bi-info-circle-fill"></i>
-                    No TSIG key available.
-                    <a routerLink="/tsigkeys" class="ms-1">Create a TSIG key →</a>
+                    {{ "ZONE_DETAIL.NO_TSIG_AVAILABLE" | translate }}
+                    <a routerLink="/tsigkeys" class="ms-1">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
                   </div>
                 } @else {
-                  <div class="text-muted small fst-italic">All available TSIG keys are already assigned.</div>
+                  <div class="text-muted small fst-italic">{{ "ZONE_DETAIL.ALL_TSIG_ASSIGNED" | translate }}</div>
                 }
                 @if (tsigKeys().length > 0) {
                   <div class="form-text mt-1">
-                    <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>Manage TSIG keys</a>
+                    <a routerLink="/tsigkeys"
+                      ><i class="bi bi-gear me-1"></i>{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }}</a
+                    >
                   </div>
                 }
               </div>
@@ -752,15 +770,13 @@
               <!-- ALSO-NOTIFY -->
               <div class="mb-4">
                 <label class="form-label fw-medium">
-                  Servers to notify (Additional NOTIFY targets)
+                  {{ "ZONE_DETAIL.ALSO_NOTIFY" | translate }}
                   <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                     >ALSO-NOTIFY</span
                   >
                 </label>
                 <div class="form-text mb-2">
-                  In addition to the NS servers of the zone, PowerDNS will send NOTIFY packets to these addresses.
-                  Format:
-                  <code>IP</code> or <code>IP:port</code>.
+                  {{ "ZONE_DETAIL.ALSO_NOTIFY_HELP" | translate }}
                 </div>
                 <div class="d-flex flex-wrap gap-2 mb-2">
                   @for (addr of alsoNotify(); track addr) {
@@ -774,12 +790,12 @@
                         style="font-size: 0.6rem"
                         [disabled]="isSubmittingTransfer()"
                         (click)="removeMetadataEntry('ALSO-NOTIFY', addr)"
-                        title="Supprimer"
+                        [title]="'COMMON.DELETE' | translate"
                       ></button>
                     </span>
                   }
                   @if (alsoNotify().length === 0) {
-                    <span class="text-muted small fst-italic">No additional servers configured</span>
+                    <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_ALSO_NOTIFY" | translate }}</span>
                   }
                 </div>
                 <div class="input-group" style="max-width: 420px">
@@ -797,32 +813,31 @@
                     [disabled]="isSubmittingTransfer() || !newAlsoNotify().trim()"
                     (click)="addAlsoNotifyEntry()"
                   >
-                    <i class="bi bi-plus-lg"></i> Add
+                    <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
                   </button>
                 </div>
               </div>
             </div>
           }
-          <!-- /zone primaire -->
+          <!-- /primary zone -->
 
-          <!-- ── Section : Zone secondaire (AXFR entrant) ─────────────── -->
+          <!-- ── Secondary zone (Incoming AXFR) ─────────────── -->
           @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
             <div class="mb-4">
               <h6 class="fw-bold text-warning border-bottom pb-2 mb-3">
-                <i class="bi bi-download me-2"></i>Secondary Zone — Incoming AXFR Transfer
+                <i class="bi bi-download me-2"></i>{{ "ZONE_DETAIL.SECONDARY_ZONE" | translate }}
               </h6>
 
               <!-- AXFR-MASTER-TSIG -->
               <div class="mb-4">
                 <label class="form-label fw-medium">
-                  TSIG key to use for the incoming AXFR transfer
+                  {{ "ZONE_DETAIL.AXFR_MASTER_TSIG" | translate }}
                   <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                     >AXFR-MASTER-TSIG</span
                   >
                 </label>
                 <div class="form-text mb-2">
-                  This key will be presented to the master server during the incoming zone transfer. The master must
-                  have this same key configured in its <code>TSIG-ALLOW-AXFR</code>.
+                  {{ "ZONE_DETAIL.AXFR_MASTER_TSIG_HELP" | translate }}
                 </div>
                 @if (axfrMasterTsig()) {
                   <div class="mb-2">
@@ -843,7 +858,7 @@
                     [value]="editAxfrMasterTsig()"
                     (change)="editAxfrMasterTsig.set($any($event.target).value)"
                   >
-                    <option value="">— No key —</option>
+                    <option value="">{{ "ZONE_DETAIL.NO_KEY" | translate }}</option>
                     @for (k of tsigKeys(); track k.id) {
                       <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
                     }
@@ -857,12 +872,12 @@
                     @if (isSubmittingTransfer()) {
                       <span class="spinner-border spinner-border-sm me-1"></span>
                     }
-                    <i class="bi bi-floppy me-1"></i>Save
+                    <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
                   </button>
                 </div>
                 @if (tsigKeys().length === 0) {
                   <div class="form-text">
-                    <a routerLink="/tsigkeys">Create a TSIG key →</a>
+                    <a routerLink="/tsigkeys">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
                   </div>
                 }
               </div>
@@ -870,14 +885,13 @@
               <!-- AXFR-SOURCE -->
               <div class="mb-4">
                 <label class="form-label fw-medium">
-                  Source address for AXFR queries
+                  {{ "ZONE_DETAIL.AXFR_SOURCE" | translate }}
                   <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                     >AXFR-SOURCE</span
                   >
                 </label>
                 <div class="form-text mb-2">
-                  Local IP address to use as the source for outgoing AXFR connections to the master. Useful if the
-                  server has multiple network interfaces. Leave empty to use the default address.
+                  {{ "ZONE_DETAIL.AXFR_SOURCE_HELP" | translate }}
                 </div>
                 <div class="input-group" style="max-width: 420px">
                   <input
@@ -896,13 +910,13 @@
                     @if (isSubmittingTransfer()) {
                       <span class="spinner-border spinner-border-sm me-1"></span>
                     }
-                    <i class="bi bi-floppy me-1"></i>Save
+                    <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
                   </button>
                 </div>
               </div>
             </div>
           }
-          <!-- /zone secondaire -->
+          <!-- /secondary zone -->
         </div>
         <!-- /card-body -->
       }
@@ -912,10 +926,11 @@
     <!-- ── Tab: DNS Update ───────────────────────────────────────────────── -->
     @if (activeTab() === "dnsupdate") {
       <div class="card-header py-3 border-bottom">
-        <span class="fw-semibold"><i class="bi bi-pencil-square me-2 text-info"></i>DNS Dynamic Update (RFC 2136)</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-pencil-square me-2 text-info"></i>{{ "ZONE_DETAIL.DNSUPDATE_TITLE" | translate }}</span
+        >
         <div class="text-muted small mt-1">
-          Configure the TSIG keys and/or IP restrictions that allow clients to dynamically update the DNS records for
-          this zone.
+          {{ "ZONE_DETAIL.DNSUPDATE_DESC" | translate }}
         </div>
       </div>
 
@@ -940,13 +955,13 @@
           <!-- TSIG-ALLOW-DNSUPDATE -->
           <div class="mb-4">
             <label class="form-label fw-medium">
-              Authorized TSIG keys for updates
+              {{ "ZONE_DETAIL.TSIG_ALLOW_DNSUPDATE" | translate }}
               <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                 >TSIG-ALLOW-DNSUPDATE</span
               >
             </label>
             <div class="form-text mb-2">
-              Only clients presenting one of these keys will be able to submit dynamic updates.
+              {{ "ZONE_DETAIL.TSIG_ALLOW_DNSUPDATE_HELP" | translate }}
             </div>
             <div class="d-flex flex-wrap gap-2 mb-2">
               @for (keyId of tsigAllowDnsupdate(); track keyId) {
@@ -962,12 +977,12 @@
                     style="font-size: 0.6rem"
                     [disabled]="isSubmittingTransfer()"
                     (click)="removeMetadataEntry('TSIG-ALLOW-DNSUPDATE', keyId)"
-                    title="Remove"
+                    [title]="'COMMON.DELETE' | translate"
                   ></button>
                 </span>
               }
               @if (tsigAllowDnsupdate().length === 0) {
-                <span class="text-muted small fst-italic">No TSIG key configured</span>
+                <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_TSIG_KEY" | translate }}</span>
               }
             </div>
             @if (availableTsigForDnsupdate().length > 0) {
@@ -977,7 +992,7 @@
                   [value]="newTsigAllowDnsupdate()"
                   (change)="newTsigAllowDnsupdate.set($any($event.target).value)"
                 >
-                  <option value="">— Choose a TSIG key —</option>
+                  <option value="">{{ "ZONE_DETAIL.CHOOSE_TSIG" | translate }}</option>
                   @for (k of availableTsigForDnsupdate(); track k.id) {
                     <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
                   }
@@ -988,21 +1003,21 @@
                   [disabled]="isSubmittingTransfer() || !newTsigAllowDnsupdate()"
                   (click)="addTsigAllowDnsupdateEntry()"
                 >
-                  <i class="bi bi-plus-lg"></i> Ajouter
+                  <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
                 </button>
               </div>
             } @else if (tsigKeys().length === 0) {
               <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
                 <i class="bi bi-info-circle-fill"></i>
-                No TSIG key available.
-                <a routerLink="/tsigkeys" class="ms-1">Create a TSIG key →</a>
+                {{ "ZONE_DETAIL.NO_TSIG_AVAILABLE" | translate }}
+                <a routerLink="/tsigkeys" class="ms-1">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
               </div>
             } @else {
-              <div class="text-muted small fst-italic">All available TSIG keys are already assigned.</div>
+              <div class="text-muted small fst-italic">{{ "ZONE_DETAIL.ALL_TSIG_ASSIGNED" | translate }}</div>
             }
             @if (tsigKeys().length > 0) {
               <div class="form-text mt-1">
-                <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>Manage TSIG keys</a>
+                <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }}</a>
               </div>
             }
           </div>
@@ -1010,14 +1025,13 @@
           <!-- ALLOW-DNSUPDATE-FROM -->
           <div class="mb-4">
             <label class="form-label fw-medium">
-              IP addresses allowed for dynamic updates
+              {{ "ZONE_DETAIL.ALLOW_DNSUPDATE_FROM" | translate }}
               <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                 >ALLOW-DNSUPDATE-FROM</span
               >
             </label>
             <div class="form-text mb-2">
-              Restrict dynamic updates to certain address ranges (CIDR format). If empty and no TSIG key is configured,
-              dynamic updates will be rejected.
+              {{ "ZONE_DETAIL.ALLOW_DNSUPDATE_FROM_HELP" | translate }}
             </div>
             <div class="d-flex flex-wrap gap-2 mb-2">
               @for (ip of allowDnsupdateFrom(); track ip) {
@@ -1031,12 +1045,12 @@
                     style="font-size: 0.6rem"
                     [disabled]="isSubmittingTransfer()"
                     (click)="removeMetadataEntry('ALLOW-DNSUPDATE-FROM', ip)"
-                    title="Remove"
+                    [title]="'COMMON.DELETE' | translate"
                   ></button>
                 </span>
               }
               @if (allowDnsupdateFrom().length === 0) {
-                <span class="text-muted small fst-italic">No IP restriction configured</span>
+                <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_IP_RESTRICTION" | translate }}</span>
               }
             </div>
             <div class="input-group" style="max-width: 420px">
@@ -1054,7 +1068,7 @@
                 [disabled]="isSubmittingTransfer() || !newAllowDnsupdateFrom().trim()"
                 (click)="addAllowDnsupdateFromEntry()"
               >
-                <i class="bi bi-plus-lg"></i> Add
+                <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
               </button>
             </div>
           </div>
@@ -1062,20 +1076,19 @@
           <!-- FORWARD-DNSUPDATE -->
           <div class="mb-4">
             <label class="form-label fw-medium">
-              Transfer dynamic updates to the master
+              {{ "ZONE_DETAIL.FORWARD_DNSUPDATE" | translate }}
               <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small"
                 >FORWARD-DNSUPDATE</span
               >
             </label>
             <div class="form-text mb-2">
-              IP address of the master server to which dynamic updates received must be forwarded. Leave empty to
-              disable forwarding.
+              {{ "ZONE_DETAIL.FORWARD_DNSUPDATE_HELP" | translate }}
             </div>
             <div class="input-group" style="max-width: 420px">
               <input
                 type="text"
                 class="form-control font-monospace"
-                placeholder="192.0.2.1 (optionnel)"
+                placeholder="192.0.2.1"
                 [value]="editForwardDnsupdate()"
                 (input)="editForwardDnsupdate.set($any($event.target).value)"
               />
@@ -1088,29 +1101,29 @@
                 @if (isSubmittingTransfer()) {
                   <span class="spinner-border spinner-border-sm me-1"></span>
                 }
-                <i class="bi bi-floppy me-1"></i>Save
+                <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
               </button>
             </div>
           </div>
         </div>
       }
     }
-    <!-- ── Tab: Paramètres ─────────────────────────────────────────────── -->
+    <!-- ── Tab: Settings ─────────────────────────────────────────────── -->
     @if (activeTab() === "settings") {
       <div class="card-body" style="max-width: 560px">
-        <h6 class="fw-bold mb-3">Settings of the zone</h6>
+        <h6 class="fw-bold mb-3">{{ "ZONE_DETAIL.SETTINGS_TITLE" | translate }}</h6>
 
         @if (settingsError()) {
           <div class="alert alert-danger py-2 small">{{ settingsError() }}</div>
         }
         @if (settingsSuccess()) {
           <div class="alert alert-success py-2 small">
-            <i class="bi bi-check-circle me-1"></i>Settings saved successfully.
+            <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.SETTINGS_SAVED" | translate }}
           </div>
         }
 
         <div class="mb-3">
-          <label class="form-label fw-medium">Type of zone</label>
+          <label class="form-label fw-medium">{{ "ZONE_DETAIL.ZONE_TYPE" | translate }}</label>
           <select class="form-select" [formField]="settingsForm.kind">
             <option value="Native">Native</option>
             <option value="Master">Master</option>
@@ -1119,45 +1132,51 @@
         </div>
 
         <div class="mb-3">
-          <label class="form-label fw-medium">Account</label>
+          <label class="form-label fw-medium">{{ "ZONE_DETAIL.ACCOUNT" | translate }}</label>
           @if (accounts().length > 0) {
             <select class="form-select" [formField]="settingsForm.account">
-              <option value="">— None —</option>
+              <option value="">{{ "COMMON.NONE" | translate }}</option>
               @for (acc of accounts(); track acc) {
                 <option [value]="acc">{{ acc }}</option>
               }
             </select>
           } @else {
-            <input class="form-control" placeholder="Leave empty for no account" [formField]="settingsForm.account" />
+            <input
+              class="form-control"
+              [placeholder]="'ZONE_DETAIL.LEAVE_EMPTY_ACCOUNT' | translate"
+              [formField]="settingsForm.account"
+            />
           }
-          <div class="form-text">Allows you to group zones by account/organization.</div>
+          <div class="form-text">{{ "ZONE_DETAIL.ACCOUNT_HELP" | translate }}</div>
         </div>
 
         <div class="mb-4">
-          <label class="form-label fw-medium">Master servers</label>
+          <label class="form-label fw-medium">{{ "ZONE_DETAIL.MASTER_SERVERS" | translate }}</label>
           <input
             type="text"
             class="form-control"
             placeholder="ns1.example.com, ns2.example.com"
             [formField]="settingsForm.masters"
           />
-          <div class="form-text">Required for Slave zones. Separate with commas.</div>
+          <div class="form-text">{{ "ZONE_DETAIL.MASTER_SERVERS_HELP" | translate }}</div>
         </div>
 
         <button class="btn btn-primary" (click)="onSaveSettings()" [disabled]="isSavingSettings()">
           @if (isSavingSettings()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
-          <i class="bi bi-floppy me-1"></i>Save
+          <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
         </button>
 
         <hr class="my-4" />
 
-        <h6 class="fw-semibold mb-3"><i class="bi bi-arrow-repeat me-2 text-primary"></i>Automatic DNS Reverse</h6>
+        <h6 class="fw-semibold mb-3">
+          <i class="bi bi-arrow-repeat me-2 text-primary"></i>{{ "ZONE_DETAIL.AUTO_REVERSE" | translate }}
+        </h6>
 
         @if (isLoadingMeta()) {
           <div class="d-flex align-items-center gap-2 text-muted small">
-            <span class="spinner-border spinner-border-sm"></span>Loading…
+            <span class="spinner-border spinner-border-sm"></span>{{ "COMMON.LOADING" | translate }}
           </div>
         } @else {
           <div class="d-flex align-items-center gap-3 mb-2">
@@ -1172,7 +1191,7 @@
                 (change)="toggleAutoReverse()"
               />
               <label class="form-check-label fw-medium" for="autoReverseToggle">
-                Automatic creation of PTR records
+                {{ "ZONE_DETAIL.AUTO_PTR" | translate }}
               </label>
             </div>
             @if (isTogglingAutoReverse()) {
@@ -1180,21 +1199,21 @@
             }
           </div>
           <div class="form-text">
-            When an <strong>A</strong> or <strong>AAAA</strong> record is added, the corresponding PTR record is
-            automatically created in the appropriate reverse zone (<code>in-addr.arpa</code> / <code>ip6.arpa</code>),
-            if it exists.
+            {{ "ZONE_DETAIL.AUTO_PTR_HELP" | translate }}
           </div>
         }
 
         <hr class="my-4" />
 
-        <h6 class="fw-semibold mb-1"><i class="bi bi-card-list me-2 text-primary"></i>Available Record Types</h6>
+        <h6 class="fw-semibold mb-1">
+          <i class="bi bi-card-list me-2 text-primary"></i>{{ "ZONE_DETAIL.RECORD_TYPES_TITLE" | translate }}
+        </h6>
         <p class="text-muted small mb-3">
-          Select the types proposed when creating or modifying records in this zone.
+          {{ "ZONE_DETAIL.RECORD_TYPES_DESC" | translate }}
           @if (zoneRecordTypesMeta()?.is_custom === false) {
-            <span class="badge bg-secondary ms-1">Global Defaults</span>
+            <span class="badge bg-secondary ms-1">{{ "ZONE_DETAIL.GLOBAL_DEFAULTS" | translate }}</span>
           } @else if (zoneRecordTypesMeta()?.is_custom) {
-            <span class="badge bg-info ms-1">Custom</span>
+            <span class="badge bg-info ms-1">{{ "ZONE_DETAIL.CUSTOM" | translate }}</span>
           }
         </p>
 
@@ -1204,11 +1223,13 @@
           </div>
         }
         @if (zoneTypesSuccess()) {
-          <div class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>Types saved.</div>
+          <div class="alert alert-success py-2 small">
+            <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.TYPES_SAVED" | translate }}
+          </div>
         }
 
         @if (availableGlobalTypes().length === 0) {
-          <p class="text-muted small">No types available for this zone type.</p>
+          <p class="text-muted small">{{ "ZONE_DETAIL.NO_TYPES" | translate }}</p>
         } @else {
           <div class="d-flex flex-wrap gap-2 mb-3">
             @for (rt of availableGlobalTypes(); track rt.id) {
@@ -1232,26 +1253,28 @@
               @if (isSavingZoneTypes()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              <i class="bi bi-floppy me-1"></i>Save
+              <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
             </button>
             @if (zoneRecordTypesMeta()?.is_custom) {
               <button
                 class="btn btn-sm btn-outline-secondary"
                 (click)="resetZoneRecordTypes()"
                 [disabled]="isSavingZoneTypes()"
-                title="Reset to global defaults"
+                [title]="'ZONE_DETAIL.RESET_TO_GLOBAL' | translate"
               >
-                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                <i class="bi bi-arrow-counterclockwise me-1"></i>{{ "COMMON.RESET" | translate }}
               </button>
             }
           </div>
         }
       </div>
     }
-    <!-- ── Tab: Membres ──────────────────────────────────────────────────── -->
+    <!-- ── Tab: Members ──────────────────────────────────────────────────── -->
     @if (activeTab() === "members") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold"><i class="bi bi-people me-2 text-primary"></i>Zone Members</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-people me-2 text-primary"></i>{{ "ZONE_DETAIL.MEMBERS_TITLE" | translate }}</span
+        >
       </div>
 
       @if (membersError()) {
@@ -1272,8 +1295,8 @@
         </div>
       } @else {
         <div class="card-body">
-          <!-- Ajouter un membre -->
-          <h6 class="fw-semibold mb-3">Add Member</h6>
+          <!-- Add a member -->
+          <h6 class="fw-semibold mb-3">{{ "ZONE_DETAIL.ADD_MEMBER" | translate }}</h6>
           <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
             <select
               class="form-select"
@@ -1281,7 +1304,7 @@
               [value]="newMemberUserId() ?? ''"
               (change)="newMemberUserId.set(+$any($event.target).value || null)"
             >
-              <option value="">— Choose a user —</option>
+              <option value="">{{ "ZONE_DETAIL.CHOOSE_USER" | translate }}</option>
               @for (u of availableUsersToAdd(); track u.id) {
                 <option [value]="u.id">{{ u.username }}</option>
               }
@@ -1292,32 +1315,32 @@
               [value]="newMemberRole()"
               (change)="newMemberRole.set($any($event.target).value)"
             >
-              <option value="admin">Administrator</option>
-              <option value="manager">Manager</option>
-              <option value="viewer">User</option>
+              <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
+              <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
+              <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
             </select>
             <button class="btn btn-primary" [disabled]="!newMemberUserId() || isSavingMember()" (click)="addMember()">
               @if (isSavingMember()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              <i class="bi bi-person-plus me-1"></i>Add
+              <i class="bi bi-person-plus me-1"></i>{{ "COMMON.ADD" | translate }}
             </button>
           </div>
 
-          <!-- Liste des membres -->
+          <!-- Members list -->
           @if (members().length === 0) {
             <div class="text-center py-4">
               <i class="bi bi-people text-muted" style="font-size: 2rem"></i>
-              <p class="text-muted mt-2 mb-0">No members in this zone</p>
+              <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_MEMBERS" | translate }}</p>
             </div>
           } @else {
-            <h6 class="fw-semibold mb-2">Current Members</h6>
+            <h6 class="fw-semibold mb-2">{{ "ZONE_DETAIL.CURRENT_MEMBERS" | translate }}</h6>
             <table class="table table-hover align-middle mb-0" style="max-width: 640px">
               <thead class="table-light">
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th class="text-end">Actions</th>
+                  <th>{{ "ZONE_DETAIL.USER" | translate }}</th>
+                  <th>{{ "ZONE_DETAIL.ROLE" | translate }}</th>
+                  <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1336,16 +1359,16 @@
                         [value]="m.role"
                         (change)="updateMemberRole(m, $any($event.target).value)"
                       >
-                        <option value="admin">Administrator</option>
-                        <option value="manager">Manager</option>
-                        <option value="viewer">User</option>
+                        <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
+                        <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
+                        <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
                       </select>
                     </td>
                     <td class="text-end">
                       <button
                         class="btn btn-sm btn-outline-danger"
                         (click)="removeMember(m)"
-                        title="Remove this member"
+                        [title]="'COMMON.DELETE' | translate"
                       >
                         <i class="bi bi-person-dash"></i>
                       </button>
@@ -1362,14 +1385,16 @@
   <!-- /card -->
 }
 
-<!-- ── Modal: Ajouter un enregistrement ─────────────────────────────────────── -->
+<!-- ── Modal: Add Record ─────────────────────────────────────────────────────── -->
 @if (showRecordModal()) {
   <div class="modal-backdrop-overlay" (click)="closeRecordModal()"></div>
   <div class="modal d-block" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Record</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>{{ "ZONE_DETAIL.ADD_RECORD_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeRecordModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onAddRecord()">
@@ -1381,7 +1406,9 @@
               </div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">Name (FQDN) <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.NAME_FQDN" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 #recordNameInput
                 type="text"
@@ -1398,7 +1425,7 @@
             </div>
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label fw-medium">Type</label>
+                <label class="form-label fw-medium">{{ "COMMON.TYPE" | translate }}</label>
                 <select class="form-select" [formField]="recordForm.type">
                   @for (t of dnsTypes(); track t) {
                     <option [value]="t">{{ t }}</option>
@@ -1406,12 +1433,14 @@
                 </select>
               </div>
               <div class="col-6">
-                <label class="form-label fw-medium">TTL (s)</label>
+                <label class="form-label fw-medium">{{ "ZONE_DETAIL.TTL" | translate }}</label>
                 <input type="number" class="form-control" [formField]="recordForm.ttl" />
               </div>
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">Content <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.CONTENT" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -1429,7 +1458,7 @@
             @if (autoReverseEnabled() && reverseZoneForCurrentRecord()) {
               <div class="alert alert-success py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
                 <i class="bi bi-arrow-repeat"></i>
-                PTR created automatically in reverse zone
+                {{ "ZONE_DETAIL.PTR_AUTO_CREATED" | translate }}
                 <code class="ms-1">{{ reverseZoneForCurrentRecord()!.name }}</code>
               </div>
             } @else if (
@@ -1439,17 +1468,19 @@
             ) {
               <div class="alert alert-warning py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
                 <i class="bi bi-exclamation-triangle"></i>
-                No reverse zone found for this address — PTR not created.
+                {{ "ZONE_DETAIL.NO_REVERSE_ZONE" | translate }}
               </div>
             }
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onAddRecord()" [disabled]="isSubmittingRecord()">
               @if (isSubmittingRecord()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Add
+              {{ "COMMON.ADD" | translate }}
             </button>
           </div>
         </form>
@@ -1458,14 +1489,16 @@
   </div>
 }
 
-<!-- ── Modal: Modifier un enregistrement ────────────────────────────────────────── -->
+<!-- ── Modal: Edit Record ────────────────────────────────────────────────────────── -->
 @if (showEditModal()) {
   <div class="modal-backdrop-overlay" (click)="closeEditModal()"></div>
   <div class="modal d-block" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Record</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>{{ "ZONE_DETAIL.EDIT_RECORD_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeEditModal()"></button>
         </div>
         <div class="modal-body">
@@ -1474,7 +1507,7 @@
           }
           <div class="row g-3 mb-3">
             <div class="col-8">
-              <label class="form-label fw-medium">Name (FQDN)</label>
+              <label class="form-label fw-medium">{{ "ZONE_DETAIL.NAME_FQDN" | translate }}</label>
               <input
                 type="text"
                 class="form-control font-monospace bg-body-secondary"
@@ -1483,12 +1516,12 @@
               />
             </div>
             <div class="col-4">
-              <label class="form-label fw-medium">Type</label>
+              <label class="form-label fw-medium">{{ "COMMON.TYPE" | translate }}</label>
               <input type="text" class="form-control bg-body-secondary" [value]="editingRRset()?.type" readonly />
             </div>
           </div>
           <div class="mb-3">
-            <label class="form-label fw-medium">TTL (s)</label>
+            <label class="form-label fw-medium">{{ "ZONE_DETAIL.TTL" | translate }}</label>
             <input
               type="number"
               class="form-control"
@@ -1497,7 +1530,7 @@
             />
           </div>
           <div class="mb-2">
-            <label class="form-label fw-medium d-block mb-2">Valeurs</label>
+            <label class="form-label fw-medium d-block mb-2">{{ "ZONE_DETAIL.VALUES" | translate }}</label>
             <div class="d-flex flex-column gap-2">
               @for (rec of editRecords(); track $index) {
                 <div class="input-group">
@@ -1508,14 +1541,14 @@
                     [class.text-muted]="rec.disabled"
                     [value]="rec.content"
                     (input)="updateEditRecord($index, $any($event.target).value)"
-                    placeholder="Content of the record"
+                    [placeholder]="'ZONE_DETAIL.CONTENT_PLACEHOLDER' | translate"
                   />
                   <button
                     class="btn"
                     [class.btn-outline-secondary]="!rec.disabled"
                     [class.btn-warning]="rec.disabled"
                     type="button"
-                    [title]="rec.disabled ? 'Enable' : 'Disable'"
+                    [title]="rec.disabled ? ('ZONE_DETAIL.ENABLE' | translate) : ('ZONE_DETAIL.DISABLE' | translate)"
                     (click)="toggleEditRecordDisabled($index)"
                   >
                     <i class="bi" [class.bi-eye-slash]="!rec.disabled" [class.bi-eye]="rec.disabled"></i>
@@ -1523,7 +1556,7 @@
                   <button
                     class="btn btn-outline-danger"
                     type="button"
-                    title="Delete this value"
+                    [title]="'ZONE_DETAIL.DELETE_VALUE' | translate"
                     (click)="removeEditRecord($index)"
                   >
                     <i class="bi bi-trash"></i>
@@ -1533,16 +1566,18 @@
             </div>
           </div>
           <button class="btn btn-sm btn-outline-primary mt-1" type="button" (click)="addEditRecord()">
-            <i class="bi bi-plus-lg me-1"></i>Add Value
+            <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ADD_VALUE" | translate }}
           </button>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
           <button type="button" class="btn btn-primary" (click)="onSaveEdit()" [disabled]="isSubmittingEdit()">
             @if (isSubmittingEdit()) {
               <span class="spinner-border spinner-border-sm me-1"></span>
             }
-            Save
+            {{ "COMMON.SAVE" | translate }}
           </button>
         </div>
       </div>
@@ -1550,21 +1585,25 @@
   </div>
 }
 
-<!-- ── Modal: Ajouter une métadonnée ─────────────────────────────────────────── -->
+<!-- ── Modal: Add Metadata ─────────────────────────────────────────────────────── -->
 @if (showMetaModal()) {
   <div class="modal-backdrop-overlay" (click)="closeMetaModal()"></div>
   <div class="modal d-block" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-tag me-2 text-primary"></i>Add Metadata</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-tag me-2 text-primary"></i>{{ "ZONE_DETAIL.ADD_METADATA_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeMetaModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onSaveMeta()">
           <button type="submit" class="d-none" aria-hidden="true"></button>
           <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label fw-medium">Type (kind) <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.META_TYPE" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 list="meta-kinds"
                 class="form-control font-monospace"
@@ -1584,7 +1623,9 @@
               }
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">Value <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.META_VALUE" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -1600,12 +1641,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeMetaModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeMetaModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onSaveMeta()" [disabled]="isSubmittingMeta()">
               @if (isSubmittingMeta()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Save
+              {{ "COMMON.SAVE" | translate }}
             </button>
           </div>
         </form>
@@ -1614,14 +1657,16 @@
   </div>
 }
 
-<!-- ── Modal: Générer une clé DNSSEC ─────────────────────────────────────────── -->
+<!-- ── Modal: Generate DNSSEC Key ─────────────────────────────────────────────────── -->
 @if (showKeyModal()) {
   <div class="modal-backdrop-overlay" (click)="closeKeyModal()"></div>
   <div class="modal d-block" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-shield-lock me-2 text-primary"></i>Generate a DNSSEC Key</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSSEC_KEY_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeKeyModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onCreateKey()">
@@ -1631,7 +1676,7 @@
               <div class="alert alert-danger py-2 small">{{ keyError() }}</div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">Key Type</label>
+              <label class="form-label fw-medium">{{ "ZONE_DETAIL.KEY_TYPE" | translate }}</label>
               <select class="form-select" [formField]="keyForm.keytype">
                 <option value="ksk">KSK — Key Signing Key</option>
                 <option value="zsk">ZSK — Zone Signing Key</option>
@@ -1647,22 +1692,27 @@
               </select>
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">Size (bits) <span class="text-muted small">— optional</span></label>
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.KEY_SIZE" | translate }}
+                <span class="text-muted small">{{ "ZONE_DETAIL.KEY_SIZE_OPTIONAL" | translate }}</span></label
+              >
               <input
                 type="number"
                 class="form-control"
-                placeholder="Default according to the algorithm"
+                [placeholder]="'ZONE_DETAIL.KEY_DEFAULT_SIZE' | translate"
                 [formField]="keyForm.bits"
               />
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeKeyModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeKeyModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onCreateKey()" [disabled]="isSubmittingKey()">
               @if (isSubmittingKey()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Generate
+              {{ "COMMON.GENERATE" | translate }}
             </button>
           </div>
         </form>

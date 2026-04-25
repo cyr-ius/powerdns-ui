@@ -5,10 +5,11 @@ import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { debounceTime, distinctUntilChanged, map, skip } from "rxjs";
 import { PdnsService } from "../../core/services/pdns.service";
 import { SearchResult } from "../../shared/models/pdns.model";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-search",
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, TranslateModule],
   templateUrl: "./search.component.html",
   styleUrl: "./search.component.css",
 })

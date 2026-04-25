@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-search me-2 text-primary"></i>Global search</h2>
-    <p class="text-muted small mb-0">Zones, DNS records and comments</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-search me-2 text-primary"></i>{{ "SEARCH.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "SEARCH.SUBTITLE" | translate }}</p>
   </div>
 </div>
 
@@ -10,7 +10,7 @@
   <div class="card-body">
     <form (submit)="onSubmit(); $event.preventDefault()" class="row g-3 align-items-end">
       <div class="col-md-6">
-        <label class="form-label fw-medium">Search term</label>
+        <label class="form-label fw-medium">{{ "SEARCH.SEARCH_TERM" | translate }}</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
           <input
@@ -21,21 +21,19 @@
             autofocus
           />
         </div>
-        <div class="form-text">
-          Use <code>*</code> as a multi-character wildcard, <code>?</code> for a single character.
-        </div>
+        <div class="form-text">{{ "SEARCH.WILDCARD_HELP" | translate }}</div>
       </div>
       <div class="col-md-3">
-        <label class="form-label fw-medium">Object type</label>
+        <label class="form-label fw-medium">{{ "SEARCH.OBJECT_TYPE" | translate }}</label>
         <select class="form-select" [formField]="searchForm.objectType">
-          <option value="all">All</option>
-          <option value="zone">Zones only</option>
-          <option value="record">Records only</option>
-          <option value="comment">Comments only</option>
+          <option value="all">{{ "SEARCH.ALL" | translate }}</option>
+          <option value="zone">{{ "SEARCH.ZONES_ONLY" | translate }}</option>
+          <option value="record">{{ "SEARCH.RECORDS_ONLY" | translate }}</option>
+          <option value="comment">{{ "SEARCH.COMMENTS_ONLY" | translate }}</option>
         </select>
       </div>
       <div class="col-md-2">
-        <label class="form-label fw-medium">Max results</label>
+        <label class="form-label fw-medium">{{ "SEARCH.MAX_RESULTS" | translate }}</label>
         <input type="number" class="form-control" [formField]="searchForm.max" />
       </div>
       <div class="col-md-1 d-grid">
@@ -60,23 +58,25 @@
 @if (isLoading()) {
   <div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2">Research in progress…</p>
+    <p class="text-muted mt-2">{{ "SEARCH.SEARCHING" | translate }}</p>
   </div>
 } @else if (hasSearched()) {
   <!-- Summary -->
   <div class="d-flex align-items-center gap-2 mb-3">
     <span class="text-muted small">
-      {{ results().length }} result(s) — <span class="text-primary">{{ zones().length }} zone(s)</span>,
-      <span class="text-success">{{ records().length }} record(s)</span>,
-      <span class="text-secondary">{{ comments().length }} comment(s)</span>
+      {{
+        "SEARCH.RESULTS"
+          | translate
+            : { total: results().length, zones: zones().length, records: records().length, comments: comments().length }
+      }}
     </span>
   </div>
 
   @if (results().length === 0) {
     <div class="text-center py-5">
       <i class="bi bi-search text-muted" style="font-size: 2.5rem"></i>
-      <p class="text-muted mt-2 mb-0">No results for this search</p>
-      <p class="text-muted small">Try with wildcards: <code>*.example.com</code></p>
+      <p class="text-muted mt-2 mb-0">{{ "SEARCH.NO_RESULTS" | translate }}</p>
+      <p class="text-muted small">{{ "SEARCH.NO_RESULTS_HELP" | translate }}</p>
     </div>
   } @else {
     <!-- Zones -->
@@ -84,7 +84,7 @@
       <div class="card shadow-sm mb-4">
         <div class="card-header py-2">
           <span class="fw-semibold text-primary">
-            <i class="bi bi-globe2 me-2"></i>Zones
+            <i class="bi bi-globe2 me-2"></i>{{ "NAV.DNS_ZONES" | translate }}
             <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zones().length }}</span>
           </span>
         </div>
@@ -119,11 +119,11 @@
           <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
-                <th>Nom</th>
-                <th>Type</th>
-                <th>TTL</th>
-                <th>Content</th>
-                <th>Zone</th>
+                <th>{{ "SEARCH.COL_NAME" | translate }}</th>
+                <th>{{ "SEARCH.COL_TYPE" | translate }}</th>
+                <th>{{ "SEARCH.COL_TTL" | translate }}</th>
+                <th>{{ "SEARCH.COL_CONTENT" | translate }}</th>
+                <th>{{ "SEARCH.COL_ZONE" | translate }}</th>
                 <th></th>
               </tr>
             </thead>

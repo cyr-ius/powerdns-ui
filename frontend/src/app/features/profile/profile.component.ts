@@ -5,6 +5,7 @@ import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 import { AuthService } from "../../core/services/auth.service";
 import { Theme, ThemeService } from "../../core/services/theme.service";
+import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 interface AppInfo {
   version: string;
@@ -20,7 +21,7 @@ interface GithubRelease {
 
 @Component({
   selector: "app-profile",
-  imports: [RouterLink, FormField],
+  imports: [RouterLink, FormField, TranslateModule],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.css",
 })
@@ -28,6 +29,15 @@ export class ProfileComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly themeService = inject(ThemeService);
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
+
+  readonly currentLang = signal(localStorage.getItem('lang') ?? 'en');
+
+  setLanguage(lang: string): void {
+    this.translate.use(lang);
+    this.currentLang.set(lang);
+    localStorage.setItem('lang', lang);
+  }
 
   readonly isChangingPassword = signal(false);
   readonly passwordSuccess = signal(false);

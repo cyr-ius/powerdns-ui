@@ -4,7 +4,7 @@
       <div class="text-center mb-4">
         <i class="bi bi-hdd-network text-primary" style="font-size: 3rem"></i>
         <h1 class="h3 mt-2 fw-bold">PowerDNS UI</h1>
-        <p class="text-muted small">Authoritative DNS Server Manager</p>
+        <p class="text-muted small">{{ "LOGIN.SUBTITLE" | translate }}</p>
       </div>
 
       @if (error()) {
@@ -17,7 +17,7 @@
       @if (!localLoginDisabled()) {
         <form (submit)="onSubmit(); $event.preventDefault()">
           <div class="mb-3">
-            <label for="username" class="form-label fw-medium">Username</label>
+            <label for="username" class="form-label fw-medium">{{ "LOGIN.USERNAME" | translate }}</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-person"></i></span>
               <input
@@ -38,7 +38,7 @@
           </div>
 
           <div class="mb-4">
-            <label for="password" class="form-label fw-medium">Password</label>
+            <label for="password" class="form-label fw-medium">{{ "LOGIN.PASSWORD" | translate }}</label>
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-lock"></i></span>
               <input
@@ -62,7 +62,7 @@
             @if (loginForm().submitting()) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             }
-            Sign In
+            {{ "LOGIN.SIGN_IN" | translate }}
           </button>
         </form>
       }
@@ -71,7 +71,7 @@
         @if (!localLoginDisabled()) {
           <div class="divider my-4 d-flex align-items-center gap-2">
             <hr class="flex-grow-1 m-0" />
-            <span class="text-muted small">or</span>
+            <span class="text-muted small">{{ "LOGIN.OR" | translate }}</span>
             <hr class="flex-grow-1 m-0" />
           </div>
         }
@@ -87,7 +87,7 @@
             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
           }
           <i class="bi bi-shield-lock me-2"></i>
-          Sign In with SSO (OpenID Connect)
+          {{ "LOGIN.SIGN_IN_SSO" | translate }}
         </button>
       }
     </div>

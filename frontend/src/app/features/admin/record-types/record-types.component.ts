@@ -2,10 +2,11 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { AdminService } from "../../../core/services/admin.service";
 import { RecordType } from "../../../shared/models/admin.model";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-admin-record-types",
-  imports: [FormField],
+  imports: [FormField, TranslateModule],
   templateUrl: "./record-types.component.html",
 })
 export class AdminRecordTypesComponent implements OnInit {

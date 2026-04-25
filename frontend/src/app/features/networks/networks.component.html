@@ -1,16 +1,20 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-primary"></i>Networks</h2>
-    <p class="text-muted small mb-0">Network association → DNS view (split-horizon)</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-diagram-3 me-2 text-primary"></i>{{ "NETWORKS.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "NETWORKS.SUBTITLE" | translate }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openAddModal()"><i class="bi bi-plus-lg me-1"></i>Add</button>
+  <button class="btn btn-primary" (click)="openAddModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "NETWORKS.ADD" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadNetworks()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadNetworks()">
+      {{ "COMMON.RETRY" | translate }}
+    </button>
   </div>
 }
 
@@ -19,21 +23,21 @@
     @if (isLoading()) {
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="text-muted mt-2 mb-0">Loading networks…</p>
+        <p class="text-muted mt-2 mb-0">{{ "NETWORKS.LOADING" | translate }}</p>
       </div>
     } @else if (networks().length === 0) {
       <div class="text-center py-5">
         <i class="bi bi-diagram-3 text-muted" style="font-size: 2.5rem"></i>
-        <p class="text-muted mt-2 mb-0">No networks configured</p>
-        <p class="text-muted small">Associate network ranges with DNS views for split-horizon.</p>
+        <p class="text-muted mt-2 mb-0">{{ "NETWORKS.NO_NETWORKS" | translate }}</p>
+        <p class="text-muted small">{{ "NETWORKS.NO_NETWORKS_HELP" | translate }}</p>
       </div>
     } @else {
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>Network (CIDR)</th>
-            <th>DNS View</th>
-            <th class="text-end">Actions</th>
+            <th>{{ "NETWORKS.COL_NETWORK" | translate }}</th>
+            <th>{{ "NETWORKS.COL_VIEW" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -58,21 +62,29 @@
               </td>
               <td class="text-end">
                 @if (editingNetwork()?.network === net.network) {
-                  <button class="btn btn-sm btn-success me-1" (click)="saveEdit(net)" title="Save changes">
+                  <button
+                    class="btn btn-sm btn-success me-1"
+                    (click)="saveEdit(net)"
+                    [title]="'COMMON.SAVE' | translate"
+                  >
                     <i class="bi bi-check-lg"></i>
                   </button>
-                  <button class="btn btn-sm btn-secondary" (click)="cancelEdit()" title="Cancel">
+                  <button class="btn btn-sm btn-secondary" (click)="cancelEdit()" [title]="'COMMON.CANCEL' | translate">
                     <i class="bi bi-x-lg"></i>
                   </button>
                 } @else {
                   <button
                     class="btn btn-sm btn-outline-secondary me-1"
                     (click)="startEdit(net)"
-                    title="Modifier la vue"
+                    [title]="'COMMON.EDIT' | translate"
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <button class="btn btn-sm btn-outline-danger" (click)="deleteNetwork(net)" title="Delete">
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    (click)="deleteNetwork(net)"
+                    [title]="'COMMON.DELETE' | translate"
+                  >
                     <i class="bi bi-trash"></i>
                   </button>
                 }
@@ -91,7 +103,9 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-diagram-3 me-2 text-primary"></i>Add Network Association</h5>
+          <h5 class="modal-title">
+            <i class="bi bi-diagram-3 me-2 text-primary"></i>{{ "NETWORKS.ADD_TITLE" | translate }}
+          </h5>
           <button type="button" class="btn-close" (click)="closeAddModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onAdd()">
@@ -101,7 +115,9 @@
               <div class="alert alert-danger py-2 small">{{ addError() }}</div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">Network CIDR <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "NETWORKS.NETWORK_CIDR" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -116,14 +132,16 @@
               }
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">DNS View <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "NETWORKS.DNS_VIEW" | translate }} <span class="text-danger">*</span></label
+              >
               @if (availableViews().length > 0) {
                 <select
                   class="form-select"
                   [class.is-invalid]="addForm.view().touched() && addForm.view().errors().length"
                   [formField]="addForm.view"
                 >
-                  <option value="">— Select a view —</option>
+                  <option value="">{{ "NETWORKS.SELECT_VIEW" | translate }}</option>
                   @for (v of availableViews(); track v) {
                     <option [value]="v">{{ v }}</option>
                   }
@@ -145,12 +163,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onAdd()" [disabled]="isSubmitting()">
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Add
+              {{ "COMMON.ADD" | translate }}
             </button>
           </div>
         </form>

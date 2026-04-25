@@ -2,10 +2,11 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { ActivatedRoute, Router } from "@angular/router";
 import { AuthService } from "../../../core/services/auth.service";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-login",
-  imports: [FormField],
+  imports: [FormField, TranslateModule],
   templateUrl: "./login.component.html",
   styleUrl: "./login.component.css",
 })

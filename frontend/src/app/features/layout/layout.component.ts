@@ -1,13 +1,14 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
+import { TranslateModule } from "@ngx-translate/core";
 import { AuthService } from "../../core/services/auth.service";
 import { ServerService } from "../../core/services/server.service";
 import { ThemeService } from "../../core/services/theme.service";
 
 @Component({
   selector: "app-layout",
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslateModule],
   templateUrl: "./layout.component.html",
   styleUrl: "./layout.component.css",
 })

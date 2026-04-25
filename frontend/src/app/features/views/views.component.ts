@@ -2,10 +2,11 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { ViewDetail } from "../../shared/models/pdns.model";
+import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-views",
-  imports: [FormField],
+  imports: [FormField, TranslateModule],
   templateUrl: "./views.component.html",
 })
 export class ViewsComponent implements OnInit {

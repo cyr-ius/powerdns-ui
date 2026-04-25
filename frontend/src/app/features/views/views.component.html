@@ -1,29 +1,33 @@
 <div class="d-flex align-items-center justify-content-between mb-4">
   <div>
-    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-eye me-2 text-primary"></i>DNS Views</h2>
-    <p class="text-muted small mb-0">Split-horizon — association zones → DNS views</p>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-eye me-2 text-primary"></i>{{ "VIEWS.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "VIEWS.SUBTITLE" | translate }}</p>
   </div>
-  <button class="btn btn-primary" (click)="openAddViewModal()"><i class="bi bi-plus-lg me-1"></i>New View</button>
+  <button class="btn btn-primary" (click)="openAddViewModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "VIEWS.NEW_VIEW" | translate }}
+  </button>
 </div>
 
 @if (error()) {
   <div class="alert alert-danger d-flex align-items-center gap-2">
     <i class="bi bi-exclamation-triangle-fill"></i>
     <span>{{ error() }}</span>
-    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadViews()">Retry</button>
+    <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadViews()">
+      {{ "COMMON.RETRY" | translate }}
+    </button>
   </div>
 }
 
 @if (isLoading()) {
   <div class="text-center py-5">
     <div class="spinner-border text-primary" role="status"></div>
-    <p class="text-muted mt-2 mb-0">Loading views…</p>
+    <p class="text-muted mt-2 mb-0">{{ "VIEWS.LOADING" | translate }}</p>
   </div>
 } @else if (views().length === 0) {
   <div class="text-center py-5">
     <i class="bi bi-eye text-muted" style="font-size: 2.5rem"></i>
-    <p class="text-muted mt-2 mb-0">No views configured</p>
-    <p class="text-muted small">DNS views allow you to serve different zones based on the origin of the requests.</p>
+    <p class="text-muted mt-2 mb-0">{{ "VIEWS.NO_VIEWS" | translate }}</p>
+    <p class="text-muted small">{{ "VIEWS.NO_VIEWS_HELP" | translate }}</p>
   </div>
 } @else {
   <div class="row g-3">
@@ -31,7 +35,7 @@
     <div class="col-12 col-md-4">
       <div class="card shadow-sm h-100">
         <div class="card-header d-flex align-items-center justify-content-between py-2">
-          <span class="fw-medium small">Views ({{ views().length }})</span>
+          <span class="fw-medium small">{{ "VIEWS.VIEWS_COUNT" | translate: { count: views().length } }}</span>
         </div>
         <div class="list-group list-group-flush">
           @for (view of views(); track trackByViewName($index, view)) {
@@ -49,7 +53,7 @@
                 <button
                   class="btn btn-sm p-0 border-0 text-danger"
                   (click)="$event.stopPropagation(); deleteView(view)"
-                  title="Supprimer la vue"
+                  [title]="'VIEWS.DELETE_VIEW' | translate"
                 >
                   <i class="bi bi-trash small"></i>
                 </button>
@@ -65,23 +69,25 @@
       @if (selectedView()) {
         <div class="card shadow-sm">
           <div class="card-header d-flex align-items-center justify-content-between py-2">
-            <span class="fw-medium"> <i class="bi bi-globe2 me-1"></i>Zones in « {{ selectedView()!.name }} » </span>
+            <span class="fw-medium">
+              <i class="bi bi-globe2 me-1"></i>{{ "VIEWS.ZONES_IN" | translate: { name: selectedView()!.name } }}
+            </span>
             <button class="btn btn-sm btn-outline-primary" (click)="openAddZoneModal()">
-              <i class="bi bi-plus-lg me-1"></i>Add Zone
+              <i class="bi bi-plus-lg me-1"></i>{{ "VIEWS.ADD_ZONE" | translate }}
             </button>
           </div>
           <div class="table-responsive">
             @if (selectedZones().length === 0) {
               <div class="text-center py-4">
                 <i class="bi bi-globe2 text-muted" style="font-size: 2rem"></i>
-                <p class="text-muted small mt-2 mb-0">No zones in this view</p>
+                <p class="text-muted small mt-2 mb-0">{{ "VIEWS.NO_ZONES" | translate }}</p>
               </div>
             } @else {
               <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                   <tr>
-                    <th>Zone</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ "COMMON.NAME" | translate }}</th>
+                    <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -94,7 +100,7 @@
                         <button
                           class="btn btn-sm btn-outline-danger"
                           (click)="removeZone(zone)"
-                          title="Retirer de la vue"
+                          [title]="'VIEWS.REMOVE_FROM_VIEW' | translate"
                         >
                           <i class="bi bi-x-lg"></i>
                         </button>
@@ -111,7 +117,7 @@
           <div class="d-flex align-items-center justify-content-center h-100 py-5 text-muted">
             <div class="text-center">
               <i class="bi bi-arrow-left-circle" style="font-size: 2rem"></i>
-              <p class="mt-2 mb-0 small">Select a view to see its zones</p>
+              <p class="mt-2 mb-0 small">{{ "VIEWS.SELECT_VIEW" | translate }}</p>
             </div>
           </div>
         </div>
@@ -127,7 +133,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow">
         <div class="modal-header">
-          <h5 class="modal-title"><i class="bi bi-eye me-2 text-primary"></i>Create New View</h5>
+          <h5 class="modal-title"><i class="bi bi-eye me-2 text-primary"></i>{{ "VIEWS.CREATE_TITLE" | translate }}</h5>
           <button type="button" class="btn-close" (click)="closeAddViewModal()"></button>
         </div>
         <form (submit)="$event.preventDefault(); onCreateView()">
@@ -139,7 +145,9 @@
               </div>
             }
             <div class="mb-3">
-              <label class="form-label fw-medium">View Name <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "VIEWS.VIEW_NAME" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control"
@@ -154,7 +162,9 @@
               }
             </div>
             <div class="mb-0">
-              <label class="form-label fw-medium">Première zone <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "VIEWS.FIRST_ZONE" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -162,7 +172,7 @@
                 placeholder="example.com."
                 [formField]="newViewForm.zoneName"
               />
-              <div class="form-text">A view must contain at least one zone to be created.</div>
+              <div class="form-text">{{ "VIEWS.FIRST_ZONE_HELP" | translate }}</div>
               @if (newViewForm.zoneName().touched() && newViewForm.zoneName().errors().length) {
                 <div class="invalid-feedback">
                   {{ newViewForm.zoneName().errors()[0].message }}
@@ -171,12 +181,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeAddViewModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeAddViewModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onCreateView()" [disabled]="isSubmitting()">
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Create
+              {{ "COMMON.CREATE" | translate }}
             </button>
           </div>
         </form>
@@ -193,7 +205,8 @@
       <div class="modal-content shadow">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-globe2 me-2 text-primary"></i>Add Zone to « {{ selectedView()?.name }} »
+            <i class="bi bi-globe2 me-2 text-primary"></i
+            >{{ "VIEWS.ADD_ZONE_TITLE" | translate: { name: selectedView()?.name } }}
           </h5>
           <button type="button" class="btn-close" (click)="closeAddZoneModal()"></button>
         </div>
@@ -206,7 +219,9 @@
               </div>
             }
             <div class="mb-0">
-              <label class="form-label fw-medium">Nom de la zone <span class="text-danger">*</span></label>
+              <label class="form-label fw-medium"
+                >{{ "VIEWS.ZONE_NAME" | translate }} <span class="text-danger">*</span></label
+              >
               <input
                 type="text"
                 class="form-control font-monospace"
@@ -222,12 +237,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeAddZoneModal()">Cancel</button>
+            <button type="button" class="btn btn-secondary" (click)="closeAddZoneModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
             <button type="button" class="btn btn-primary" (click)="onAddZone()" [disabled]="isSubmitting()">
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
-              Add Zone
+              {{ "VIEWS.ADD_ZONE" | translate }}
             </button>
           </div>
         </form>

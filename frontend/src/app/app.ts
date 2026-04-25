@@ -1,5 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/services/auth.service';
 import { ThemeService } from './core/services/theme.service';
 
@@ -14,6 +15,10 @@ export class App implements OnInit {
 
   constructor() {
     inject(ThemeService);
+    const translate = inject(TranslateService);
+    const lang = localStorage.getItem('lang') ?? navigator.language.split('-')[0];
+    const supported = ['en', 'fr', 'es'];
+    translate.use(supported.includes(lang) ? lang : 'en');
   }
 
   async ngOnInit(): Promise<void> {
