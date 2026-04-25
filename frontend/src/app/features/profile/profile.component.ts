@@ -124,6 +124,7 @@ export class ProfileComponent implements OnInit {
         const release = await firstValueFrom(
           this.http.get<GithubRelease>(
             `https://api.github.com/repos/${info.github_repository}/releases/latest`,
+            { headers: { Accept: "application/vnd.github+json" } },
           ),
         );
         this.latestRelease.set(release);
