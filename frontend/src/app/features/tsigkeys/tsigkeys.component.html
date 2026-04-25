@@ -120,9 +120,10 @@
                 placeholder="my-tsig-key"
                 [formField]="createForm.name"
               />
+              <div class="form-text">{{ "TSIGKEYS.NAME_HELP" | translate }}</div>
               @if (createForm.name().touched() && createForm.name().errors().length) {
                 <div class="invalid-feedback">
-                  {{ createForm.name().errors()[0].message }}
+                  {{ createForm.name().errors()[0].message | translate }}
                 </div>
               }
             </div>

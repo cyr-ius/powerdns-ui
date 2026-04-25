@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
-import { form, FormField, required, submit } from "@angular/forms/signals";
+import { form, FormField, pattern, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { TsigKey } from "../../shared/models/pdns.model";
 import { TranslateModule } from "@ngx-translate/core";
@@ -33,7 +33,8 @@ export class TsigKeysComponent implements OnInit {
     secret: "",
   });
   readonly createForm = form(this.createModel, (s) => {
-    required(s.name, { message: "Le nom est requis" });
+    required(s.name, { message: "TSIGKEYS.NAME_REQUIRED" });
+    pattern(s.name, /^[a-zA-Z0-9._-]+$/, { message: "TSIGKEYS.NAME_PATTERN" });
   });
 
   async ngOnInit(): Promise<void> {
