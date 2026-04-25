@@ -209,7 +209,13 @@
         </button>
       </li>
       <li class="nav-item">
-        <button class="nav-link" [class.active]="activeTab() === 'members'" (click)="setTab('members')">
+        <button
+          class="nav-link"
+          [class.active]="activeTab() === 'members'"
+          [disabled]="!zone()?.account"
+          [title]="!zone()?.account ? ('ZONE_DETAIL.MEMBERS_NO_ACCOUNT_TOOLTIP' | translate) : ''"
+          (click)="zone()?.account && setTab('members')"
+        >
           <i class="bi bi-people me-1"></i>{{ "ZONE_DETAIL.TAB_MEMBERS" | translate }}
           @if (members().length > 0) {
             <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ members().length }}</span>
@@ -1145,35 +1151,18 @@
           </select>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-medium">{{ "ZONE_DETAIL.ACCOUNT" | translate }}</label>
-          @if (accounts().length > 0) {
-            <select class="form-select" [formField]="settingsForm.account">
-              <option value="">{{ "COMMON.NONE" | translate }}</option>
-              @for (acc of accounts(); track acc) {
-                <option [value]="acc">{{ acc }}</option>
-              }
-            </select>
-          } @else {
+        @if (settingsModel().kind === "Slave" || settingsModel().kind === "Secondary") {
+          <div class="mb-4">
+            <label class="form-label fw-medium">{{ "ZONE_DETAIL.MASTER_SERVERS" | translate }}</label>
             <input
+              type="text"
               class="form-control"
-              [placeholder]="'ZONE_DETAIL.LEAVE_EMPTY_ACCOUNT' | translate"
-              [formField]="settingsForm.account"
+              placeholder="ns1.example.com, ns2.example.com"
+              [formField]="settingsForm.masters"
             />
-          }
-          <div class="form-text">{{ "ZONE_DETAIL.ACCOUNT_HELP" | translate }}</div>
-        </div>
-
-        <div class="mb-4">
-          <label class="form-label fw-medium">{{ "ZONE_DETAIL.MASTER_SERVERS" | translate }}</label>
-          <input
-            type="text"
-            class="form-control"
-            placeholder="ns1.example.com, ns2.example.com"
-            [formField]="settingsForm.masters"
-          />
-          <div class="form-text">{{ "ZONE_DETAIL.MASTER_SERVERS_HELP" | translate }}</div>
-        </div>
+            <div class="form-text">{{ "ZONE_DETAIL.MASTER_SERVERS_HELP" | translate }}</div>
+          </div>
+        }
 
         <button class="btn btn-primary" (click)="onSaveSettings()" [disabled]="isSavingSettings()">
           @if (isSavingSettings()) {

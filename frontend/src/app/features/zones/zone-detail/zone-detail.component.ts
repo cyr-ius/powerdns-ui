@@ -215,9 +215,7 @@ export class ZoneDetailComponent implements OnInit {
   readonly isSavingSettings = signal(false);
   readonly settingsError = signal<string | null>(null);
   readonly settingsSuccess = signal(false);
-  readonly accounts = signal<string[]>([]);
-
-  readonly settingsModel = signal({ kind: "Native", account: "", masters: "" });
+  readonly settingsModel = signal({ kind: "Native", masters: "" });
   readonly settingsForm = form(this.settingsModel, (s) => {
     required(s.kind);
   });
@@ -261,7 +259,7 @@ export class ZoneDetailComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.zoneId = this.route.snapshot.paramMap.get("id") ?? "";
-    await Promise.all([this.loadZone(), this.loadAccounts(), this.loadAllZones(), this.loadZoneRole()]);
+    await Promise.all([this.loadZone(), this.loadAllZones(), this.loadZoneRole()]);
     void this.loadMetadata();
     void this.loadZoneRecordTypes();
   }
@@ -272,14 +270,6 @@ export class ZoneDetailComponent implements OnInit {
       this.currentRole.set(role);
     } catch {
       // non-blocking — falls back to null (no write access)
-    }
-  }
-
-  async loadAccounts(): Promise<void> {
-    try {
-      this.accounts.set(await this.pdns.getAccounts());
-    } catch {
-      // non-blocking
     }
   }
 
@@ -310,7 +300,6 @@ export class ZoneDetailComponent implements OnInit {
       this.recordsPage.set(1);
       this.settingsModel.set({
         kind: data.kind,
-        account: data.account ?? "",
         masters: data.masters?.join(", ") ?? "",
       });
     } catch {
@@ -844,7 +833,7 @@ export class ZoneDetailComponent implements OnInit {
       this.settingsError.set(null);
       this.settingsSuccess.set(false);
       try {
-        const { kind, account, masters } = this.settingsModel();
+        const { kind, masters } = this.settingsModel();
         const mastersList = masters
           .split(",")
           .map((s) => s.trim())
@@ -852,7 +841,6 @@ export class ZoneDetailComponent implements OnInit {
         await this.pdns.updateZone(this.zoneId, {
           name: zone.name,
           kind,
-          account: account || null,
           masters: mastersList,
         });
         this.settingsSuccess.set(true);
