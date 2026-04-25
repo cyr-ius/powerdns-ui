@@ -206,7 +206,12 @@
     "KEY_DEFAULT_SIZE": "Default according to the algorithm",
     "ACCOUNT_HELP": "Allows you to group zones by account/organization.",
     "LEAVE_EMPTY_ACCOUNT": "Leave empty for no account",
-    "CHECKING": "Checking…"
+    "CHECKING": "Checking…",
+    "TAB_API_KEYS": "API Keys",
+    "API_KEYS_EMPTY": "No API or ACME keys are associated with this zone.",
+    "API_KEY_SCOPE": "Scope",
+    "API_KEY_UNRESTRICTED": "Unrestricted access",
+    "API_KEY_ZONE_ALLOWED": "Zone allowed"
   },
   "ACCOUNTS": {
     "TITLE": "Accounts",

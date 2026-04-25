@@ -206,7 +206,12 @@
     "KEY_DEFAULT_SIZE": "Par défaut selon l'algorithme",
     "ACCOUNT_HELP": "Permet de regrouper les zones par compte/organisation.",
     "LEAVE_EMPTY_ACCOUNT": "Laisser vide pour aucun compte",
-    "CHECKING": "Vérification…"
+    "CHECKING": "Vérification…",
+    "TAB_API_KEYS": "Clés API",
+    "API_KEYS_EMPTY": "Aucune clé API ou ACME n'est associée à cette zone.",
+    "API_KEY_SCOPE": "Portée",
+    "API_KEY_UNRESTRICTED": "Accès non restreint",
+    "API_KEY_ZONE_ALLOWED": "Zone autorisée"
   },
   "ACCOUNTS": {
     "TITLE": "Comptes",

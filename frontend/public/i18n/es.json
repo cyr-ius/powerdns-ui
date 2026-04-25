@@ -206,7 +206,12 @@
     "KEY_DEFAULT_SIZE": "Por defecto según el algoritmo",
     "ACCOUNT_HELP": "Permite agrupar zonas por cuenta/organización.",
     "LEAVE_EMPTY_ACCOUNT": "Dejar vacío para ninguna cuenta",
-    "CHECKING": "Verificando…"
+    "CHECKING": "Verificando…",
+    "TAB_API_KEYS": "Claves API",
+    "API_KEYS_EMPTY": "No hay claves API o ACME asociadas a esta zona.",
+    "API_KEY_SCOPE": "Alcance",
+    "API_KEY_UNRESTRICTED": "Acceso sin restricciones",
+    "API_KEY_ZONE_ALLOWED": "Zona autorizada"
   },
   "ACCOUNTS": {
     "TITLE": "Cuentas",
