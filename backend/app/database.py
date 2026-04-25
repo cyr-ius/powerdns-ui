@@ -65,6 +65,14 @@ async def init_db() -> None:
                     "ALTER TABLE useraccount ADD COLUMN role VARCHAR NOT NULL DEFAULT 'admin'"
                 )
             )
+        result = await conn.execute(text("PRAGMA table_info(acmeapikey)"))
+        acme_columns = {row[1] for row in result.fetchall()}
+        if "key_type" not in acme_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE acmeapikey ADD COLUMN key_type VARCHAR(10) NOT NULL DEFAULT 'acme'"
+                )
+            )
         # Seed default record types if the table is empty
         result = await conn.execute(text("SELECT COUNT(*) FROM recordtype"))
         if result.scalar() == 0:
