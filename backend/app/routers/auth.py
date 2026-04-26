@@ -154,7 +154,7 @@ async def oidc_login(db: AsyncSession = Depends(get_db)) -> OidcLoginResponse:
 
 @router.get("/oidc/callback")
 async def oidc_callback(
-    code: str, state: str, db: AsyncSession = Depends(get_db)
+    request: Request, code: str, state: str, db: AsyncSession = Depends(get_db)
 ) -> RedirectResponse:
     cfg = await _get_oidc_cfg(db)
     if not cfg:
@@ -163,8 +163,22 @@ async def oidc_callback(
         )
     try:
         auth_service.validate_and_consume_oidc_state(state)
-        tokens = await auth_service.exchange_oidc_code(code, state, cfg)
+    except ValueError:
+        logger.warning(
+            "OIDC state validation failed (params: %s)", dict(request.query_params)
+        )
+        return RedirectResponse(url="/login?error=oidc_state_invalid")
+    try:
+        tokens = await auth_service.exchange_oidc_code(code, cfg)
+    except Exception as exc:
+        _log_oidc_error("token exchange", exc)
+        return RedirectResponse(url="/login?error=oidc_failed")
+    try:
         userinfo = await auth_service.get_oidc_userinfo(tokens["access_token"], cfg)
+    except Exception as exc:
+        _log_oidc_error("userinfo fetch", exc)
+        return RedirectResponse(url="/login?error=oidc_failed")
+    try:
         username: str = userinfo.get("preferred_username") or userinfo.get("sub", "")
         email: str | None = userinfo.get("email")
         user = await auth_service.get_or_create_oidc_user(
@@ -172,8 +186,21 @@ async def oidc_callback(
         )
         jwt_token = auth_service.create_access_token({"sub": user.username})
         return RedirectResponse(url=f"/#token={jwt_token}")
-    except ValueError:
-        return RedirectResponse(url="/login?error=oidc_state_invalid")
     except Exception as exc:
-        logger.error("OIDC callback failed: %s", exc)
+        _log_oidc_error("user provisioning", exc)
         return RedirectResponse(url="/login?error=oidc_failed")
+
+
+def _log_oidc_error(step: str, exc: Exception) -> None:
+    import httpx as _httpx
+
+    if isinstance(exc, _httpx.HTTPStatusError):
+        logger.error(
+            "OIDC %s failed — HTTP %s %s — body: %s",
+            step,
+            exc.response.status_code,
+            exc.request.url,
+            exc.response.text,
+        )
+    else:
+        logger.exception("OIDC %s failed", step)

@@ -135,9 +135,7 @@ async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
     return f"{auth_endpoint}?{urlencode(params)}"
 
 
-async def exchange_oidc_code(
-    code: str, state: str, cfg_override: dict | None = None
-) -> dict:
+async def exchange_oidc_code(code: str, cfg_override: dict | None = None) -> dict:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)
     token_endpoint = discovery["token_endpoint"]
@@ -148,9 +146,8 @@ async def exchange_oidc_code(
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": cfg["redirect_uri"],
-                "client_id": cfg["client_id"],
-                "client_secret": cfg["client_secret"],
             },
+            auth=(cfg["client_id"], cfg["client_secret"]),
         )
         resp.raise_for_status()
         return resp.json()  # type: ignore[no-any-return]
