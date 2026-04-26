@@ -7,42 +7,51 @@
 
 <!-- Search bar -->
 <div class="card shadow-sm mb-4">
-  <div class="card-body">
-    <form (submit)="onSubmit(); $event.preventDefault()" class="row g-3 align-items-end">
-      <div class="col-md-6">
-        <label class="form-label fw-medium">{{ "SEARCH.SEARCH_TERM" | translate }}</label>
-        <div class="input-group">
-          <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input
-            type="search"
-            class="form-control form-control-lg"
-            placeholder="example.com or *.example.com"
-            [formField]="searchForm.search"
-            autofocus
-          />
+  <div class="card-body py-3">
+    <form (submit)="onSubmit(); $event.preventDefault()">
+      <!-- Search input row -->
+      <div class="input-group mb-2">
+        <span class="input-group-text bg-transparent"><i class="bi bi-search text-muted"></i></span>
+        <input
+          type="search"
+          class="form-control"
+          placeholder="example.com or *.example.com"
+          [formField]="searchForm.search"
+          autofocus
+        />
+      </div>
+      <div class="form-text mb-3">{{ "SEARCH.WILDCARD_HELP" | translate }}</div>
+
+      <!-- Options row -->
+      <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 text-muted small fw-medium text-nowrap">{{
+            "SEARCH.OBJECT_TYPE" | translate
+          }}</label>
+          <select class="form-select form-select-sm" style="width: auto" [formField]="searchForm.objectType">
+            <option value="all">{{ "SEARCH.ALL" | translate }}</option>
+            <option value="zone">{{ "SEARCH.ZONES_ONLY" | translate }}</option>
+            <option value="record">{{ "SEARCH.RECORDS_ONLY" | translate }}</option>
+            <option value="comment">{{ "SEARCH.COMMENTS_ONLY" | translate }}</option>
+          </select>
         </div>
-        <div class="form-text">{{ "SEARCH.WILDCARD_HELP" | translate }}</div>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label fw-medium">{{ "SEARCH.OBJECT_TYPE" | translate }}</label>
-        <select class="form-select" [formField]="searchForm.objectType">
-          <option value="all">{{ "SEARCH.ALL" | translate }}</option>
-          <option value="zone">{{ "SEARCH.ZONES_ONLY" | translate }}</option>
-          <option value="record">{{ "SEARCH.RECORDS_ONLY" | translate }}</option>
-          <option value="comment">{{ "SEARCH.COMMENTS_ONLY" | translate }}</option>
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label fw-medium">{{ "SEARCH.MAX_RESULTS" | translate }}</label>
-        <input type="number" class="form-control" [formField]="searchForm.max" />
-      </div>
-      <div class="col-md-1 d-grid">
-        <button type="submit" class="btn btn-primary" [disabled]="!searchModel().search.trim() || isLoading()">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 text-muted small fw-medium text-nowrap">{{
+            "SEARCH.MAX_RESULTS" | translate
+          }}</label>
+          <input type="number" class="form-control form-control-sm" style="width: 80px" [formField]="searchForm.max" />
+        </div>
+        <button
+          type="submit"
+          class="btn btn-primary btn-sm ms-auto"
+          [disabled]="!searchModel().search.trim() || isLoading()"
+        >
           @if (isLoading()) {
-            <span class="spinner-border spinner-border-sm"></span>
+            <span class="spinner-border spinner-border-sm me-1"></span>
           } @else {
-            <i class="bi bi-search"></i>
+            <i class="bi bi-search me-1"></i>
           }
+          {{ "SEARCH.SEARCH_TERM" | translate }}
         </button>
       </div>
     </form>

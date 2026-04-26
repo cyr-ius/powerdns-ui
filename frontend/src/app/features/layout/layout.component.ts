@@ -46,6 +46,7 @@ export class LayoutComponent implements OnInit {
     const q = this.searchQuery.trim();
     if (q) {
       void this.router.navigate(["/search"], { queryParams: { q } });
+      this.searchQuery = "";
       this.closeSidebar();
     }
   }

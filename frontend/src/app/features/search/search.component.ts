@@ -2,7 +2,7 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from "@angula
 import { takeUntilDestroyed, toObservable } from "@angular/core/rxjs-interop";
 import { form, FormField } from "@angular/forms/signals";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { debounceTime, distinctUntilChanged, map, skip } from "rxjs";
+import { debounceTime, distinctUntilChanged, filter, map, skip } from "rxjs";
 import { PdnsService } from "../../core/services/pdns.service";
 import { SearchResult } from "../../shared/models/pdns.model";
 import { TranslateModule } from "@ngx-translate/core";
@@ -58,6 +58,20 @@ export class SearchComponent implements OnInit {
       if (val && val.length >= 2) void this.doSearch(val);
       else if (!val) this.results.set([]);
     });
+
+    // When the navbar triggers a new search (component reused, ngOnInit not re-called)
+    this.route.queryParamMap
+      .pipe(
+        skip(1),
+        map((p) => p.get("q") ?? ""),
+        filter((q) => q !== this.searchModel().search),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((newQ) => {
+        this.searchModel.update((m) => ({ ...m, search: newQ }));
+        if (newQ) void this.doSearch(newQ);
+        else this.results.set([]);
+      });
   }
 
   onSubmit(): void {

@@ -54,10 +54,11 @@
 
 /* ── Search ──────────────────────────────────────────────────────────────── */
 .pdns-topbar-search {
-  position: relative;
-  flex: 1;
-  max-width: 320px;
-  margin: 0 auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 320px;
+  max-width: calc(100% - 480px);
 }
 
 .pdns-search-icon {

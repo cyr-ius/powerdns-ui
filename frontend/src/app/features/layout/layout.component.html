@@ -22,6 +22,16 @@
   </form>
 
   <div class="pdns-topbar-end">
+    @if (appInfo.updateAvailable()) {
+      <a
+        routerLink="/profile"
+        class="link-warning link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
+        [title]="'NAV.UPDATE_AVAILABLE' | translate: { version: appInfo.latestRelease()!.tag_name }"
+      >
+        Update is available: {{ appInfo.latestRelease()!.tag_name }}
+      </a>
+    }
+
     <button
       class="pdns-icon-btn"
       type="button"
@@ -30,16 +40,6 @@
     >
       <i class="bi" [class]="themeService.themeIcon()"></i>
     </button>
-
-    @if (appInfo.updateAvailable()) {
-      <a
-        routerLink="/profile"
-        class="pdns-update-badge"
-        [title]="'NAV.UPDATE_AVAILABLE' | translate: { version: appInfo.latestRelease()!.tag_name }"
-      >
-        <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ appInfo.latestRelease()!.tag_name }}
-      </a>
-    }
 
     @if (auth.currentUser()) {
       <a routerLink="/profile" class="pdns-user-btn" [title]="auth.currentUser()!.username" (click)="closeSidebar()">
