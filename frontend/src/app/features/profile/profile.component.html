@@ -147,9 +147,6 @@
               }
             </dd>
           </dl>
-          <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
-          </a>
         </div>
       </div>
     </div>
@@ -323,9 +320,14 @@
 @if (activeTab() === "apikeys") {
   <div class="d-flex align-items-center justify-content-between mb-3">
     <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE" | translate }}</p>
-    <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
-      <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
-    </button>
+    <div class="d-flex gap-2">
+      <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
+      </a>
+      <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
+      </button>
+    </div>
   </div>
 
   @if (keysError()) {
