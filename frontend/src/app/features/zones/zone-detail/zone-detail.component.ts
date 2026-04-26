@@ -301,6 +301,12 @@ export class ZoneDetailComponent implements OnInit {
     this.metadata().some((m) => m.kind === "X-AUTO-REVERSE" && m.metadata[0] === "1"),
   );
 
+  // ── Lua Records ───────────────────────────────────────────────────────────
+  readonly isTogglingLuaRecords = signal(false);
+  readonly luaRecordsEnabled = computed(() =>
+    this.metadata().some((m) => m.kind === "X-LUA-RECORDS" && m.metadata[0] === "1"),
+  );
+
   readonly reverseZoneForCurrentRecord = computed(() => {
     const { type, content } = this.recordModel();
     if (type !== "A" && type !== "AAAA") return null;
@@ -955,6 +961,30 @@ export class ZoneDetailComponent implements OnInit {
       this.settingsError.set("Error occurred while updating the automatic PTR parameter.");
     } finally {
       this.isTogglingAutoReverse.set(false);
+    }
+  }
+
+  async toggleLuaRecords(): Promise<void> {
+    this.isTogglingLuaRecords.set(true);
+    this.settingsError.set(null);
+    try {
+      const currentTypes = new Set(this.zoneRecordTypesMeta()?.types ?? []);
+      if (this.luaRecordsEnabled()) {
+        await this.pdns.deleteMetadata(this.zoneId, "X-LUA-RECORDS");
+        currentTypes.delete("LUA");
+      } else {
+        await this.pdns.setMetadata(this.zoneId, "X-LUA-RECORDS", ["1"]);
+        currentTypes.add("LUA");
+      }
+      const result = await this.pdns.setZoneRecordTypes(this.zoneId, Array.from(currentTypes));
+      this.zoneRecordTypesMeta.set(result);
+      this.zoneRecordTypes.set(result.types);
+      this.pendingZoneTypes.set(new Set(result.types));
+      await this.loadMetadata();
+    } catch {
+      this.settingsError.set("Error occurred while updating the Lua Records setting.");
+    } finally {
+      this.isTogglingLuaRecords.set(false);
     }
   }
 

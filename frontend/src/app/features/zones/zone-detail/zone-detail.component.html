@@ -464,11 +464,7 @@
         </button>
       </li>
       <li class="nav-item">
-        <button
-          class="nav-link"
-          [class.active]="activeTab() === 'members'"
-          (click)="setTab('members')"
-        >
+        <button class="nav-link" [class.active]="activeTab() === 'members'" (click)="setTab('members')">
           <i class="bi bi-people me-1"></i>{{ "ZONE_DETAIL.TAB_MEMBERS" | translate }}
           @if (members().length > 0) {
             <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1">{{ members().length }}</span>
@@ -1474,6 +1470,52 @@
           </div>
         }
 
+        @if (isZoneAdmin()) {
+          <hr class="my-4" />
+
+          <h6 class="fw-semibold mb-3">
+            <i class="bi bi-code-square me-2 text-primary"></i>{{ "ZONE_DETAIL.LUA_RECORDS_TITLE" | translate }}
+          </h6>
+
+          @if (isLoadingMeta()) {
+            <div class="d-flex align-items-center gap-2 text-muted small">
+              <span class="spinner-border spinner-border-sm"></span>{{ "COMMON.LOADING" | translate }}
+            </div>
+          } @else {
+            <div class="d-flex align-items-center gap-3 mb-2">
+              <div class="form-check form-switch mb-0">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="luaRecordsToggle"
+                  role="switch"
+                  [checked]="luaRecordsEnabled()"
+                  [disabled]="isTogglingLuaRecords()"
+                  (change)="toggleLuaRecords()"
+                />
+                <label class="form-check-label fw-medium" for="luaRecordsToggle">
+                  {{ "ZONE_DETAIL.LUA_RECORDS_ENABLE" | translate }}
+                </label>
+              </div>
+              @if (isTogglingLuaRecords()) {
+                <span class="spinner-border spinner-border-sm text-primary"></span>
+              }
+            </div>
+            <div class="form-text">
+              {{ "ZONE_DETAIL.LUA_RECORDS_HELP" | translate }}
+              <a
+                href="https://doc.powerdns.com/authoritative/lua-records/index.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="ms-1"
+              >
+                {{ "ZONE_DETAIL.LUA_RECORDS_DOC" | translate }}
+                <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+              </a>
+            </div>
+          }
+        }
+
         <hr class="my-4" />
 
         <h6 class="fw-semibold mb-1">
@@ -1575,36 +1617,36 @@
         <div class="card-body">
           <!-- Add a member -->
           <div [class.opacity-50]="!zone()?.account" [attr.inert]="!zone()?.account ? '' : null">
-          <h6 class="fw-semibold mb-3">{{ "ZONE_DETAIL.ADD_MEMBER" | translate }}</h6>
-          <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
-            <select
-              class="form-select"
-              style="max-width: 220px"
-              [value]="newMemberUserId() ?? ''"
-              (change)="newMemberUserId.set(+$any($event.target).value || null)"
-            >
-              <option value="">{{ "ZONE_DETAIL.CHOOSE_USER" | translate }}</option>
-              @for (u of availableUsersToAdd(); track u.id) {
-                <option [value]="u.id">{{ u.username }}</option>
-              }
-            </select>
-            <select
-              class="form-select"
-              style="max-width: 160px"
-              [value]="newMemberRole()"
-              (change)="newMemberRole.set($any($event.target).value)"
-            >
-              <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
-              <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
-              <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
-            </select>
-            <button class="btn btn-primary" [disabled]="!newMemberUserId() || isSavingMember()" (click)="addMember()">
-              @if (isSavingMember()) {
-                <span class="spinner-border spinner-border-sm me-1"></span>
-              }
-              <i class="bi bi-person-plus me-1"></i>{{ "COMMON.ADD" | translate }}
-            </button>
-          </div>
+            <h6 class="fw-semibold mb-3">{{ "ZONE_DETAIL.ADD_MEMBER" | translate }}</h6>
+            <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
+              <select
+                class="form-select"
+                style="max-width: 220px"
+                [value]="newMemberUserId() ?? ''"
+                (change)="newMemberUserId.set(+$any($event.target).value || null)"
+              >
+                <option value="">{{ "ZONE_DETAIL.CHOOSE_USER" | translate }}</option>
+                @for (u of availableUsersToAdd(); track u.id) {
+                  <option [value]="u.id">{{ u.username }}</option>
+                }
+              </select>
+              <select
+                class="form-select"
+                style="max-width: 160px"
+                [value]="newMemberRole()"
+                (change)="newMemberRole.set($any($event.target).value)"
+              >
+                <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
+                <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
+                <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
+              </select>
+              <button class="btn btn-primary" [disabled]="!newMemberUserId() || isSavingMember()" (click)="addMember()">
+                @if (isSavingMember()) {
+                  <span class="spinner-border spinner-border-sm me-1"></span>
+                }
+                <i class="bi bi-person-plus me-1"></i>{{ "COMMON.ADD" | translate }}
+              </button>
+            </div>
           </div>
 
           <!-- Members list -->
