@@ -54,10 +54,6 @@ _SERVER = "/servers/localhost"
 _ROLE_LEVELS: dict[str, int] = {"viewer": 0, "manager": 1, "admin": 2}
 
 
-def _zone_not_found() -> HTTPException:
-    return HTTPException(status_code=404, detail="Zone not found")
-
-
 def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
     if exc.response.status_code == 404:
         return HTTPException(status_code=404, detail="Resource not found")
