@@ -30,7 +30,7 @@
   },
   "NAV": {
     "PERSONAL": "My Space",
-    "API_KEYS": "My API Keys",
+    "API_KEYS": "API Keys",
     "DNS_ZONES": "DNS Zones",
     "CATALOGUES": "Catalogues",
     "STATISTICS": "Statistics",
@@ -447,7 +447,7 @@
     "TAB_INFO": "Information",
     "TAB_APPEARANCE": "Appearance",
     "TAB_PASSWORD": "Password",
-    "TAB_API_KEYS": "My API Keys",
+    "TAB_API_KEYS": "API Keys",
     "ROLE": "Role",
     "ROLE_ADMIN": "Super Administrator",
     "ROLE_ACCOUNT_ADMIN": "Account Admin"
@@ -500,7 +500,7 @@
     "COL_VALUE": "Value"
   },
   "APIKEYS": {
-    "TITLE": "My API Keys",
+    "TITLE": "API Keys",
     "SUBTITLE": "PowerDNS UI API access keys and ACME keys for Certbot",
     "NEW_KEY": "New Key",
     "LOADING": "Loading keys…",
