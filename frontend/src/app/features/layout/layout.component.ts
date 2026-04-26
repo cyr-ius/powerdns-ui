@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from "@angular/router";
 import { TranslateModule } from "@ngx-translate/core";
+import { AppInfoService } from "../../core/services/app-info.service";
 import { AuthService } from "../../core/services/auth.service";
 import { ServerService } from "../../core/services/server.service";
 import { ThemeService } from "../../core/services/theme.service";
@@ -16,6 +17,7 @@ export class LayoutComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly themeService = inject(ThemeService);
   readonly server = inject(ServerService);
+  readonly appInfo = inject(AppInfoService);
   private readonly router = inject(Router);
 
   searchQuery = "";
@@ -25,6 +27,7 @@ export class LayoutComponent implements OnInit {
     if (this.auth.isAdmin()) {
       void this.server.init();
     }
+    void this.appInfo.load();
   }
 
   toggleSidebar(): void {

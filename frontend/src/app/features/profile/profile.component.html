@@ -100,9 +100,9 @@
 
             <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.VERSION" | translate }}</dt>
             <dd class="col-7 col-md-8">
-              @if (appInfo()) {
+              @if (appInfoSvc.appInfo()) {
                 <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">
-                  v{{ appInfo()!.version }}
+                  v{{ appInfoSvc.appInfo()!.version }}
                 </span>
               } @else {
                 <span class="text-muted small">—</span>
@@ -111,23 +111,23 @@
 
             <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.UPDATE" | translate }}</dt>
             <dd class="col-7 col-md-8">
-              @if (!releaseCheckDone()) {
+              @if (!appInfoSvc.releaseCheckDone()) {
                 <span class="text-muted small">
                   <span class="spinner-border spinner-border-sm me-1" role="status"></span
                   >{{ "PROFILE.CHECKING" | translate }}
                 </span>
-              } @else if (!latestRelease()) {
+              } @else if (!appInfoSvc.latestRelease()) {
                 <span class="text-muted small"
                   ><i class="bi bi-dash me-1"></i>{{ "PROFILE.NOT_AVAILABLE" | translate }}</span
                 >
-              } @else if (updateAvailable) {
+              } @else if (appInfoSvc.updateAvailable()) {
                 <a
-                  [href]="latestRelease()!.html_url"
+                  [href]="appInfoSvc.latestRelease()!.html_url"
                   target="_blank"
                   rel="noopener"
                   class="badge bg-warning-subtle text-warning-emphasis text-decoration-none"
                 >
-                  <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ latestRelease()!.tag_name }} available
+                  <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ appInfoSvc.latestRelease()!.tag_name }} available
                 </a>
               } @else {
                 <span class="badge bg-success-subtle text-success-emphasis">
@@ -138,9 +138,9 @@
 
             <dt class="col-5 col-md-4 text-muted fw-normal">{{ "PROFILE.SOURCE_CODE" | translate }}</dt>
             <dd class="col-7 col-md-8">
-              @if (appInfo()) {
-                <a [href]="appInfo()!.github" target="_blank" rel="noopener" class="text-decoration-none">
-                  <i class="bi bi-github me-1"></i>{{ appInfo()!.github_repository }}
+              @if (appInfoSvc.appInfo()) {
+                <a [href]="appInfoSvc.appInfo()!.github" target="_blank" rel="noopener" class="text-decoration-none">
+                  <i class="bi bi-github me-1"></i>{{ appInfoSvc.appInfo()!.github_repository }}
                 </a>
               } @else {
                 <span class="text-muted small">—</span>

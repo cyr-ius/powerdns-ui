@@ -48,7 +48,8 @@
     "AUDIT_JOURNAL": "Audit Journal",
     "LOGOUT": "Logout",
     "THEME": "Theme : {{ label }}",
-    "SEARCH_PLACEHOLDER": "Search… (*, ?)"
+    "SEARCH_PLACEHOLDER": "Search… (*, ?)",
+    "UPDATE_AVAILABLE": "New version available: {{ version }}"
   },
   "SESSION": {
     "EXPIRED_TITLE": "Session expired",

@@ -4,6 +4,7 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
+import { AppInfoService } from "../../core/services/app-info.service";
 import { AuthService } from "../../core/services/auth.service";
 import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
 import { PdnsService } from "../../core/services/pdns.service";
@@ -12,19 +13,6 @@ import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { Zone } from "../../shared/models/pdns.model";
 
 type Tab = "info" | "appearance" | "password" | "apikeys";
-
-interface AppInfo {
-  version: string;
-  github: string;
-  github_repository: string;
-  docs_url: string;
-}
-
-interface GithubRelease {
-  tag_name: string;
-  html_url: string;
-  name: string;
-}
 
 @Component({
   selector: "app-profile",
@@ -35,6 +23,7 @@ interface GithubRelease {
 export class ProfileComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly themeService = inject(ThemeService);
+  readonly appInfoSvc = inject(AppInfoService);
   private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
   private readonly acmeKeysSvc = inject(AcmeKeysService);
@@ -102,40 +91,6 @@ export class ProfileComponent implements OnInit {
         this.isChangingPassword.set(false);
       }
     });
-  }
-
-  // ── About ─────────────────────────────────────────────────────────────────
-  readonly appInfo = signal<AppInfo | null>(null);
-  readonly latestRelease = signal<GithubRelease | null>(null);
-  readonly releaseCheckDone = signal(false);
-
-  get updateAvailable(): boolean {
-    const info = this.appInfo();
-    const latest = this.latestRelease();
-    if (!info || !latest) return false;
-    return latest.tag_name.replace(/^v/, "") !== info.version;
-  }
-
-  private async _loadAppInfo(): Promise<void> {
-    try {
-      const info = await firstValueFrom(this.http.get<AppInfo>("/api/info"));
-      this.appInfo.set(info);
-      try {
-        const release = await firstValueFrom(
-          this.http.get<GithubRelease>(
-            `https://api.github.com/repos/${info.github_repository}/releases/latest`,
-            { headers: { Accept: "application/vnd.github+json" } },
-          ),
-        );
-        this.latestRelease.set(release);
-      } catch {
-        // no release or GitHub quota exceeded
-      }
-    } catch {
-      // backend unavailable
-    } finally {
-      this.releaseCheckDone.set(true);
-    }
   }
 
   // ── API Keys ──────────────────────────────────────────────────────────────
@@ -312,7 +267,7 @@ export class ProfileComponent implements OnInit {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
-    void this._loadAppInfo();
+    void this.appInfoSvc.load();
     void this.loadApiKeys();
   }
 }

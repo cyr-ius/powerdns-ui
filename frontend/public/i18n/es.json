@@ -48,7 +48,8 @@
     "AUDIT_JOURNAL": "Registro de auditoría",
     "LOGOUT": "Cerrar sesión",
     "THEME": "Tema : {{ label }}",
-    "SEARCH_PLACEHOLDER": "Buscar… (*, ?)"
+    "SEARCH_PLACEHOLDER": "Buscar… (*, ?)",
+    "UPDATE_AVAILABLE": "Nueva versión disponible: {{ version }}"
   },
   "SESSION": {
     "EXPIRED_TITLE": "Sesión expirada",

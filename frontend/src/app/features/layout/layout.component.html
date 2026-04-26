@@ -31,6 +31,16 @@
       <i class="bi" [class]="themeService.themeIcon()"></i>
     </button>
 
+    @if (appInfo.updateAvailable()) {
+      <a
+        routerLink="/profile"
+        class="pdns-update-badge"
+        [title]="'NAV.UPDATE_AVAILABLE' | translate: { version: appInfo.latestRelease()!.tag_name }"
+      >
+        <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ appInfo.latestRelease()!.tag_name }}
+      </a>
+    }
+
     @if (auth.currentUser()) {
       <a routerLink="/profile" class="pdns-user-btn" [title]="auth.currentUser()!.username" (click)="closeSidebar()">
         <span class="pdns-avatar">{{ auth.currentUser()!.username.charAt(0).toUpperCase() }}</span>
