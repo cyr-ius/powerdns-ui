@@ -467,9 +467,7 @@
         <button
           class="nav-link"
           [class.active]="activeTab() === 'members'"
-          [disabled]="!zone()?.account"
-          [title]="!zone()?.account ? ('ZONE_DETAIL.MEMBERS_NO_ACCOUNT_TOOLTIP' | translate) : ''"
-          (click)="zone()?.account && setTab('members')"
+          (click)="setTab('members')"
         >
           <i class="bi bi-people me-1"></i>{{ "ZONE_DETAIL.TAB_MEMBERS" | translate }}
           @if (members().length > 0) {
@@ -1217,6 +1215,13 @@
         </div>
       </div>
 
+      @if (!dnsupdateEnabled()) {
+        <div class="alert alert-warning mx-3 mt-3 py-2 d-flex align-items-start gap-2">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <span [innerHTML]="'ZONE_DETAIL.DNSUPDATE_DISABLED_WARNING' | translate"></span>
+        </div>
+      }
+
       @if (isLoadingMeta()) {
         <div class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -1234,7 +1239,7 @@
           </div>
         }
 
-        <div class="card-body">
+        <div class="card-body" [class.opacity-50]="!dnsupdateEnabled()" [attr.inert]="!dnsupdateEnabled() ? '' : null">
           <!-- TSIG-ALLOW-DNSUPDATE -->
           <div class="mb-4">
             <label class="form-label fw-medium">
@@ -1543,6 +1548,13 @@
         >
       </div>
 
+      @if (!zone()?.account) {
+        <div class="alert alert-warning mx-3 mt-3 py-2 d-flex align-items-start gap-2">
+          <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+          <span [innerHTML]="'ZONE_DETAIL.MEMBERS_NO_ACCOUNT_WARNING' | translate"></span>
+        </div>
+      }
+
       @if (membersError()) {
         <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
           <i class="bi bi-exclamation-triangle-fill"></i>{{ membersError() }}
@@ -1562,6 +1574,7 @@
       } @else {
         <div class="card-body">
           <!-- Add a member -->
+          <div [class.opacity-50]="!zone()?.account" [attr.inert]="!zone()?.account ? '' : null">
           <h6 class="fw-semibold mb-3">{{ "ZONE_DETAIL.ADD_MEMBER" | translate }}</h6>
           <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
             <select
@@ -1591,6 +1604,7 @@
               }
               <i class="bi bi-person-plus me-1"></i>{{ "COMMON.ADD" | translate }}
             </button>
+          </div>
           </div>
 
           <!-- Members list -->
@@ -1623,6 +1637,7 @@
                         class="form-select form-select-sm"
                         style="width: auto"
                         [value]="m.role"
+                        [disabled]="!zone()?.account"
                         (change)="updateMemberRole(m, $any($event.target).value)"
                       >
                         <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
@@ -1633,6 +1648,7 @@
                     <td class="text-end">
                       <button
                         class="btn btn-sm btn-outline-danger"
+                        [disabled]="!zone()?.account"
                         (click)="removeMember(m)"
                         [title]="'COMMON.DELETE' | translate"
                       >

@@ -257,6 +257,9 @@ export class ZoneDetailComponent implements OnInit {
   readonly emailCheckError = signal<string | null>(null);
   readonly showEmailPanel = signal(false);
 
+  // ── Server config ─────────────────────────────────────────────────────────
+  readonly dnsupdateEnabled = signal<boolean>(true);
+
   async checkEmailSecurity(): Promise<void> {
     this.isCheckingEmail.set(true);
     this.emailCheckError.set(null);
@@ -307,12 +310,22 @@ export class ZoneDetailComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.zoneId = this.route.snapshot.paramMap.get("id") ?? "";
-    await Promise.all([this.loadZone(), this.loadAllZones(), this.loadZoneRole()]);
+    await Promise.all([this.loadZone(), this.loadAllZones(), this.loadZoneRole(), this.loadServerConfig()]);
     void this.loadMetadata();
     void this.loadZoneRecordTypes();
     if (this.isZoneAdmin()) {
       void this.loadMembers();
       void this.loadZoneApiKeys();
+    }
+  }
+
+  async loadServerConfig(): Promise<void> {
+    try {
+      const config = await this.pdns.getConfig();
+      const setting = config.find((s) => s.name === "dnsupdate");
+      this.dnsupdateEnabled.set(setting?.value === "yes");
+    } catch {
+      // non-blocking — assume enabled on error
     }
   }
 
