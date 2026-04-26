@@ -6,6 +6,35 @@ Web management interface for [PowerDNS Authoritative Server](https://www.powerdn
 ![Python](https://img.shields.io/badge/python-3.12%2B-blue)
 ![Angular](https://img.shields.io/badge/angular-21-red)
 
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+  - [Docker Compose](#docker-compose)
+  - [Build from Source](#build-from-source)
+- [PowerDNS Configuration](#powerdns-configuration)
+- [Environment Variables](#environment-variables)
+- [MariaDB Backend (gmysql)](#mariadb-backend-gmysql)
+  - [When to run it](#when-to-run-it)
+  - [Usage](#usage)
+  - [Custom SQL schema](#--schema----custom-sql-file)
+  - [Recommended startup order](#recommended-startup-order)
+- [OIDC Authentication](#oidc-authentication)
+- [Roles and Permissions](#roles-and-permissions)
+- [Audit Log](#audit-log)
+- [API](#api)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+- [Screenshots](#screenshots)
+- [License](#license)
+
+---
+
 ## Features
 
 - **DNS Zones** — create, edit, delete (Native / Master / Slave), record management
@@ -272,9 +301,6 @@ npm run start   # proxy to localhost:8080
 <img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/4a17d385-c4cc-4772-923f-4a7a696cbc81" />
 <img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/e3718deb-2b8b-47ea-9515-dcaeab94e6ed" />
 <img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/36df2912-52e6-4890-8d6b-e2322583b774" />
-
-
-
 
 ## License
 
