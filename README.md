@@ -266,6 +266,16 @@ npm install
 npm run start   # proxy to localhost:8080
 ```
 
+## Screenshots
+
+<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/542b271b-f806-4be9-9ebf-58d04e4d0676" />
+<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/4a17d385-c4cc-4772-923f-4a7a696cbc81" />
+<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/e3718deb-2b8b-47ea-9515-dcaeab94e6ed" />
+<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/36df2912-52e6-4890-8d6b-e2322583b774" />
+
+
+
+
 ## License
 
 MIT — see [LICENSE](LICENSE)
