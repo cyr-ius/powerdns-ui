@@ -73,6 +73,8 @@ async def init_db() -> None:
                     "ALTER TABLE acmeapikey ADD COLUMN key_type VARCHAR(10) NOT NULL DEFAULT 'acme'"
                 )
             )
+        if "comment" not in acme_columns:
+            await conn.execute(text("ALTER TABLE acmeapikey ADD COLUMN comment TEXT"))
         # Seed default record types if the table is empty
         result = await conn.execute(text("SELECT COUNT(*) FROM recordtype"))
         if result.scalar() == 0:

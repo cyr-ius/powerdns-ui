@@ -515,7 +515,13 @@
     "LOAD_ERROR": "Impossible de charger les clés.",
     "DELETE_ERROR": "Erreur lors de la suppression de la clé.",
     "ADMIN_TITLE": "Toutes les clés API",
-    "ADMIN_SUBTITLE": "Vue d'ensemble de toutes les clés API et ACME des utilisateurs"
+    "ADMIN_SUBTITLE": "Vue d'ensemble de toutes les clés API et ACME des utilisateurs",
+    "COMMENT": "Commentaire",
+    "COMMENT_OPTIONAL": "— optionnel",
+    "COMMENT_PLACEHOLDER": "Brève description de l'utilisation de cette clé…",
+    "COMMENT_HELP": "Note optionnelle pour vous aider à identifier l'usage de cette clé.",
+    "EDIT_TITLE": "Modifier la clé",
+    "EDIT_ERROR": "Erreur lors de la sauvegarde des modifications."
   },
   "TSIGKEYS": {
     "TITLE": "Clés TSIG",

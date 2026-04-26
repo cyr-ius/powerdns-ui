@@ -8,6 +8,7 @@ export interface AcmeApiKey {
   key_prefix: string;
   zones: string[];
   key_type: "acme" | "api";
+  comment: string | null;
   created_at: string;
   username?: string;
   user_id?: number;
@@ -29,14 +30,19 @@ export class AcmeKeysService {
     return firstValueFrom(this.http.get<AcmeApiKey[]>("/api/acme-keys/all"));
   }
 
-  createKey(name: string, keyType: "acme" | "api", key?: string): Promise<AcmeApiKeyCreated> {
+  createKey(name: string, keyType: "acme" | "api", key?: string, comment?: string): Promise<AcmeApiKeyCreated> {
     return firstValueFrom(
       this.http.post<AcmeApiKeyCreated>("/api/acme-keys", {
         name,
         key_type: keyType,
         key: key || undefined,
+        comment: comment || undefined,
       }),
     );
+  }
+
+  updateKey(keyId: number, comment: string | null): Promise<AcmeApiKey> {
+    return firstValueFrom(this.http.patch<AcmeApiKey>(`/api/acme-keys/${keyId}`, { comment }));
   }
 
   updateZones(keyId: number, zones: string[]): Promise<AcmeApiKey> {

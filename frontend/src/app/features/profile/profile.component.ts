@@ -157,10 +157,17 @@ export class ProfileComponent implements OnInit {
   readonly isSavingZones = signal(false);
   readonly zonesError = signal<string | null>(null);
 
-  readonly createModel = signal({ name: "", secret: "", keyType: "api" as "acme" | "api" });
+  readonly createModel = signal({ name: "", secret: "", keyType: "api" as "acme" | "api", comment: "" });
   readonly createForm = form(this.createModel, (s) => {
     required(s.name, { message: "APIKEYS.NAME_REQUIRED" });
   });
+
+  // ── Edit modal ────────────────────────────────────────────────────────────
+  readonly editingKeyData = signal<AcmeApiKey | null>(null);
+  readonly isEditing = signal(false);
+  readonly editError = signal<string | null>(null);
+  readonly editModel = signal({ comment: "" });
+  readonly editForm = form(this.editModel, () => {});
 
   async loadApiKeys(): Promise<void> {
     this.isLoadingKeys.set(true);
@@ -176,7 +183,7 @@ export class ProfileComponent implements OnInit {
 
   openCreateModal(): void {
     const defaultType = this.auth.isAcmeCreator() ? "acme" : "api";
-    this.createModel.set({ name: "", secret: "", keyType: defaultType });
+    this.createModel.set({ name: "", secret: "", keyType: defaultType, comment: "" });
     this.createError.set(null);
     this.showCreateModal.set(true);
   }
@@ -199,8 +206,8 @@ export class ProfileComponent implements OnInit {
       this.isCreating.set(true);
       this.createError.set(null);
       try {
-        const { name, secret, keyType } = this.createModel();
-        const created = await this.acmeKeysSvc.createKey(name, keyType, secret.trim() || undefined);
+        const { name, secret, keyType, comment } = this.createModel();
+        const created = await this.acmeKeysSvc.createKey(name, keyType, secret.trim() || undefined, comment.trim() || undefined);
         this.showCreateModal.set(false);
         this.keys.update((list) => [...list, created]);
         this.createdKey.set(created.key);
@@ -219,6 +226,35 @@ export class ProfileComponent implements OnInit {
     await navigator.clipboard.writeText(key);
     this.copied.set(true);
     setTimeout(() => this.copied.set(false), 2000);
+  }
+
+  openEditModal(key: AcmeApiKey): void {
+    this.editingKeyData.set(key);
+    this.editModel.set({ comment: key.comment ?? "" });
+    this.editError.set(null);
+  }
+
+  closeEditModal(): void {
+    this.editingKeyData.set(null);
+  }
+
+  onEditKey(): void {
+    submit(this.editForm, async () => {
+      const key = this.editingKeyData();
+      if (!key) return;
+      this.isEditing.set(true);
+      this.editError.set(null);
+      try {
+        const { comment } = this.editModel();
+        const updated = await this.acmeKeysSvc.updateKey(key.id, comment.trim() || null);
+        this.keys.update((list) => list.map((k) => (k.id === updated.id ? updated : k)));
+        this.editingKeyData.set(null);
+      } catch {
+        this.editError.set("APIKEYS.EDIT_ERROR");
+      } finally {
+        this.isEditing.set(false);
+      }
+    });
   }
 
   async openZoneModal(key: AcmeApiKey): Promise<void> {

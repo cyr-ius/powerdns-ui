@@ -27,6 +27,7 @@ async def create_key(
     name: str,
     raw: str | None = None,
     key_type: str = "acme",
+    comment: str | None = None,
 ) -> tuple[AcmeApiKey, str]:
     if not raw:
         prefix = "apk_" if key_type == "api" else "ak_"
@@ -37,6 +38,7 @@ async def create_key(
         key_prefix=raw[:11],
         key_hash=_hash(raw),
         key_type=key_type,
+        comment=comment,
     )
     db.add(key)
     await db.commit()
@@ -107,6 +109,19 @@ async def verify_key(db: AsyncSession, raw_key: str) -> AcmeApiKey | None:
     return result.first()
 
 
+async def update_key(
+    db: AsyncSession, key_id: int, user_id: int, comment: str | None
+) -> AcmeApiKey | None:
+    key = await get_key(db, key_id, user_id)
+    if key is None:
+        return None
+    key.comment = comment
+    db.add(key)
+    await db.commit()
+    await db.refresh(key)
+    return key
+
+
 def key_to_response(key: AcmeApiKey) -> dict:
     return {
         "id": key.id,
@@ -114,5 +129,6 @@ def key_to_response(key: AcmeApiKey) -> dict:
         "key_prefix": key.key_prefix,
         "zones": _decode_zones(key),
         "key_type": key.key_type,
+        "comment": key.comment,
         "created_at": key.created_at,
     }

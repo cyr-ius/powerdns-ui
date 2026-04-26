@@ -9,6 +9,7 @@ from app.schemas.acme import (
     AcmeApiKeyCreate,
     AcmeApiKeyCreated,
     AcmeApiKeyResponse,
+    AcmeApiKeyUpdate,
     AcmeApiKeyZonesUpdate,
 )
 from app.services import acme_service, admin_service
@@ -54,9 +55,29 @@ async def create_acme_key(
                 detail="Account admin or super admin required to create ACME keys",
             )
     key, raw = await acme_service.create_key(
-        db, current_user.id, payload.name, payload.key or None, payload.key_type
+        db,
+        current_user.id,
+        payload.name,
+        payload.key or None,
+        payload.key_type,
+        payload.comment,
     )
     return {**acme_service.key_to_response(key), "key": raw}
+
+
+@router.patch("/{key_id}", response_model=AcmeApiKeyResponse)
+async def update_acme_key(
+    key_id: int,
+    payload: AcmeApiKeyUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    updated = await acme_service.update_key(
+        db, key_id, current_user.id, payload.comment
+    )
+    if updated is None:
+        raise HTTPException(status_code=404, detail="API key not found")
+    return acme_service.key_to_response(updated)
 
 
 @router.put("/{key_id}/zones", response_model=AcmeApiKeyResponse)

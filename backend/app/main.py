@@ -23,6 +23,7 @@ from app.routers import (
     catalogues,
     health,
     networks,
+    nic_update,
     pdns,
     server,
     tsigkeys,
@@ -87,6 +88,7 @@ app.include_router(server.router)
 app.include_router(autoprimaries.router)
 app.include_router(networks.router)
 app.include_router(views.router)
+app.include_router(nic_update.router)
 
 
 # ── Serve Angular SPA (must be last) ─────────────────────────────────────────

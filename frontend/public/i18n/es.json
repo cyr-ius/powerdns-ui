@@ -515,7 +515,13 @@
     "LOAD_ERROR": "No se pueden cargar las claves.",
     "DELETE_ERROR": "Error al eliminar la clave.",
     "ADMIN_TITLE": "Todas las claves API",
-    "ADMIN_SUBTITLE": "Vista general de todas las claves API y ACME de los usuarios"
+    "ADMIN_SUBTITLE": "Vista general de todas las claves API y ACME de los usuarios",
+    "COMMENT": "Comentario",
+    "COMMENT_OPTIONAL": "— opcional",
+    "COMMENT_PLACEHOLDER": "Breve descripción del uso de esta clave…",
+    "COMMENT_HELP": "Nota opcional para ayudarle a identificar el uso de esta clave.",
+    "EDIT_TITLE": "Editar clave",
+    "EDIT_ERROR": "Error al guardar los cambios."
   },
   "TSIGKEYS": {
     "TITLE": "Claves TSIG",

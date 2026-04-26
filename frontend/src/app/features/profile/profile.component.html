@@ -359,6 +359,7 @@
               <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
               <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
               <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
+              <th>{{ "APIKEYS.COMMENT" | translate }}</th>
               <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
               <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
             </tr>
@@ -390,9 +391,23 @@
                     <span class="text-muted small">—</span>
                   }
                 </td>
+                <td class="small text-muted">
+                  @if (key.comment) {
+                    <span [title]="key.comment">{{ key.comment }}</span>
+                  } @else {
+                    <span class="fst-italic text-muted">—</span>
+                  }
+                </td>
                 <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
                 <td class="text-end">
                   <div class="d-flex gap-1 justify-content-end">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="openEditModal(key)"
+                      [title]="'APIKEYS.EDIT_TITLE' | translate"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
                     @if (key.key_type === "acme") {
                       <button
                         class="btn btn-sm btn-outline-secondary"
@@ -501,7 +516,7 @@
               }
               <div class="form-text">{{ "APIKEYS.NAME_HELP" | translate }}</div>
             </div>
-            <div class="mb-0">
+            <div class="mb-3">
               <label class="form-label fw-medium">
                 {{ "APIKEYS.SECRET" | translate }}
                 <span class="text-muted small">{{ "APIKEYS.SECRET_OPTIONAL" | translate }}</span>
@@ -513,6 +528,19 @@
                 [formField]="createForm.secret"
               />
               <div class="form-text">{{ "APIKEYS.SECRET_HELP" | translate }}</div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium">
+                {{ "APIKEYS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span>
+              </label>
+              <textarea
+                class="form-control"
+                rows="2"
+                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [formField]="createForm.comment"
+              ></textarea>
+              <div class="form-text">{{ "APIKEYS.COMMENT_HELP" | translate }}</div>
             </div>
           </div>
           <div class="modal-footer">
@@ -573,6 +601,55 @@ curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api
             {{ "COMMON.CLOSE" | translate }}
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Edit key modal ─────────────────────────────────────────────────────── -->
+@if (editingKeyData()) {
+  <div class="modal-backdrop-overlay" (click)="closeEditModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil me-2 text-primary"></i>{{ "APIKEYS.EDIT_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onEditKey()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (editError()) {
+              <div class="alert alert-danger py-2 small">{{ editError() | translate }}</div>
+            }
+            <div class="mb-1">
+              <label class="form-label fw-medium">
+                {{ "APIKEYS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span>
+              </label>
+              <textarea
+                class="form-control"
+                rows="3"
+                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [formField]="editForm.comment"
+              ></textarea>
+              <div class="form-text">{{ "APIKEYS.COMMENT_HELP" | translate }}</div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeEditModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="onEditKey()" [disabled]="isEditing()">
+              @if (isEditing()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.SAVE_CHANGES" | translate }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

@@ -34,6 +34,7 @@
             <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
             <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
             <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
+            <th>{{ "APIKEYS.COMMENT" | translate }}</th>
             <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
             <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
@@ -64,6 +65,13 @@
                   }
                 } @else {
                   <span class="text-muted small">—</span>
+                }
+              </td>
+              <td class="small text-muted">
+                @if (key.comment) {
+                  <span [title]="key.comment">{{ key.comment }}</span>
+                } @else {
+                  <span class="fst-italic">—</span>
                 }
               </td>
               <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>

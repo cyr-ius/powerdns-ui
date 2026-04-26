@@ -515,7 +515,13 @@
     "LOAD_ERROR": "Unable to load keys.",
     "DELETE_ERROR": "Error deleting key.",
     "ADMIN_TITLE": "All API Keys",
-    "ADMIN_SUBTITLE": "Overview of all users' API and ACME keys"
+    "ADMIN_SUBTITLE": "Overview of all users' API and ACME keys",
+    "COMMENT": "Comment",
+    "COMMENT_OPTIONAL": "— optional",
+    "COMMENT_PLACEHOLDER": "Short description of this key's purpose…",
+    "COMMENT_HELP": "Optional note to help you identify the use of this key.",
+    "EDIT_TITLE": "Edit Key",
+    "EDIT_ERROR": "Error saving changes."
   },
   "TSIGKEYS": {
     "TITLE": "TSIG Keys",

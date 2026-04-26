@@ -8,6 +8,11 @@ class AcmeApiKeyCreate(BaseModel):
     name: str
     key: str | None = None
     key_type: Literal["acme", "api"] = "acme"
+    comment: str | None = None
+
+
+class AcmeApiKeyUpdate(BaseModel):
+    comment: str | None = None
 
 
 class AcmeApiKeyResponse(BaseModel):
@@ -16,6 +21,7 @@ class AcmeApiKeyResponse(BaseModel):
     key_prefix: str
     zones: list[str]
     key_type: str
+    comment: str | None
     created_at: datetime
 
 
