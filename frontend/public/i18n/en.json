@@ -212,7 +212,20 @@
     "API_KEYS_EMPTY": "No API or ACME keys are associated with this zone.",
     "API_KEY_SCOPE": "Scope",
     "API_KEY_UNRESTRICTED": "Unrestricted access",
-    "API_KEY_ZONE_ALLOWED": "Zone allowed"
+    "API_KEY_ZONE_ALLOWED": "Zone allowed",
+    "SOA_CHECK_TITLE": "SOA Sync",
+    "SOA_AUTH_SERIAL": "Authoritative serial",
+    "SOA_CHECKING": "Querying nameservers…",
+    "SOA_CHECK_ERROR": "Error querying nameservers.",
+    "SOA_COL_NS": "Nameserver",
+    "SOA_COL_IP": "IP",
+    "SOA_COL_SERIAL": "Serial",
+    "SOA_COL_STATUS": "Status",
+    "SOA_BEHIND": "behind",
+    "SOA_STATUS_SYNCED": "Synced",
+    "SOA_STATUS_OUTDATED": "Outdated",
+    "SOA_STATUS_AHEAD": "Ahead",
+    "SOA_STATUS_ERROR": "Error"
   },
   "ACCOUNTS": {
     "TITLE": "Accounts",

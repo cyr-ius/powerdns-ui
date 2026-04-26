@@ -4,7 +4,7 @@ import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdminService } from "../../../core/services/admin.service";
 import { AuthService } from "../../../core/services/auth.service";
 import { AcmeApiKey, AcmeKeysService } from "../../../core/services/acme-keys.service";
-import { PdnsService } from "../../../core/services/pdns.service";
+import { PdnsService, SoaCheckResult } from "../../../core/services/pdns.service";
 import type { RecordType, ZoneRecordTypes } from "../../../shared/models/admin.model";
 import {
   CryptoKey,
@@ -249,6 +249,26 @@ export class ZoneDetailComponent implements OnInit {
   readonly zoneApiKeys = signal<AcmeApiKey[]>([]);
   readonly isLoadingApiKeys = signal(false);
   private apiKeysLoaded = false;
+
+  // ── SOA Sync check ───────────────────────────────────────────────────────
+  readonly soaCheck = signal<SoaCheckResult | null>(null);
+  readonly isCheckingSoa = signal(false);
+  readonly soaCheckError = signal<string | null>(null);
+  readonly showSoaPanel = signal(false);
+
+  async checkSoaSync(): Promise<void> {
+    this.isCheckingSoa.set(true);
+    this.soaCheckError.set(null);
+    this.showSoaPanel.set(true);
+    try {
+      const result = await this.pdns.checkSoaSync(this.zoneId);
+      this.soaCheck.set(result);
+    } catch {
+      this.soaCheckError.set("ZONE_DETAIL.SOA_CHECK_ERROR");
+    } finally {
+      this.isCheckingSoa.set(false);
+    }
+  }
 
   // ── Reverse DNS ──────────────────────────────────────────────────────────
   readonly allZones = signal<Zone[]>([]);

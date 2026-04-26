@@ -212,7 +212,20 @@
     "API_KEYS_EMPTY": "Aucune clé API ou ACME n'est associée à cette zone.",
     "API_KEY_SCOPE": "Portée",
     "API_KEY_UNRESTRICTED": "Accès non restreint",
-    "API_KEY_ZONE_ALLOWED": "Zone autorisée"
+    "API_KEY_ZONE_ALLOWED": "Zone autorisée",
+    "SOA_CHECK_TITLE": "Sync SOA",
+    "SOA_AUTH_SERIAL": "Numéro de série autoritatif",
+    "SOA_CHECKING": "Interrogation des serveurs de noms…",
+    "SOA_CHECK_ERROR": "Erreur lors de la vérification des serveurs de noms.",
+    "SOA_COL_NS": "Serveur de noms",
+    "SOA_COL_IP": "IP",
+    "SOA_COL_SERIAL": "Numéro de série",
+    "SOA_COL_STATUS": "Statut",
+    "SOA_BEHIND": "de retard",
+    "SOA_STATUS_SYNCED": "Synchronisé",
+    "SOA_STATUS_OUTDATED": "En retard",
+    "SOA_STATUS_AHEAD": "En avance",
+    "SOA_STATUS_ERROR": "Erreur"
   },
   "ACCOUNTS": {
     "TITLE": "Comptes",

@@ -277,4 +277,24 @@ export class PdnsService {
   setZoneRecordTypes(zoneId: string, types: string[]): Promise<ZoneRecordTypes> {
     return firstValueFrom(this.http.put<ZoneRecordTypes>(`/api/zones/${zoneId}/record-types`, { types }));
   }
+
+  // ── SOA sync check ────────────────────────────────────────────────────────
+
+  checkSoaSync(zoneId: string): Promise<SoaCheckResult> {
+    return firstValueFrom(this.http.get<SoaCheckResult>(`/api/zones/${zoneId}/soa-check`));
+  }
+}
+
+export interface SoaNsResult {
+  ns: string;
+  ip: string | null;
+  serial: number | null;
+  status: "synced" | "outdated" | "ahead" | "error";
+  error: string | null;
+}
+
+export interface SoaCheckResult {
+  zone: string;
+  authoritative_serial: number | null;
+  nameservers: SoaNsResult[];
 }

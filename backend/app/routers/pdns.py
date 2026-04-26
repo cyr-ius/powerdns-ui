@@ -1,3 +1,11 @@
+import asyncio
+
+import dns.asyncquery
+import dns.asyncresolver
+import dns.exception
+import dns.message
+import dns.name as dns_name_mod
+import dns.rdatatype
 import httpx
 from fastapi import (
     APIRouter,
@@ -716,3 +724,78 @@ async def set_zone_record_types(
     return ZoneRecordTypesResponse(
         types=sorted(t.upper() for t in payload.types), is_custom=True
     )
+
+
+# ── SOA sync check ────────────────────────────────────────────────────────────
+
+
+async def _query_ns_serial(ns: str, zone: str) -> dict:
+    try:
+        ns_hostname = ns.rstrip(".")
+        answers = await dns.asyncresolver.resolve(ns_hostname, "A", lifetime=5)
+        ns_ip = str(answers[0].address)
+        qname = dns_name_mod.from_text(zone)
+        request = dns.message.make_query(qname, dns.rdatatype.SOA)
+        response = await dns.asyncquery.udp(request, ns_ip, timeout=3)
+        for rrset in response.answer:
+            if rrset.rdtype == dns.rdatatype.SOA:
+                return {"ip": ns_ip, "serial": rrset[0].serial, "error": None}
+        return {"ip": ns_ip, "serial": None, "error": "No SOA in response"}
+    except dns.exception.Timeout:
+        return {"ip": None, "serial": None, "error": "Timeout"}
+    except dns.resolver.NXDOMAIN:
+        return {"ip": None, "serial": None, "error": "NS hostname not found"}
+    except Exception as exc:
+        return {"ip": None, "serial": None, "error": str(exc)}
+
+
+@router.get("/{zone_id}/soa-check", dependencies=[Depends(get_current_user)])
+async def soa_sync_check(
+    zone_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    zone, _ = await _check_zone_access(zone_id, current_user, db)
+    zone_name: str = zone.get("name", "")
+
+    ns_names: list[str] = []
+    authoritative_serial: int | None = None
+    for rrset in zone.get("rrsets", []):
+        if rrset["type"] == "SOA" and rrset["name"] == zone_name:
+            try:
+                authoritative_serial = int(rrset["records"][0]["content"].split()[2])
+            except IndexError, ValueError, KeyError:
+                pass
+        if rrset["type"] == "NS" and rrset["name"] == zone_name:
+            for rec in rrset["records"]:
+                if not rec.get("disabled", False):
+                    ns_names.append(rec["content"])
+
+    raw = await asyncio.gather(*[_query_ns_serial(ns, zone_name) for ns in ns_names])
+
+    nameservers = []
+    for ns, result in zip(ns_names, raw):
+        serial: int | None = result.get("serial")
+        if serial is None:
+            ns_status = "error"
+        elif serial == authoritative_serial:
+            ns_status = "synced"
+        elif serial < (authoritative_serial or 0):
+            ns_status = "outdated"
+        else:
+            ns_status = "ahead"
+        nameservers.append(
+            {
+                "ns": ns,
+                "ip": result.get("ip"),
+                "serial": serial,
+                "status": ns_status,
+                "error": result.get("error"),
+            }
+        )
+
+    return {
+        "zone": zone_name,
+        "authoritative_serial": authoritative_serial,
+        "nameservers": nameservers,
+    }
