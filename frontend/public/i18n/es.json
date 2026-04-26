@@ -225,7 +225,17 @@
     "SOA_STATUS_SYNCED": "Sincronizado",
     "SOA_STATUS_OUTDATED": "Desactualizado",
     "SOA_STATUS_AHEAD": "Adelantado",
-    "SOA_STATUS_ERROR": "Error"
+    "SOA_STATUS_ERROR": "Error",
+    "EMAIL_CHECK_TITLE": "Seguridad de correo",
+    "EMAIL_CHECKING": "Analizando registros DNS…",
+    "EMAIL_CHECK_ERROR": "Error al analizar los registros de seguridad de correo.",
+    "EMAIL_STATUS_WARNING": "Atención",
+    "EMAIL_STATUS_MISSING": "Ausente",
+    "EMAIL_STATUS_REVOKED": "Revocado",
+    "EMAIL_STATUS_ERROR": "Error",
+    "EMAIL_DKIM_NONE": "Ninguno",
+    "EMAIL_DKIM_NONE_HELP": "No se encontró ninguna clave DKIM (sin registro *._domainkey). Configure DKIM en su servidor de correo.",
+    "EMAIL_DKIM_SELECTORS": "selector(es)"
   },
   "ACCOUNTS": {
     "TITLE": "Cuentas",

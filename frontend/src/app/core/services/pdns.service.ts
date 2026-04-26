@@ -283,6 +283,10 @@ export class PdnsService {
   checkSoaSync(zoneId: string): Promise<SoaCheckResult> {
     return firstValueFrom(this.http.get<SoaCheckResult>(`/api/zones/${zoneId}/soa-check`));
   }
+
+  checkEmailSecurity(zoneId: string): Promise<EmailCheckResult> {
+    return firstValueFrom(this.http.get<EmailCheckResult>(`/api/zones/${zoneId}/email-check`));
+  }
 }
 
 export interface SoaNsResult {
@@ -297,4 +301,33 @@ export interface SoaCheckResult {
   zone: string;
   authoritative_serial: number | null;
   nameservers: SoaNsResult[];
+}
+
+export type EmailCheckStatus = "ok" | "warning" | "error" | "missing" | "revoked" | "invalid";
+
+export interface SpfResult {
+  status: EmailCheckStatus;
+  record: string | null;
+  details: string;
+}
+
+export interface DmarcResult {
+  status: EmailCheckStatus;
+  record: string | null;
+  policy: "none" | "quarantine" | "reject" | null;
+  details: string;
+}
+
+export interface DkimSelectorResult {
+  selector: string;
+  status: EmailCheckStatus;
+  record: string;
+  details: string;
+}
+
+export interface EmailCheckResult {
+  zone: string;
+  spf: SpfResult;
+  dmarc: DmarcResult;
+  dkim: DkimSelectorResult[];
 }

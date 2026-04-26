@@ -225,7 +225,17 @@
     "SOA_STATUS_SYNCED": "Synced",
     "SOA_STATUS_OUTDATED": "Outdated",
     "SOA_STATUS_AHEAD": "Ahead",
-    "SOA_STATUS_ERROR": "Error"
+    "SOA_STATUS_ERROR": "Error",
+    "EMAIL_CHECK_TITLE": "Email Security",
+    "EMAIL_CHECKING": "Analysing DNS records…",
+    "EMAIL_CHECK_ERROR": "Error analysing email security records.",
+    "EMAIL_STATUS_WARNING": "Warning",
+    "EMAIL_STATUS_MISSING": "Missing",
+    "EMAIL_STATUS_REVOKED": "Revoked",
+    "EMAIL_STATUS_ERROR": "Error",
+    "EMAIL_DKIM_NONE": "None",
+    "EMAIL_DKIM_NONE_HELP": "No DKIM key found (no *._domainkey record). Configure DKIM in your mail server.",
+    "EMAIL_DKIM_SELECTORS": "selector(s)"
   },
   "ACCOUNTS": {
     "TITLE": "Accounts",

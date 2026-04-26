@@ -92,6 +92,18 @@
   <div class="d-flex gap-2 mb-3 flex-wrap">
     @if (zone()!.kind === "Master" || zone()!.kind === "Primary") {
       <button
+        class="btn btn-sm btn-outline-primary"
+        (click)="notifySlaves()"
+        [disabled]="isNotifying()"
+        [title]="'ZONE_DETAIL.NOTIFY_SLAVES' | translate"
+      >
+        @if (isNotifying()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-broadcast me-1"></i>{{ "ZONE_DETAIL.NOTIFY_SLAVES" | translate }}
+      </button>
+
+      <button
         class="btn btn-sm btn-outline-info"
         (click)="checkSoaSync()"
         [disabled]="isCheckingSoa()"
@@ -103,17 +115,6 @@
           <i class="bi bi-arrow-repeat me-1"></i>
         }
         {{ "ZONE_DETAIL.SOA_CHECK_TITLE" | translate }}
-      </button>
-      <button
-        class="btn btn-sm btn-outline-primary"
-        (click)="notifySlaves()"
-        [disabled]="isNotifying()"
-        [title]="'ZONE_DETAIL.NOTIFY_SLAVES' | translate"
-      >
-        @if (isNotifying()) {
-          <span class="spinner-border spinner-border-sm me-1"></span>
-        }
-        <i class="bi bi-broadcast me-1"></i>{{ "ZONE_DETAIL.NOTIFY_SLAVES" | translate }}
       </button>
     }
     @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
@@ -152,6 +153,21 @@
           <span class="spinner-border spinner-border-sm me-1"></span>
         }
         <i class="bi bi-upload me-1"></i>{{ "ZONE_DETAIL.IMPORT" | translate }}
+      </button>
+    }
+    @if (!isReverseZone()) {
+      <button
+        class="btn btn-sm btn-outline-secondary"
+        (click)="checkEmailSecurity()"
+        [disabled]="isCheckingEmail()"
+        [title]="'ZONE_DETAIL.EMAIL_CHECK_TITLE' | translate"
+      >
+        @if (isCheckingEmail()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        } @else {
+          <i class="bi bi-envelope-check me-1"></i>
+        }
+        {{ "ZONE_DETAIL.EMAIL_CHECK_TITLE" | translate }}
       </button>
     }
   </div>
@@ -237,6 +253,150 @@
       </div>
     </div>
   }
+
+  <!-- Email security panel (SPF / DMARC / DKIM) -->
+  @if (showEmailPanel()) {
+    <div class="card shadow-sm mb-3">
+      <div class="card-header py-2 d-flex align-items-center justify-content-between">
+        <span class="fw-semibold small">
+          <i class="bi bi-envelope-check me-2 text-secondary"></i>{{ "ZONE_DETAIL.EMAIL_CHECK_TITLE" | translate }}
+        </span>
+        <button type="button" class="btn-close btn-sm" (click)="showEmailPanel.set(false)"></button>
+      </div>
+      <div class="card-body">
+        @if (isCheckingEmail()) {
+          <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+            <span class="text-muted small ms-2">{{ "ZONE_DETAIL.EMAIL_CHECKING" | translate }}</span>
+          </div>
+        } @else if (emailCheckError()) {
+          <div class="alert alert-danger py-2 small mb-0">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ emailCheckError() | translate }}
+          </div>
+        } @else if (emailCheck()) {
+          <div class="row g-3">
+            <!-- SPF -->
+            <div class="col-12 col-md-4">
+              <div class="card h-100 border-0 bg-body-secondary">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-semibold small">SPF</span>
+                    <ng-container
+                      [ngTemplateOutlet]="emailBadge"
+                      [ngTemplateOutletContext]="{ status: emailCheck()!.spf.status }"
+                    ></ng-container>
+                  </div>
+                  @if (emailCheck()!.spf.record) {
+                    <div
+                      class="font-monospace small text-break bg-body rounded p-2 mb-2"
+                      style="font-size: 0.72rem; word-break: break-all"
+                    >
+                      {{ emailCheck()!.spf.record }}
+                    </div>
+                  }
+                  <p class="small text-muted mb-0">{{ emailCheck()!.spf.details }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- DMARC -->
+            <div class="col-12 col-md-4">
+              <div class="card h-100 border-0 bg-body-secondary">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-semibold small">DMARC</span>
+                    <ng-container
+                      [ngTemplateOutlet]="emailBadge"
+                      [ngTemplateOutletContext]="{ status: emailCheck()!.dmarc.status }"
+                    ></ng-container>
+                    @if (emailCheck()!.dmarc.policy) {
+                      <span
+                        class="badge bg-secondary-subtle text-secondary-emphasis ms-auto font-monospace"
+                        style="font-size: 0.65rem"
+                      >
+                        p={{ emailCheck()!.dmarc.policy }}
+                      </span>
+                    }
+                  </div>
+                  @if (emailCheck()!.dmarc.record) {
+                    <div
+                      class="font-monospace small text-break bg-body rounded p-2 mb-2"
+                      style="font-size: 0.72rem; word-break: break-all"
+                    >
+                      {{ emailCheck()!.dmarc.record }}
+                    </div>
+                  }
+                  <p class="small text-muted mb-0">{{ emailCheck()!.dmarc.details }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- DKIM -->
+            <div class="col-12 col-md-4">
+              <div class="card h-100 border-0 bg-body-secondary">
+                <div class="card-body p-3">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="fw-semibold small">DKIM</span>
+                    @if (emailCheck()!.dkim.length === 0) {
+                      <span class="badge bg-warning-subtle text-warning-emphasis">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i
+                        >{{ "ZONE_DETAIL.EMAIL_DKIM_NONE" | translate }}
+                      </span>
+                    } @else {
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                        {{ emailCheck()!.dkim.length }} {{ "ZONE_DETAIL.EMAIL_DKIM_SELECTORS" | translate }}
+                      </span>
+                    }
+                  </div>
+                  @if (emailCheck()!.dkim.length === 0) {
+                    <p class="small text-muted mb-0">{{ "ZONE_DETAIL.EMAIL_DKIM_NONE_HELP" | translate }}</p>
+                  } @else {
+                    <div class="d-flex flex-column gap-2">
+                      @for (sel of emailCheck()!.dkim; track sel.selector) {
+                        <div class="bg-body rounded p-2">
+                          <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="font-monospace small fw-medium">{{ sel.selector }}</span>
+                            <ng-container
+                              [ngTemplateOutlet]="emailBadge"
+                              [ngTemplateOutletContext]="{ status: sel.status }"
+                            ></ng-container>
+                          </div>
+                          <p class="small text-muted mb-0" style="font-size: 0.78rem">{{ sel.details }}</p>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Status badge template -->
+  <ng-template #emailBadge let-status="status">
+    @if (status === "ok") {
+      <span class="badge bg-success-subtle text-success-emphasis"><i class="bi bi-check-circle-fill me-1"></i>OK</span>
+    } @else if (status === "warning") {
+      <span class="badge bg-warning-subtle text-warning-emphasis"
+        ><i class="bi bi-exclamation-triangle-fill me-1"></i>{{ "ZONE_DETAIL.EMAIL_STATUS_WARNING" | translate }}</span
+      >
+    } @else if (status === "missing") {
+      <span class="badge bg-danger-subtle text-danger-emphasis"
+        ><i class="bi bi-x-circle-fill me-1"></i>{{ "ZONE_DETAIL.EMAIL_STATUS_MISSING" | translate }}</span
+      >
+    } @else if (status === "revoked") {
+      <span class="badge bg-secondary-subtle text-secondary-emphasis"
+        ><i class="bi bi-slash-circle me-1"></i>{{ "ZONE_DETAIL.EMAIL_STATUS_REVOKED" | translate }}</span
+      >
+    } @else {
+      <span class="badge bg-danger-subtle text-danger-emphasis"
+        ><i class="bi bi-x-circle-fill me-1"></i>{{ "ZONE_DETAIL.EMAIL_STATUS_ERROR" | translate }}</span
+      >
+    }
+  </ng-template>
 
   <!-- Role badge -->
   @if (currentRole()) {

@@ -1,10 +1,11 @@
+import { NgTemplateOutlet } from "@angular/common";
 import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdminService } from "../../../core/services/admin.service";
 import { AuthService } from "../../../core/services/auth.service";
 import { AcmeApiKey, AcmeKeysService } from "../../../core/services/acme-keys.service";
-import { PdnsService, SoaCheckResult } from "../../../core/services/pdns.service";
+import { PdnsService, EmailCheckResult, SoaCheckResult } from "../../../core/services/pdns.service";
 import type { RecordType, ZoneRecordTypes } from "../../../shared/models/admin.model";
 import {
   CryptoKey,
@@ -49,7 +50,7 @@ export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | 
 
 @Component({
   selector: "app-zone-detail",
-  imports: [RouterLink, FormField, TranslateModule],
+  imports: [RouterLink, FormField, TranslateModule, NgTemplateOutlet],
   templateUrl: "./zone-detail.component.html",
   styleUrl: "./zone-detail.component.css",
 })
@@ -249,6 +250,25 @@ export class ZoneDetailComponent implements OnInit {
   readonly zoneApiKeys = signal<AcmeApiKey[]>([]);
   readonly isLoadingApiKeys = signal(false);
   private apiKeysLoaded = false;
+
+  // ── Email security check (SPF/DMARC/DKIM) ───────────────────────────────
+  readonly emailCheck = signal<EmailCheckResult | null>(null);
+  readonly isCheckingEmail = signal(false);
+  readonly emailCheckError = signal<string | null>(null);
+  readonly showEmailPanel = signal(false);
+
+  async checkEmailSecurity(): Promise<void> {
+    this.isCheckingEmail.set(true);
+    this.emailCheckError.set(null);
+    this.showEmailPanel.set(true);
+    try {
+      this.emailCheck.set(await this.pdns.checkEmailSecurity(this.zoneId));
+    } catch {
+      this.emailCheckError.set("ZONE_DETAIL.EMAIL_CHECK_ERROR");
+    } finally {
+      this.isCheckingEmail.set(false);
+    }
+  }
 
   // ── SOA Sync check ───────────────────────────────────────────────────────
   readonly soaCheck = signal<SoaCheckResult | null>(null);
