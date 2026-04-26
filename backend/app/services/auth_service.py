@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 import bcrypt
 import httpx
-from jose import jwt
+from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -12,7 +12,6 @@ from app.config import settings
 from app.models.user import User
 
 _oidc_discovery_cache: dict | None = None
-_oidc_state_store: dict[str, str] = {}
 
 
 def clear_oidc_cache() -> None:
@@ -96,19 +95,36 @@ async def _get_oidc_discovery(cfg: dict) -> dict:
     return result
 
 
+def _generate_oidc_state() -> str:
+    """Generate a short-lived signed JWT used as OIDC state parameter.
+
+    Stateless: survives app restarts and works across multiple workers.
+    """
+    expire = datetime.now(UTC) + timedelta(minutes=10)
+    return jwt.encode(
+        {"sub": "oidc_state", "exp": expire, "nonce": secrets.token_urlsafe(16)},
+        settings.secret_key,
+        algorithm=settings.algorithm,
+    )
+
+
 def validate_and_consume_oidc_state(state: str) -> None:
-    """Verify state was issued by this server and remove it (single-use)."""
-    if state not in _oidc_state_store:
-        raise ValueError("Invalid or expired OIDC state")
-    del _oidc_state_store[state]
+    """Verify the state JWT was signed by this server and has not expired."""
+    try:
+        payload = jwt.decode(
+            state, settings.secret_key, algorithms=[settings.algorithm]
+        )
+        if payload.get("sub") != "oidc_state":
+            raise ValueError("Invalid OIDC state subject")
+    except JWTError as exc:
+        raise ValueError("Invalid or expired OIDC state") from exc
 
 
 async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)
     auth_endpoint = discovery["authorization_endpoint"]
-    state = secrets.token_urlsafe(32)
-    _oidc_state_store[state] = "/"
+    state = _generate_oidc_state()
     params = {
         "response_type": "code",
         "client_id": cfg["client_id"],
