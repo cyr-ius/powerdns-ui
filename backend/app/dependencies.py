@@ -8,8 +8,14 @@ from app.database import get_db
 from app.models.user import User
 from app.services import acme_service, admin_service, auth_service
 
-bearer_scheme = HTTPBearer(auto_error=False)
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+bearer_scheme = HTTPBearer(
+    auto_error=False, description="JWT Bearer token in Authorization header"
+)
+api_key_header = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+    description="Use API key issued by an administrator",
+)
 
 
 async def get_current_user(
