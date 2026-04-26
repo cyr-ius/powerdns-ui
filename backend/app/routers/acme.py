@@ -3,9 +3,10 @@
 Exposes the minimal PowerDNS HTTP API subset that certbot-dns-pdns (via
 dns-lexicon) needs to perform DNS-01 ACME challenges:
 
-  GET  /api/v1/servers/{server_id}/zones
-  GET  /api/v1/servers/{server_id}/zones/{zone_id}
+  GET   /api/v1/servers/{server_id}/zones
+  GET   /api/v1/servers/{server_id}/zones/{zone_id}
   PATCH /api/v1/servers/{server_id}/zones/{zone_id}
+  PUT   /api/v1/servers/{server_id}/zones/{zone_id}/notify
 
 Secured with per-user ACME API keys managed via /api/acme-keys.
 Each key carries an explicit allow-list of zones.
@@ -70,6 +71,22 @@ async def list_zones(
         z for z in zones if z.get("name", "").rstrip(".") + "." in normalised_allowed
     ]
     return JSONResponse(content=filtered)
+
+
+@router.put("/servers/{server_id}/zones/{zone_id}/notify", status_code=200)
+async def notify_zone(
+    server_id: str,
+    zone_id: str,
+    key: AcmeApiKey = Depends(_get_acme_key),
+) -> JSONResponse:
+    _check_zone_allowed(key, zone_id)
+    try:
+        data = await pdns_request("PUT", f"/servers/{server_id}/zones/{zone_id}/notify")
+        return JSONResponse(content=data)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code, detail=str(exc)
+        ) from exc
 
 
 @router.get("/servers/{server_id}/zones/{zone_id:path}")
