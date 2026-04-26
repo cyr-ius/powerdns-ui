@@ -4,6 +4,8 @@ import { PdnsService } from "../../core/services/pdns.service";
 import { Zone } from "../../shared/models/pdns.model";
 import { TranslateModule } from "@ngx-translate/core";
 
+type CatalogTab = "producer" | "consumer";
+
 @Component({
   selector: "app-catalogues",
   imports: [FormField, TranslateModule],
@@ -13,6 +15,9 @@ import { TranslateModule } from "@ngx-translate/core";
 export class CataloguesComponent implements OnInit {
   private readonly pdns = inject(PdnsService);
 
+  readonly activeTab = signal<CatalogTab>("producer");
+
+  // ── Producer ──────────────────────────────────────────────────────────────
   readonly catalogues = signal<Zone[]>([]);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
@@ -36,12 +41,34 @@ export class CataloguesComponent implements OnInit {
 
   readonly nonMembers = computed(() => {
     const memberIds = new Set(this.members().map((z) => z.id));
-    return this.availableZones().filter((z) => !memberIds.has(z.id) && z.kind !== "Producer");
+    return this.availableZones().filter((z) => !memberIds.has(z.id) && z.kind !== "Producer" && z.kind !== "Consumer");
+  });
+
+  // ── Consumer ──────────────────────────────────────────────────────────────
+  readonly consumers = signal<Zone[]>([]);
+  readonly isLoadingConsumers = signal(false);
+  readonly consumerError = signal<string | null>(null);
+
+  readonly selectedConsumer = signal<Zone | null>(null);
+  readonly consumerMembers = signal<Zone[]>([]);
+  readonly isLoadingConsumerMembers = signal(false);
+  readonly consumerMembersError = signal<string | null>(null);
+
+  readonly showCreateConsumerModal = signal(false);
+  readonly createConsumerError = signal<string | null>(null);
+  readonly isCreatingConsumer = signal(false);
+
+  readonly createConsumerModel = signal({ name: "", masters: "", account: "" });
+  readonly createConsumerForm = form(this.createConsumerModel, (s) => {
+    required(s.name, { message: "The consumer name is required" });
+    required(s.masters, { message: "At least one master server is required" });
   });
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadCatalogues(), this.loadAccounts()]);
+    await Promise.all([this.loadCatalogues(), this.loadConsumers(), this.loadAccounts()]);
   }
+
+  // ── Producer methods ──────────────────────────────────────────────────────
 
   async loadCatalogues(): Promise<void> {
     this.isLoading.set(true);
@@ -149,6 +176,84 @@ export class CataloguesComponent implements OnInit {
       }
     } catch {
       this.error.set(`Impossible to delete the catalogue "${cat.name}".`);
+    }
+  }
+
+  // ── Consumer methods ──────────────────────────────────────────────────────
+
+  async loadConsumers(): Promise<void> {
+    this.isLoadingConsumers.set(true);
+    this.consumerError.set(null);
+    try {
+      this.consumers.set(await this.pdns.getConsumers());
+    } catch {
+      this.consumerError.set("Impossible to load consumer catalog zones.");
+    } finally {
+      this.isLoadingConsumers.set(false);
+    }
+  }
+
+  async selectConsumer(consumer: Zone): Promise<void> {
+    this.selectedConsumer.set(consumer);
+    this.isLoadingConsumerMembers.set(true);
+    this.consumerMembersError.set(null);
+    try {
+      this.consumerMembers.set(await this.pdns.getConsumerMembers(consumer.id));
+    } catch {
+      this.consumerMembersError.set("Impossible to load consumer members.");
+    } finally {
+      this.isLoadingConsumerMembers.set(false);
+    }
+  }
+
+  openCreateConsumerModal(): void {
+    this.createConsumerModel.set({ name: "", masters: "", account: "" });
+    this.createConsumerError.set(null);
+    this.showCreateConsumerModal.set(true);
+  }
+
+  closeCreateConsumerModal(): void {
+    this.showCreateConsumerModal.set(false);
+  }
+
+  onCreateConsumer(): void {
+    submit(this.createConsumerForm, async () => {
+      this.isCreatingConsumer.set(true);
+      this.createConsumerError.set(null);
+      try {
+        const { name, masters, account } = this.createConsumerModel();
+        const mastersList = masters
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
+        await this.pdns.createConsumer({
+          name,
+          kind: "Consumer",
+          nameservers: [],
+          masters: mastersList,
+          account: account || undefined,
+        });
+        this.showCreateConsumerModal.set(false);
+        await this.loadConsumers();
+      } catch {
+        this.createConsumerError.set("Error occurred while creating the consumer catalog zone.");
+      } finally {
+        this.isCreatingConsumer.set(false);
+      }
+    });
+  }
+
+  async deleteConsumer(consumer: Zone): Promise<void> {
+    if (!confirm(`Delete the consumer "${consumer.name}" ? This action is irreversible.`)) return;
+    try {
+      await this.pdns.deleteConsumer(consumer.id);
+      this.consumers.update((list) => list.filter((c) => c.id !== consumer.id));
+      if (this.selectedConsumer()?.id === consumer.id) {
+        this.selectedConsumer.set(null);
+        this.consumerMembers.set([]);
+      }
+    } catch {
+      this.consumerError.set(`Impossible to delete the consumer "${consumer.name}".`);
     }
   }
 

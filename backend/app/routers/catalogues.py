@@ -178,3 +178,94 @@ async def remove_member(
         )
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
+
+
+# ── Consumers ─────────────────────────────────────────────────────────────────
+
+
+async def _get_consumer_zone(zone_id: str) -> dict:
+    try:
+        zone: dict = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
+    except httpx.HTTPStatusError as exc:
+        raise _pdns_error_handler(exc) from exc
+    if zone.get("kind") != "Consumer":
+        raise HTTPException(status_code=404, detail="Consumer catalog zone not found")
+    return zone
+
+
+@router.get("/consumers", response_model=list[Zone])
+async def list_consumers(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list:
+    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+    consumers = [z for z in zones if z.get("kind") == "Consumer"]
+    if current_user.is_admin:
+        return consumers
+    user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
+    return [z for z in consumers if (z.get("account") or "") in user_accounts]
+
+
+@router.post("/consumers", response_model=ZoneDetail, status_code=201)
+async def create_consumer(
+    payload: ZoneCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    if not current_user.is_admin:
+        user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
+        if not payload.account or payload.account not in user_accounts:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You must specify an account to which you belong to create a consumer",
+            )
+    if not payload.masters:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="At least one master server is required for a Consumer catalog zone",
+        )
+    data = payload.model_dump(exclude_none=True)
+    data["kind"] = "Consumer"
+    data.pop("nameservers", None)
+    if not data["name"].endswith("."):
+        data["name"] += "."
+    try:
+        return await pdns_request("POST", f"{_SERVER}/zones", json=data)
+    except httpx.HTTPStatusError as exc:
+        raise _pdns_error_handler(exc) from exc
+
+
+@router.delete("/consumers/{zone_id}", status_code=204)
+async def delete_consumer(
+    zone_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    zone = await _get_consumer_zone(zone_id)
+    if not current_user.is_admin:
+        account = zone.get("account") or ""
+        user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
+        if account not in user_accounts:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+            )
+    try:
+        await pdns_request("DELETE", f"{_SERVER}/zones/{zone_id}")
+    except httpx.HTTPStatusError as exc:
+        raise _pdns_error_handler(exc) from exc
+
+
+@router.get("/consumers/{zone_id}/members", response_model=list[Zone])
+async def list_consumer_members(
+    zone_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list:
+    consumer = await _get_consumer_zone(zone_id)
+    consumer_name: str = consumer["name"]
+    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+    members = [z for z in zones if z.get("catalog") == consumer_name]
+    if current_user.is_admin:
+        return members
+    user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
+    return [z for z in members if (z.get("account") or "") in user_accounts]

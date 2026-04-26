@@ -222,6 +222,24 @@ export class PdnsService {
     return firstValueFrom(this.http.delete(`/api/catalogues/${catalogueId}/members/${memberZoneId}`));
   }
 
+  // ── Consumers ─────────────────────────────────────────────────────────────
+
+  getConsumers(): Promise<Zone[]> {
+    return firstValueFrom(this.http.get<Zone[]>("/api/catalogues/consumers"));
+  }
+
+  createConsumer(payload: ZoneCreate): Promise<ZoneDetail> {
+    return firstValueFrom(this.http.post<ZoneDetail>("/api/catalogues/consumers", payload));
+  }
+
+  deleteConsumer(zoneId: string): Promise<unknown> {
+    return firstValueFrom(this.http.delete(`/api/catalogues/consumers/${zoneId}`));
+  }
+
+  getConsumerMembers(zoneId: string): Promise<Zone[]> {
+    return firstValueFrom(this.http.get<Zone[]>(`/api/catalogues/consumers/${zoneId}/members`));
+  }
+
   // ── Autoprimaries ─────────────────────────────────────────────────────────
 
   getAutoprimaries(): Promise<Autoprimary[]> {
