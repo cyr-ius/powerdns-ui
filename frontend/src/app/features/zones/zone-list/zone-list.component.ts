@@ -31,6 +31,7 @@ export class ZoneListComponent implements OnInit {
   });
 
   readonly accounts = signal<string[]>([]);
+  readonly catalogues = signal<Zone[]>([]);
 
   readonly createMode = signal<"standard" | "reverse">("standard");
   readonly reverseCidr = signal("");
@@ -41,6 +42,7 @@ export class ZoneListComponent implements OnInit {
     kind: "Native",
     nameservers: "",
     account: "",
+    catalog: "",
   });
   readonly createForm = form(this.createModel, (s) => {
     required(s.name, { message: "The zone name is required" });
@@ -50,12 +52,20 @@ export class ZoneListComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadZones(), this.loadAccounts()]);
+    await Promise.all([this.loadZones(), this.loadAccounts(), this.loadCatalogues()]);
   }
 
   async loadAccounts(): Promise<void> {
     try {
       this.accounts.set(await this.pdns.getAccounts());
+    } catch {
+      // non-blocking
+    }
+  }
+
+  async loadCatalogues(): Promise<void> {
+    try {
+      this.catalogues.set(await this.pdns.getCatalogues());
     } catch {
       // non-blocking
     }
@@ -80,6 +90,7 @@ export class ZoneListComponent implements OnInit {
       kind: "Native",
       nameservers: "",
       account: "",
+      catalog: "",
     });
     this.createError.set(null);
     this.createMode.set("standard");
@@ -105,7 +116,7 @@ export class ZoneListComponent implements OnInit {
       this.isCreating.set(true);
       this.createError.set(null);
       try {
-        const { name, kind, nameservers, account } = this.createModel();
+        const { name, kind, nameservers, account, catalog } = this.createModel();
         const nsList = nameservers
           .split(",")
           .map((s) => s.trim())
@@ -116,6 +127,7 @@ export class ZoneListComponent implements OnInit {
           nameservers: nsList,
           masters: [],
           account: account || undefined,
+          catalog: catalog || undefined,
         });
         this.showCreateModal.set(false);
         await this.loadZones();

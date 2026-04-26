@@ -209,7 +209,7 @@
               }
             </div>
             @if (accounts().length > 0) {
-              <div class="mb-0">
+              <div class="mb-3">
                 <label class="form-label fw-medium">{{ "COMMON.ACCOUNT" | translate }}</label>
                 <select class="form-select" [formField]="createForm.account">
                   <option value="">{{ "COMMON.NONE" | translate }}</option>
@@ -217,6 +217,18 @@
                     <option [value]="acc">{{ acc }}</option>
                   }
                 </select>
+              </div>
+            }
+            @if (catalogues().length > 0) {
+              <div class="mb-0">
+                <label class="form-label fw-medium">{{ "ZONES.CATALOG" | translate }}</label>
+                <select class="form-select" [formField]="createForm.catalog">
+                  <option value="">{{ "COMMON.NONE" | translate }}</option>
+                  @for (cat of catalogues(); track cat.id) {
+                    <option [value]="cat.name">{{ cat.name }}</option>
+                  }
+                </select>
+                <div class="form-text">{{ "ZONES.CATALOG_HELP" | translate }}</div>
               </div>
             }
           </div>

@@ -85,6 +85,8 @@
     "ZONE_CREATED": "Zona creada:",
     "NAMESERVERS": "Servidores de nombres",
     "NAMESERVERS_HELP": "Separados por comas. El primero será el mname del SOA.",
+    "CATALOG": "Catálogo",
+    "CATALOG_HELP": "Asociar esta zona con un catálogo para distribuirla automáticamente a los servidores secundarios.",
     "CREATING": "Creando…"
   },
   "ZONE_DETAIL": {
