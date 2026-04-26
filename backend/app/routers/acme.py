@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.acme_key import AcmeApiKey
-from app.services import acme_service
+from app.services import acme_service, admin_service, audit_service
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api/v1", tags=["acme-pdns-compat"])
@@ -54,9 +54,16 @@ def _check_zone_allowed(key: AcmeApiKey, zone_id: str) -> None:
         )
 
 
+async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
+    user = await admin_service.get_user_by_id(db, key.user_id)
+    return user.username if user else f"user:{key.user_id}"
+
+
 @router.get("/servers/{server_id}/zones")
 async def list_zones(
     server_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     allowed = acme_service._decode_zones(key)
@@ -70,6 +77,16 @@ async def list_zones(
     filtered = [
         z for z in zones if z.get("name", "").rstrip(".") + "." in normalised_allowed
     ]
+    username = await _resolve_username(db, key)
+    await audit_service.log_action(
+        db,
+        username=username,
+        user_id=key.user_id,
+        action="list",
+        resource_type="acme_zone",
+        details={"acme_key": key.name},
+        ip_address=request.client.host if request.client else None,
+    )
     return JSONResponse(content=filtered)
 
 
@@ -77,32 +94,58 @@ async def list_zones(
 async def notify_zone(
     server_id: str,
     zone_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     _check_zone_allowed(key, zone_id)
     try:
         data = await pdns_request("PUT", f"/servers/{server_id}/zones/{zone_id}/notify")
-        return JSONResponse(content=data)
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
+    username = await _resolve_username(db, key)
+    await audit_service.log_action(
+        db,
+        username=username,
+        user_id=key.user_id,
+        action="notify",
+        resource_type="acme_zone",
+        resource_id=zone_id,
+        details={"acme_key": key.name},
+        ip_address=request.client.host if request.client else None,
+    )
+    return JSONResponse(content=data)
 
 
 @router.get("/servers/{server_id}/zones/{zone_id:path}")
 async def get_zone(
     server_id: str,
     zone_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     _check_zone_allowed(key, zone_id)
     try:
         data = await pdns_request("GET", f"/servers/{server_id}/zones/{zone_id}")
-        return JSONResponse(content=data)
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
+    username = await _resolve_username(db, key)
+    await audit_service.log_action(
+        db,
+        username=username,
+        user_id=key.user_id,
+        action="read",
+        resource_type="acme_zone",
+        resource_id=zone_id,
+        details={"acme_key": key.name},
+        ip_address=request.client.host if request.client else None,
+    )
+    return JSONResponse(content=data)
 
 
 @router.patch("/servers/{server_id}/zones/{zone_id:path}", status_code=204)
@@ -110,6 +153,7 @@ async def patch_zone(
     server_id: str,
     zone_id: str,
     request: Request,
+    db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> None:
     _check_zone_allowed(key, zone_id)
@@ -131,3 +175,15 @@ async def patch_zone(
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
+    username = await _resolve_username(db, key)
+    records = [r.get("name") for r in body.get("rrsets", [])]
+    await audit_service.log_action(
+        db,
+        username=username,
+        user_id=key.user_id,
+        action="update",
+        resource_type="acme_zone",
+        resource_id=zone_id,
+        details={"acme_key": key.name, "records": records},
+        ip_address=request.client.host if request.client else None,
+    )
