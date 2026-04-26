@@ -112,11 +112,6 @@ async def list_members(
     return [z for z in members if (z.get("account") or "") in user_accounts]
 
 
-class _MemberPayload:
-    def __init__(self, zone_id: str):
-        self.zone_id = zone_id
-
-
 @router.post("/{zone_id}/members/{member_zone_id}", status_code=204)
 async def add_member(
     zone_id: str,
