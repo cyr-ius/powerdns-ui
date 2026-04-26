@@ -47,12 +47,12 @@ async def create_key(
 
 
 async def list_keys(db: AsyncSession, user_id: int) -> list[AcmeApiKey]:
-    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.user_id == user_id))
+    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.user_id == user_id))  # type: ignore[attr-defined]
     return list(result.all())
 
 
 async def get_key(db: AsyncSession, key_id: int, user_id: int) -> AcmeApiKey | None:
-    result = await db.exec(
+    result = await db.exec(  # type: ignore[attr-defined]
         select(AcmeApiKey).where(AcmeApiKey.id == key_id, AcmeApiKey.user_id == user_id)
     )
     return result.first()
@@ -83,7 +83,7 @@ async def delete_key(db: AsyncSession, key_id: int, user_id: int) -> bool:
 async def list_all_keys(db: AsyncSession) -> list[tuple[AcmeApiKey, str, int]]:
     """Return all keys with their owner's username and user_id (admin use)."""
     rows = await db.execute(
-        sa_select(AcmeApiKey, User.username, User.id)
+        sa_select(AcmeApiKey, User.username, User.id)  # type: ignore[call-overload]
         .join(User, AcmeApiKey.user_id == User.id)
         .order_by(User.username, AcmeApiKey.created_at)
     )
@@ -92,7 +92,7 @@ async def list_all_keys(db: AsyncSession) -> list[tuple[AcmeApiKey, str, int]]:
 
 async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
     """Delete any key by id regardless of owner (admin use)."""
-    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))
+    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))  # type: ignore[attr-defined]
     key = result.first()
     if key is None:
         return False
@@ -103,7 +103,7 @@ async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
 
 async def verify_key(db: AsyncSession, raw_key: str) -> AcmeApiKey | None:
     """Look up a key by its SHA-256 hash (constant-time safe for random keys)."""
-    result = await db.exec(
+    result = await db.exec(  # type: ignore[attr-defined]
         select(AcmeApiKey).where(AcmeApiKey.key_hash == _hash(raw_key))
     )
     return result.first()
