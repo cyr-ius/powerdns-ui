@@ -88,13 +88,12 @@
   },
 
   // ─── Ports forwardés automatiquement ──────────────────────────────────
-  "forwardPorts": [
-    4200, // Angular dev server
-    8000 // FastAPI
-  ],
+  // appPort publie les ports sur 0.0.0.0 (accessible via IP LAN, ex: 192.168.1.x)
+  // forwardPorts crée un tunnel localhost uniquement — insuffisant pour OIDC avec IP réelle
+  "appPort": ["0.0.0.0:4200:4200", "0.0.0.0:8000:8000"],
   "portsAttributes": {
-    "4200": { "label": "Angular Frontend", "onAutoForward": "notify" },
-    "8000": { "label": "FastAPI Backend", "onAutoForward": "notify" }
+    "4200": { "label": "Angular Frontend", "onAutoForward": "notify", "host": "0.0.0.0" },
+    "8000": { "label": "FastAPI Backend", "onAutoForward": "notify", "host": "0.0.0.0" }
   },
 
   // ─── Environment varaibles ──────────────────────────────────────────────
