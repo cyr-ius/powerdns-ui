@@ -22,7 +22,7 @@ export class App implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.hash.substring(1));
     const token = params.get('token');
     if (token) {
       await this.auth.loginWithToken(token);

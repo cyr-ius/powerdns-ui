@@ -96,6 +96,13 @@ async def _get_oidc_discovery(cfg: dict) -> dict:
     return result
 
 
+def validate_and_consume_oidc_state(state: str) -> None:
+    """Verify state was issued by this server and remove it (single-use)."""
+    if state not in _oidc_state_store:
+        raise ValueError("Invalid or expired OIDC state")
+    del _oidc_state_store[state]
+
+
 async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)

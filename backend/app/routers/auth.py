@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,6 +16,8 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services import admin_service, audit_service, auth_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth")
 
@@ -158,6 +162,7 @@ async def oidc_callback(
             status_code=status.HTTP_400_BAD_REQUEST, detail="OIDC not configured"
         )
     try:
+        auth_service.validate_and_consume_oidc_state(state)
         tokens = await auth_service.exchange_oidc_code(code, state, cfg)
         userinfo = await auth_service.get_oidc_userinfo(tokens["access_token"], cfg)
         username: str = userinfo.get("preferred_username") or userinfo.get("sub", "")
@@ -166,6 +171,9 @@ async def oidc_callback(
             db, username=username, email=email
         )
         jwt_token = auth_service.create_access_token({"sub": user.username})
-        return RedirectResponse(url=f"/?token={jwt_token}")
+        return RedirectResponse(url=f"/#token={jwt_token}")
+    except ValueError:
+        return RedirectResponse(url="/login?error=oidc_state_invalid")
     except Exception as exc:
-        return RedirectResponse(url=f"/login?error=oidc_failed&detail={exc!s}")
+        logger.error("OIDC callback failed: %s", exc)
+        return RedirectResponse(url="/login?error=oidc_failed")
