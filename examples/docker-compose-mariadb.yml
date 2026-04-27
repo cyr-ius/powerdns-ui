@@ -7,9 +7,9 @@ services:
       - pdns-init
     volumes:
       - powerdns_data:/var/lib/powerdns
-    # ports:
-    #   - 53:53
-    #   - 53:53/udp
+    ports:
+      - 53:53
+      - 53:53/udp
     command:
       - "--no-config"
       - "--api=yes"
@@ -54,17 +54,21 @@ services:
       - MARIADB_USER=${MARIADB_USER:-powerdns}
       - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
       - MARIADB_INNODB_FORCE_RECOVERY=3
-
+    healthcheck:
+      test: ["CMD-SHELL", "mariadb-admin ping -h localhost -uroot -p$$MARIADB_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
   pdns-init:
     image: cyrius44/powerdns-ui:latest
     depends_on:
-      - pdns-db
+      pdns-db:
+        condition: service_healthy
     environment:
-      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
       - MARIADB_USER=${MARIADB_USER:-powerdns}
       - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
       - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}    
-    command: ["python", "/app/backend/scripts/init_pdns_schema.py"]
+    command: ["python", "/app/backend/scripts/init_pdns_schema.py", "--host", "pdns-db"]
 
 volumes:
   powerdns_data:
