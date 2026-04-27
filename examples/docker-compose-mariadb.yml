@@ -1,0 +1,72 @@
+services:
+  pdns:
+    image: powerdns/pdns-auth-50:5.0.4
+    restart: unless-stopped
+    depends_on:
+      - pdns-db
+      - pdns-init
+    volumes:
+      - powerdns_data:/var/lib/powerdns
+    # ports:
+    #   - 53:53
+    #   - 53:53/udp
+    command:
+      - "--no-config"
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}"
+      - "--launch=gmysql"
+      - "--gmysql-host=pdns-db"
+      - "--gmysql-user=${MARIADB_USER:-powerdns}"
+      - "--gmysql-password=${MARIADB_PASSWORD:-pdns}"
+      - "--gmysql-dbname=${MARIADB_DATABASE:-powerdns}"
+      - "--gmysql-dnssec=yes"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--webserver-allow-from=0.0.0.0/0"
+
+  pdns-ui:
+    image: cyrius44/powerdns-ui:latest
+    restart: unless-stopped
+    depends_on:
+      - pdns
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}
+      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
+    volumes:
+      - powerdns-ui_data:/var/lib/powerdns-ui
+    ports:
+      - 8080:8080/tcp
+
+  pdns-db:
+    image: mariadb:latest
+    container_name: pdns_db
+    restart: unless-stopped
+    volumes:
+      - powerdns_db:/var/lib/mysql:Z
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD:-root_password}
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}
+      - MARIADB_USER=${MARIADB_USER:-powerdns}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
+      - MARIADB_INNODB_FORCE_RECOVERY=3
+
+  pdns-init:
+    image: cyrius44/powerdns-ui:latest
+    depends_on:
+      - pdns-db
+    environment:
+      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
+      - MARIADB_USER=${MARIADB_USER:-powerdns}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}    
+    command: ["python", "/app/backend/scripts/init_pdns_schema.py"]
+
+volumes:
+  powerdns_data:
+  powerdns-ui_data:
+  powerdns_db:

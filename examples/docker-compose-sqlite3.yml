@@ -1,0 +1,37 @@
+services:
+  pdns:
+    image: powerdns/pdns-auth-50:5.0.4
+    restart: unless-stopped
+    volumes:
+      - powerdns_data:/var/lib/powerdns
+    ports:
+      - 53:53
+      - 53:53/udp
+    command:
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--webserver-allow-from=0.0.0.0/0"
+
+  pdns-ui:
+    image: ghcr.io/cyr-ius/powerdns-ui:latest
+    restart: unless-stopped
+    depends_on:
+      - pdns
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}
+      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
+    volumes:
+      - powerdns-ui_data:/var/lib/powerdns-ui
+    ports:
+      - 8080:8080/tcp
+
+volumes:
+  powerdns_data:
+  powerdns-ui_data:
