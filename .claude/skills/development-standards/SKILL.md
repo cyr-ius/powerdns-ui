@@ -11,7 +11,7 @@ description: Normes de développement frontend et backend pour la mise en oeuvre
 - Creation of asynchronous applications
 - Implementation of structured and tested API projects
 
-# 🎓 Portalcrane Development Standards
+# 🎓 Development Standards
 
 ## Framework Technologies
 
