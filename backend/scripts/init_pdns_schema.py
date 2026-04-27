@@ -22,9 +22,12 @@ Usage:
 import argparse
 import asyncio
 import logging
+import os
 import re
 import sys
 from pathlib import Path
+
+import aiomysql
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -51,18 +54,32 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Initialize the PowerDNS MariaDB schema."
     )
-    parser.add_argument("--host", required=True, help="MariaDB host")
     parser.add_argument(
-        "--port", type=int, default=3306, help="MariaDB port (default: 3306)"
+        "--host",
+        default=os.getenv("MARIADB_HOST", None),
+        required=True,
+        help="MariaDB host",
     )
     parser.add_argument(
-        "--user", default="powerdns", help="MariaDB user (default: powerdns)"
+        "--port",
+        type=int,
+        default=os.getenv("MARIADB_PORT", 3306),
+        help="MariaDB port (default: 3306)",
     )
     parser.add_argument(
-        "--password", default="pdns", help="MariaDB password (default: pdns)"
+        "--user",
+        default=os.getenv("MARIADB_USER", "powerdns"),
+        help="MariaDB user (default: powerdns)",
     )
     parser.add_argument(
-        "--database", default="powerdns", help="MariaDB database (default: powerdns)"
+        "--password",
+        default=os.getenv("MARIADB_PASSWORD", "pdns"),
+        help="MariaDB password (default: pdns)",
+    )
+    parser.add_argument(
+        "--database",
+        default=os.getenv("MARIADB_DATABASE", "powerdns"),
+        help="MariaDB database (default: powerdns)",
     )
     parser.add_argument(
         "--schema",
@@ -121,7 +138,6 @@ async def _fetch_schema(source: str | None) -> str:
 
 
 async def run(args: argparse.Namespace) -> None:
-    import aiomysql
 
     logger.info(
         "Connecting to MariaDB %s@%s:%d/%s ...",
