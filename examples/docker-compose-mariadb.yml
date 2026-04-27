@@ -7,9 +7,9 @@ services:
       - pdns-init
     volumes:
       - powerdns_data:/var/lib/powerdns
-    # ports:
-    #   - 53:53
-    #   - 53:53/udp
+    ports:
+      - 53:53
+      - 53:53/udp
     command:
       - "--no-config"
       - "--api=yes"
@@ -37,7 +37,7 @@ services:
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}
       - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
-    volumes:
+    volumes:feat(docker): add docker-compose files for MariaDB and SQLite
       - powerdns-ui_data:/var/lib/powerdns-ui
     ports:
       - 8080:8080/tcp
