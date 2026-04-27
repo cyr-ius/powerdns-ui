@@ -44,7 +44,7 @@ Les SPA Angular 21 doivent suivre les normes suivantes pour garantir la maintena
 - ❌ **Change Detection avec Zones** (déprécié, utiliser des signaux et computed)
 - ❌ **Reactive Forms avec `FormGroup`** (déprécié, utiliser `form` et `FormField` de Signal Forms)
 - ✅ **Control Flow** (syntaxe nouvelle: `@if`, `@for`, `@switch`)
-- ✅ ** HTML Format recommandé avec fichier séparé:**
+- ✅ **HTML Format recommandé avec fichier séparé:**
 - ✅ **CSS Format recommandé avec fichier séparé:**
 
 ### 2. Types de Composants
@@ -476,7 +476,7 @@ def process_data(data: str) -> str:
 
 ### Frontend - Angular
 
-**X Ne pas utiliiser zone.js:**
+**❌ Ne pas utiliiser zone.js:**
 
 ```typescript// WRONG - Using NgZone
 export const appConfig: ApplicationConfig = {
@@ -924,4 +924,4 @@ Pour proposer des modifications aux normes:
 
 **Dernière mise à jour:** 7 Mars 2026
 **Statut:** Production Ready ✅
-**Mainteneurs:** Portalcrane Development Team
+**Mainteneurs:** Development Team
