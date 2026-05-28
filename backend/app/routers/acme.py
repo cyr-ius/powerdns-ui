@@ -205,13 +205,43 @@ async def patch_zone(
 ) -> None:
     _check_zone_allowed(key, zone_id)
     body = await request.json()
+    username = await _resolve_username(db, key)
+    ip = request.client.host if request.client else None
     for rrset in body.get("rrsets", []):
         if rrset.get("type", "").upper() != "TXT":
+            await audit_service.log_action(
+                db,
+                username=username,
+                user_id=key.user_id,
+                action="update",
+                resource_type="acme_zone",
+                resource_id=zone_id,
+                details={
+                    "acme_key": key.name,
+                    "detail": "Only TXT record modifications are allowed via ACME endpoint",
+                },
+                ip_address=ip,
+                status="failure",
+            )
             raise HTTPException(
                 status_code=403,
                 detail="Only TXT record modifications are allowed via ACME endpoint",
             )
         if not rrset.get("name", "").startswith("_acme-challenge."):
+            await audit_service.log_action(
+                db,
+                username=username,
+                user_id=key.user_id,
+                action="update",
+                resource_type="acme_zone",
+                resource_id=zone_id,
+                details={
+                    "acme_key": key.name,
+                    "detail": "Only _acme-challenge records can be modified via ACME endpoint",
+                },
+                ip_address=ip,
+                status="failure",
+            )
             raise HTTPException(
                 status_code=403,
                 detail="Only _acme-challenge records can be modified via ACME endpoint",
@@ -231,7 +261,6 @@ async def patch_zone(
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
-    username = await _resolve_username(db, key)
     records = [r.get("name") for r in body.get("rrsets", [])]
     await audit_service.log_action(
         db,

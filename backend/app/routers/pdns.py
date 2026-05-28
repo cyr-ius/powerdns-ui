@@ -126,9 +126,21 @@ async def create_zone(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    ip = request.client.host if request.client else None
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="create",
+                resource_type="zone",
+                resource_id=payload.name,
+                ip_address=ip,
+                status="failure",
+                details={"detail": "You must specify an account to which you belong"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You must specify an account to which you belong",
@@ -146,6 +158,19 @@ async def create_zone(
             )
             < _ROLE_LEVELS["admin"]
         ):
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="create",
+                resource_type="zone",
+                resource_id=payload.name,
+                ip_address=ip,
+                status="failure",
+                details={
+                    "detail": "Only administrators of an account can create zones"
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Only administrators of an account can create zones",
@@ -161,7 +186,7 @@ async def create_zone(
         action="create",
         resource_type="zone",
         resource_id=data["name"],
-        ip_address=request.client.host if request.client else None,
+        ip_address=ip,
     )
     return zone
 
@@ -197,21 +222,55 @@ async def list_zone_members(
 async def add_zone_member(
     zone_id: str,
     payload: ZoneMemberAdd,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    ip = request.client.host if request.client else None
     zone, role = await _check_zone_access(zone_id, current_user, db)
     _require_min_role(role, "admin")
     account = zone.get("account") or ""
     if not account:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="add_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "This zone is not associated with any account"},
+        )
         raise HTTPException(
             status_code=400, detail="This zone is not associated with any account"
         )
     target_user = await admin_service.get_user_by_id(db, payload.user_id)
     if not target_user:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="add_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "User not found", "user_id": payload.user_id},
+        )
         raise HTTPException(status_code=404, detail="User not found")
     await admin_service.upsert_account_member(
         db, account, payload.user_id, payload.role
+    )
+    await audit_service.log_action(
+        db,
+        username=current_user.username,
+        user_id=current_user.id,
+        action="add_member",
+        resource_type="zone",
+        resource_id=zone_id,
+        details={"member": target_user.username, "role": payload.role.value},
+        ip_address=ip,
     )
     return {
         "user_id": target_user.id,
@@ -226,20 +285,54 @@ async def update_zone_member(
     zone_id: str,
     user_id: int,
     payload: ZoneMemberUpdate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    ip = request.client.host if request.client else None
     zone, role = await _check_zone_access(zone_id, current_user, db)
     _require_min_role(role, "admin")
     account = zone.get("account") or ""
     if not account:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="update_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "This zone is not associated with any account"},
+        )
         raise HTTPException(
             status_code=400, detail="This zone is not associated with any account"
         )
     target_user = await admin_service.get_user_by_id(db, user_id)
     if not target_user:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="update_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "User not found", "user_id": user_id},
+        )
         raise HTTPException(status_code=404, detail="User not found")
     await admin_service.upsert_account_member(db, account, user_id, payload.role)
+    await audit_service.log_action(
+        db,
+        username=current_user.username,
+        user_id=current_user.id,
+        action="update_member",
+        resource_type="zone",
+        resource_id=zone_id,
+        details={"member": target_user.username, "role": payload.role.value},
+        ip_address=ip,
+    )
     return {
         "user_id": target_user.id,
         "username": target_user.username,
@@ -252,19 +345,53 @@ async def update_zone_member(
 async def remove_zone_member(
     zone_id: str,
     user_id: int,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     zone, role = await _check_zone_access(zone_id, current_user, db)
     _require_min_role(role, "admin")
     account = zone.get("account") or ""
     if not account:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="remove_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "This zone is not associated with any account"},
+        )
         raise HTTPException(
             status_code=400, detail="This zone is not associated with any account"
         )
     removed = await admin_service.remove_account_member(db, account, user_id)
     if not removed:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="remove_member",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "Member not found", "user_id": user_id},
+        )
         raise HTTPException(status_code=404, detail="Member not found")
+    await audit_service.log_action(
+        db,
+        username=current_user.username,
+        user_id=current_user.id,
+        action="remove_member",
+        resource_type="zone",
+        resource_id=zone_id,
+        details={"user_id": user_id},
+        ip_address=ip,
+    )
 
 
 # ─── Sub-resource routes (must come BEFORE the /{zone_id} catch-all) ──────────
@@ -518,15 +645,28 @@ async def rectify_zone(
 async def import_zone(
     zone_id: str,
     file: UploadFile,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     _, role = await _check_zone_access(zone_id, current_user, db)
     _require_min_role(role, "admin")
     try:
         content = (await file.read()).decode("utf-8")
         imported_rrsets = _parse_zone_file(zone_id, content)
     except Exception as exc:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="import",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": f"Invalid zone file: {exc}"},
+        )
         raise HTTPException(
             status_code=422, detail=f"Invalid zone file: {exc}"
         ) from exc
@@ -551,8 +691,29 @@ async def import_zone(
         await pdns_request(
             "PATCH", f"{_SERVER}/zones/{zone_id}", json={"rrsets": patch}
         )
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="import",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="import",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 def _parse_zone_file(zone_name: str, content: str) -> list[dict]:
@@ -616,13 +777,28 @@ async def get_zone(
 async def update_zone(
     zone_id: str,
     payload: ZoneUpdate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     zone, role = await _check_zone_access(zone_id, current_user, db)
     _require_min_role(role, "admin")
     # Prevent non-global-admins from changing the account field
     if not current_user.is_admin and payload.account != zone.get("account"):
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="update",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={
+                "detail": "Only a global administrator can modify the account associated with a zone"
+            },
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Only a global administrator can modify the account associated with a zone",
@@ -633,8 +809,29 @@ async def update_zone(
             f"{_SERVER}/zones/{zone_id}",
             json=payload.model_dump(exclude_none=True),
         )
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="update",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="update",
+            resource_type="zone",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.delete("/{zone_id}", status_code=204)

@@ -111,6 +111,17 @@ async def change_password(
 ) -> None:
     ip = request.client.host if request.client else None
     if current_user.is_oidc:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="change_password",
+            resource_type="user",
+            resource_id=current_user.username,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "SSO users cannot change their password"},
+        )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="SSO users cannot change their password",
@@ -118,11 +129,33 @@ async def change_password(
     if not current_user.hashed_password or not auth_service.verify_password(
         payload.current_password, current_user.hashed_password
     ):
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="change_password",
+            resource_type="user",
+            resource_id=current_user.username,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "Current password is incorrect"},
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
     if len(payload.new_password) < 8:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="change_password",
+            resource_type="user",
+            resource_id=current_user.username,
+            ip_address=ip,
+            status="failure",
+            details={"detail": "New password must contain at least 8 characters"},
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="New password must contain at least 8 characters",
@@ -136,7 +169,7 @@ async def change_password(
         user_id=current_user.id,
         action="change_password",
         resource_type="user",
-        resource_id=str(current_user.id),
+        resource_id=current_user.username,
         ip_address=ip,
     )
 

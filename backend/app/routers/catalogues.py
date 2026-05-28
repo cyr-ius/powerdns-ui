@@ -1,12 +1,12 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.pdns import Zone, ZoneCreate, ZoneDetail
-from app.services import admin_service
+from app.services import admin_service, audit_service
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api/catalogues")
@@ -53,12 +53,27 @@ async def list_catalogues(
 @router.post("", response_model=ZoneDetail, status_code=201)
 async def create_catalogue(
     payload: ZoneCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    ip = request.client.host if request.client else None
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="create",
+                resource_type="catalogue",
+                resource_id=payload.name,
+                ip_address=ip,
+                status="failure",
+                details={
+                    "detail": "You must specify an account to which you belong to create a catalogue"
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You must specify an account to which you belong to create a catalogue",
@@ -68,29 +83,85 @@ async def create_catalogue(
     if not data["name"].endswith("."):
         data["name"] += "."
     try:
-        return await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        result = await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="create",
+            resource_type="catalogue",
+            resource_id=data["name"],
+            ip_address=ip,
+        )
+        return result
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="create",
+            resource_type="catalogue",
+            resource_id=data["name"],
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.delete("/{zone_id}", status_code=204)
 async def delete_catalogue(
     zone_id: str,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     zone = await _get_catalog_zone(zone_id)
     if not current_user.is_admin:
         account = zone.get("account") or ""
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if account not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="delete",
+                resource_type="catalogue",
+                resource_id=zone_id,
+                ip_address=ip,
+                status="failure",
+                details={"detail": "Access denied"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
     try:
         await pdns_request("DELETE", f"{_SERVER}/zones/{zone_id}")
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="delete",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="delete",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 # ── Members ───────────────────────────────────────────────────────────────────
@@ -116,9 +187,11 @@ async def list_members(
 async def add_member(
     zone_id: str,
     member_zone_id: str,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     catalog = await _get_catalog_zone(zone_id)
     try:
         member: dict = await pdns_request("GET", f"{_SERVER}/zones/{member_zone_id}")
@@ -127,6 +200,17 @@ async def add_member(
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if (member.get("account") or "") not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="add_member",
+                resource_type="catalogue",
+                resource_id=zone_id,
+                ip_address=ip,
+                status="failure",
+                details={"member": member_zone_id, "detail": "Access denied"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
@@ -142,17 +226,41 @@ async def add_member(
                 "catalog": catalog["name"],
             },
         )
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="add_member",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            details={"member": member_zone_id},
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="add_member",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"member": member_zone_id, "detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.delete("/{zone_id}/members/{member_zone_id}", status_code=204)
 async def remove_member(
     zone_id: str,
     member_zone_id: str,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     await _get_catalog_zone(zone_id)
     try:
         member: dict = await pdns_request("GET", f"{_SERVER}/zones/{member_zone_id}")
@@ -161,6 +269,17 @@ async def remove_member(
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if (member.get("account") or "") not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="remove_member",
+                resource_type="catalogue",
+                resource_id=zone_id,
+                ip_address=ip,
+                status="failure",
+                details={"member": member_zone_id, "detail": "Access denied"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
@@ -176,8 +295,30 @@ async def remove_member(
                 "catalog": "",
             },
         )
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="remove_member",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            details={"member": member_zone_id},
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="remove_member",
+            resource_type="catalogue",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"member": member_zone_id, "detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 # ── Consumers ─────────────────────────────────────────────────────────────────
@@ -209,17 +350,45 @@ async def list_consumers(
 @router.post("/consumers", response_model=ZoneDetail, status_code=201)
 async def create_consumer(
     payload: ZoneCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
+    ip = request.client.host if request.client else None
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="create",
+                resource_type="consumer",
+                resource_id=payload.name,
+                ip_address=ip,
+                status="failure",
+                details={
+                    "detail": "You must specify an account to which you belong to create a consumer"
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You must specify an account to which you belong to create a consumer",
             )
     if not payload.masters:
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="create",
+            resource_type="consumer",
+            resource_id=payload.name,
+            ip_address=ip,
+            status="failure",
+            details={
+                "detail": "At least one master server is required for a Consumer catalog zone"
+            },
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="At least one master server is required for a Consumer catalog zone",
@@ -230,29 +399,85 @@ async def create_consumer(
     if not data["name"].endswith("."):
         data["name"] += "."
     try:
-        return await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        result = await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="create",
+            resource_type="consumer",
+            resource_id=data["name"],
+            ip_address=ip,
+        )
+        return result
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="create",
+            resource_type="consumer",
+            resource_id=data["name"],
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.delete("/consumers/{zone_id}", status_code=204)
 async def delete_consumer(
     zone_id: str,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    ip = request.client.host if request.client else None
     zone = await _get_consumer_zone(zone_id)
     if not current_user.is_admin:
         account = zone.get("account") or ""
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if account not in user_accounts:
+            await audit_service.log_action(
+                db,
+                username=current_user.username,
+                user_id=current_user.id,
+                action="delete",
+                resource_type="consumer",
+                resource_id=zone_id,
+                ip_address=ip,
+                status="failure",
+                details={"detail": "Access denied"},
+            )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
             )
     try:
         await pdns_request("DELETE", f"{_SERVER}/zones/{zone_id}")
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="delete",
+            resource_type="consumer",
+            resource_id=zone_id,
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_user.username,
+            user_id=current_user.id,
+            action="delete",
+            resource_type="consumer",
+            resource_id=zone_id,
+            ip_address=ip,
+            status="failure",
+            details={"detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.get("/consumers/{zone_id}/members", response_model=list[Zone])

@@ -1,8 +1,12 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database import get_db
 from app.dependencies import get_current_admin
+from app.models.user import User
 from app.schemas.pdns import ViewZoneAdd
+from app.services import audit_service
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api/views", dependencies=[Depends(get_current_admin)])
@@ -41,9 +45,15 @@ async def get_view_zones(view: str) -> list:
 
 
 @router.post("/{view}", status_code=204)
-async def add_zone_to_view(view: str, payload: ViewZoneAdd) -> None:
+async def add_zone_to_view(
+    view: str,
+    payload: ViewZoneAdd,
+    request: Request,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    ip = request.client.host if request.client else None
     zone = payload.name if payload.name.endswith(".") else payload.name + "."
-    # PDNS expects "{zone}.{view}" e.g. "example.org..trusted"
     pdns_name = f"{zone}.{view}"
     try:
         await pdns_request(
@@ -51,13 +61,64 @@ async def add_zone_to_view(view: str, payload: ViewZoneAdd) -> None:
             f"{_SERVER}/views/{view}",
             json={"name": pdns_name},
         )
+        await audit_service.log_action(
+            db,
+            username=current_admin.username,
+            user_id=current_admin.id,
+            action="add_zone",
+            resource_type="view",
+            resource_id=view,
+            details={"zone": zone},
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_admin.username,
+            user_id=current_admin.id,
+            action="add_zone",
+            resource_type="view",
+            resource_id=view,
+            ip_address=ip,
+            status="failure",
+            details={"zone": zone, "detail": http_exc.detail},
+        )
+        raise http_exc from exc
 
 
 @router.delete("/{view}/{zone_id}", status_code=204)
-async def remove_zone_from_view(view: str, zone_id: str) -> None:
+async def remove_zone_from_view(
+    view: str,
+    zone_id: str,
+    request: Request,
+    current_admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    ip = request.client.host if request.client else None
     try:
         await pdns_request("DELETE", f"{_SERVER}/views/{view}/{zone_id}")
+        await audit_service.log_action(
+            db,
+            username=current_admin.username,
+            user_id=current_admin.id,
+            action="remove_zone",
+            resource_type="view",
+            resource_id=view,
+            details={"zone": zone_id},
+            ip_address=ip,
+        )
     except httpx.HTTPStatusError as exc:
-        raise _pdns_error_handler(exc) from exc
+        http_exc = _pdns_error_handler(exc)
+        await audit_service.log_action(
+            db,
+            username=current_admin.username,
+            user_id=current_admin.id,
+            action="remove_zone",
+            resource_type="view",
+            resource_id=view,
+            ip_address=ip,
+            status="failure",
+            details={"zone": zone_id, "detail": http_exc.detail},
+        )
+        raise http_exc from exc
