@@ -17,6 +17,8 @@ certbot credentials file:
   dns_pdns_server_id = localhost
 """
 
+import logging
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Security
 from fastapi.responses import JSONResponse
@@ -31,6 +33,8 @@ from app.services.pdns_service import pdns_request
 router = APIRouter(prefix="/api/v1", tags=["acme-pdns-compat"])
 
 _API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=True)
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.debug("ACME PDNS compatibility router initialized")
 
 
 async def _get_acme_key(
@@ -170,6 +174,9 @@ async def patch_zone(
                 detail="Only _acme-challenge records can be modified via ACME endpoint",
             )
     try:
+        _LOGGER.debug(
+            f"Patching zone '{zone_id}' on server '{server_id}' with body: {body}"
+        )
         await pdns_request("PATCH", f"/servers/{server_id}/zones/{zone_id}", json=body)
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
