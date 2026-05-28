@@ -64,6 +64,35 @@ async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
     return user.username if user else f"user:{key.user_id}"
 
 
+def _normalize_acme_body(body: dict) -> dict:
+    """Normalize a Traefik/LEGO patch payload for PowerDNS 4.x/5.x compatibility.
+
+    LEGO may send names without a trailing dot, a spurious `kind` field copied
+    from the zone object, and `name`/`type`/`ttl` fields inside each record
+    (PowerDNS 3.x compat). PowerDNS requires FQDNs and does not accept those
+    extra fields at the record level.
+    """
+    rrsets = []
+    for rrset in body.get("rrsets", []):
+        name = rrset.get("name", "")
+        if name and not name.endswith("."):
+            name += "."
+        changetype = rrset.get("changetype", "REPLACE").upper()
+        clean: dict = {
+            "name": name,
+            "type": rrset.get("type", ""),
+            "changetype": changetype,
+        }
+        if changetype != "DELETE":
+            clean["ttl"] = rrset.get("ttl", 120)
+            clean["records"] = [
+                {"content": r.get("content", ""), "disabled": r.get("disabled", False)}
+                for r in rrset.get("records", [])
+            ]
+        rrsets.append(clean)
+    return {"rrsets": rrsets}
+
+
 @router_api.get("")
 async def get_api_versions(
     key: AcmeApiKey = Depends(_get_acme_key),
@@ -164,35 +193,6 @@ async def get_zone(
         ip_address=request.client.host if request.client else None,
     )
     return JSONResponse(content=data)
-
-
-def _normalize_acme_body(body: dict) -> dict:
-    """Normalize a Traefik/LEGO patch payload for PowerDNS 4.x/5.x compatibility.
-
-    LEGO may send names without a trailing dot, a spurious `kind` field copied
-    from the zone object, and `name`/`type`/`ttl` fields inside each record
-    (PowerDNS 3.x compat). PowerDNS requires FQDNs and does not accept those
-    extra fields at the record level.
-    """
-    rrsets = []
-    for rrset in body.get("rrsets", []):
-        name = rrset.get("name", "")
-        if name and not name.endswith("."):
-            name += "."
-        changetype = rrset.get("changetype", "REPLACE").upper()
-        clean: dict = {
-            "name": name,
-            "type": rrset.get("type", ""),
-            "changetype": changetype,
-        }
-        if changetype != "DELETE":
-            clean["ttl"] = rrset.get("ttl", 120)
-            clean["records"] = [
-                {"content": r.get("content", ""), "disabled": r.get("disabled", False)}
-                for r in rrset.get("records", [])
-            ]
-        rrsets.append(clean)
-    return {"rrsets": rrsets}
 
 
 @router.patch("/servers/{server_id}/zones/{zone_id:path}", status_code=204)
