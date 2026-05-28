@@ -152,6 +152,35 @@ async def get_zone(
     return JSONResponse(content=data)
 
 
+def _normalize_acme_body(body: dict) -> dict:
+    """Normalize a Traefik/LEGO patch payload for PowerDNS 4.x/5.x compatibility.
+
+    LEGO may send names without a trailing dot, a spurious `kind` field copied
+    from the zone object, and `name`/`type`/`ttl` fields inside each record
+    (PowerDNS 3.x compat). PowerDNS requires FQDNs and does not accept those
+    extra fields at the record level.
+    """
+    rrsets = []
+    for rrset in body.get("rrsets", []):
+        name = rrset.get("name", "")
+        if name and not name.endswith("."):
+            name += "."
+        changetype = rrset.get("changetype", "REPLACE").upper()
+        clean: dict = {
+            "name": name,
+            "type": rrset.get("type", ""),
+            "changetype": changetype,
+        }
+        if changetype != "DELETE":
+            clean["ttl"] = rrset.get("ttl", 120)
+            clean["records"] = [
+                {"content": r.get("content", ""), "disabled": r.get("disabled", False)}
+                for r in rrset.get("records", [])
+            ]
+        rrsets.append(clean)
+    return {"rrsets": rrsets}
+
+
 @router.patch("/servers/{server_id}/zones/{zone_id:path}", status_code=204)
 async def patch_zone(
     server_id: str,
@@ -173,11 +202,17 @@ async def patch_zone(
                 status_code=403,
                 detail="Only _acme-challenge records can be modified via ACME endpoint",
             )
+    clean_body = _normalize_acme_body(body)
     try:
         _LOGGER.debug(
-            f"Patching zone '{zone_id}' on server '{server_id}' with body: {body}"
+            "Patching zone '%s' on server '%s' with body: %s",
+            zone_id,
+            server_id,
+            clean_body,
         )
-        await pdns_request("PATCH", f"/servers/{server_id}/zones/{zone_id}", json=body)
+        await pdns_request(
+            "PATCH", f"/servers/{server_id}/zones/{zone_id}", json=clean_body
+        )
     except httpx.HTTPStatusError as exc:
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
