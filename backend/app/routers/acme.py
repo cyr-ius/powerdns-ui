@@ -28,9 +28,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.acme_key import AcmeApiKey
 from app.services import acme_service, admin_service, audit_service
-from app.services.pdns_service import pdns_request
+from app.services.pdns_service import pdns_request, pdns_request_root
 
 router = APIRouter(prefix="/api/v1", tags=["acme-pdns-compat"])
+router_api = APIRouter(prefix="/api", tags=["acme-pdns-compat"])
 
 _API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=True)
 _LOGGER = logging.getLogger(__name__)
@@ -61,6 +62,19 @@ def _check_zone_allowed(key: AcmeApiKey, zone_id: str) -> None:
 async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
     user = await admin_service.get_user_by_id(db, key.user_id)
     return user.username if user else f"user:{key.user_id}"
+
+
+@router_api.get("")
+async def get_api_versions(
+    key: AcmeApiKey = Depends(_get_acme_key),
+) -> JSONResponse:
+    try:
+        data = await pdns_request_root("/api")
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(
+            status_code=exc.response.status_code, detail=str(exc)
+        ) from exc
+    return JSONResponse(content=data)
 
 
 @router.get("/servers/{server_id}/zones")

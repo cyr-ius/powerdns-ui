@@ -28,6 +28,7 @@ from app.routers import (
     tsigkeys,
     views,
 )
+from app.routers.acme import router_api as acme_api_router
 from app.security import SecurityHeadersMiddleware
 from app.services.auth_service import create_user, get_user_by_username
 from app.utils import resolve_safe_path
@@ -75,6 +76,7 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # ── API routers ───────────────────────────────────────────────────────────────
 app.include_router(acme.router)
+app.include_router(acme_api_router)
 app.include_router(acme_keys.router)
 app.include_router(health.router)
 app.include_router(auth.router)

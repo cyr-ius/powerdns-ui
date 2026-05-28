@@ -27,3 +27,15 @@ async def pdns_request_text(method: str, path: str, **kwargs: Any) -> str:
         resp = await client.request(method, path, **kwargs)
         resp.raise_for_status()
         return resp.text
+
+
+async def pdns_request_root(path: str) -> Any:
+    """Requête vers pdns sans le préfixe /v1 (ex: /api)."""
+    async with httpx.AsyncClient(
+        base_url=settings.pdns_auth_api_url,
+        headers={"X-API-Key": settings.pdns_auth_api_key},
+        timeout=30.0,
+    ) as client:
+        resp = await client.get(path)
+        resp.raise_for_status()
+        return resp.json()
