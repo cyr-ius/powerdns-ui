@@ -27,7 +27,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.acme_key import AcmeApiKey
-from app.services import acme_service, admin_service, audit_service
+from app.services import acme_service, admin_service
+from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request, pdns_request_root
 
 router = APIRouter(prefix="/api/v1", tags=["acme-pdns-compat"])
@@ -48,20 +49,18 @@ async def _get_acme_key(
     return key
 
 
-def _check_zone_allowed(key: AcmeApiKey, zone_id: str) -> None:
+async def _check_zone_allowed(
+    key: AcmeApiKey,
+    zone_id: str,
+    audit: AuditLogger,
+    action: str,
+) -> None:
     allowed = acme_service._decode_zones(key)
-    # Normalise trailing dot for comparison
     normalised = zone_id.rstrip(".") + "."
     if normalised not in [z.rstrip(".") + "." for z in allowed]:
-        raise HTTPException(
-            status_code=403,
-            detail=f"Zone '{zone_id}' is not in this key's allowed zones",
-        )
-
-
-async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
-    user = await admin_service.get_user_by_id(db, key.user_id)
-    return user.username if user else f"user:{key.user_id}"
+        detail = f"Zone '{zone_id}' is not in this key's allowed zones"
+        await audit.failure(action, "acme_zone", zone_id, {"detail": detail})
+        raise HTTPException(status_code=403, detail=detail)
 
 
 def _normalize_acme_body(body: dict) -> dict:
@@ -93,6 +92,11 @@ def _normalize_acme_body(body: dict) -> dict:
     return {"rrsets": rrsets}
 
 
+async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
+    user = await admin_service.get_user_by_id(db, key.user_id)
+    return user.username if user else f"user:{key.user_id}"
+
+
 @router_api.get("")
 async def get_api_versions(
     key: AcmeApiKey = Depends(_get_acme_key),
@@ -113,10 +117,16 @@ async def list_zones(
     db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
+    username = await _resolve_username(db, key)
+    ip = request.client.host if request.client else None
+    audit = AuditLogger(db, username, key.user_id, ip)
     allowed = acme_service._decode_zones(key)
     try:
         zones: list[dict] = await pdns_request("GET", f"/servers/{server_id}/zones")
     except httpx.HTTPStatusError as exc:
+        await audit.failure(
+            "list", "acme_zone", details={"acme_key": key.name, "detail": str(exc)}
+        )
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
@@ -124,16 +134,7 @@ async def list_zones(
     filtered = [
         z for z in zones if z.get("name", "").rstrip(".") + "." in normalised_allowed
     ]
-    username = await _resolve_username(db, key)
-    await audit_service.log_action(
-        db,
-        username=username,
-        user_id=key.user_id,
-        action="list",
-        resource_type="acme_zone",
-        details={"acme_key": key.name},
-        ip_address=request.client.host if request.client else None,
-    )
+    await audit.success("list", "acme_zone", details={"acme_key": key.name})
     return JSONResponse(content=filtered)
 
 
@@ -145,24 +146,20 @@ async def notify_zone(
     db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
-    _check_zone_allowed(key, zone_id)
+    username = await _resolve_username(db, key)
+    ip = request.client.host if request.client else None
+    audit = AuditLogger(db, username, key.user_id, ip)
+    await _check_zone_allowed(key, zone_id, audit, "notify")
     try:
         data = await pdns_request("PUT", f"/servers/{server_id}/zones/{zone_id}/notify")
     except httpx.HTTPStatusError as exc:
+        await audit.failure(
+            "notify", "acme_zone", zone_id, {"acme_key": key.name, "detail": str(exc)}
+        )
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
-    username = await _resolve_username(db, key)
-    await audit_service.log_action(
-        db,
-        username=username,
-        user_id=key.user_id,
-        action="notify",
-        resource_type="acme_zone",
-        resource_id=zone_id,
-        details={"acme_key": key.name},
-        ip_address=request.client.host if request.client else None,
-    )
+    await audit.success("notify", "acme_zone", zone_id, {"acme_key": key.name})
     return JSONResponse(content=data)
 
 
@@ -174,24 +171,20 @@ async def get_zone(
     db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
-    _check_zone_allowed(key, zone_id)
+    username = await _resolve_username(db, key)
+    ip = request.client.host if request.client else None
+    audit = AuditLogger(db, username, key.user_id, ip)
+    await _check_zone_allowed(key, zone_id, audit, "read")
     try:
         data = await pdns_request("GET", f"/servers/{server_id}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:
+        await audit.failure(
+            "read", "acme_zone", zone_id, {"acme_key": key.name, "detail": str(exc)}
+        )
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
-    username = await _resolve_username(db, key)
-    await audit_service.log_action(
-        db,
-        username=username,
-        user_id=key.user_id,
-        action="read",
-        resource_type="acme_zone",
-        resource_id=zone_id,
-        details={"acme_key": key.name},
-        ip_address=request.client.host if request.client else None,
-    )
+    await audit.success("read", "acme_zone", zone_id, {"acme_key": key.name})
     return JSONResponse(content=data)
 
 
@@ -203,44 +196,35 @@ async def patch_zone(
     db: AsyncSession = Depends(get_db),
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> None:
-    _check_zone_allowed(key, zone_id)
-    body = await request.json()
     username = await _resolve_username(db, key)
     ip = request.client.host if request.client else None
+    audit = AuditLogger(db, username, key.user_id, ip)
+    await _check_zone_allowed(key, zone_id, audit, "update")
+    body = await request.json()
     for rrset in body.get("rrsets", []):
         if rrset.get("type", "").upper() != "TXT":
-            await audit_service.log_action(
-                db,
-                username=username,
-                user_id=key.user_id,
-                action="update",
-                resource_type="acme_zone",
-                resource_id=zone_id,
-                details={
+            await audit.failure(
+                "update",
+                "acme_zone",
+                zone_id,
+                {
                     "acme_key": key.name,
                     "detail": "Only TXT record modifications are allowed via ACME endpoint",
                 },
-                ip_address=ip,
-                status="failure",
             )
             raise HTTPException(
                 status_code=403,
                 detail="Only TXT record modifications are allowed via ACME endpoint",
             )
         if not rrset.get("name", "").startswith("_acme-challenge."):
-            await audit_service.log_action(
-                db,
-                username=username,
-                user_id=key.user_id,
-                action="update",
-                resource_type="acme_zone",
-                resource_id=zone_id,
-                details={
+            await audit.failure(
+                "update",
+                "acme_zone",
+                zone_id,
+                {
                     "acme_key": key.name,
                     "detail": "Only _acme-challenge records can be modified via ACME endpoint",
                 },
-                ip_address=ip,
-                status="failure",
             )
             raise HTTPException(
                 status_code=403,
@@ -258,17 +242,13 @@ async def patch_zone(
             "PATCH", f"/servers/{server_id}/zones/{zone_id}", json=clean_body
         )
     except httpx.HTTPStatusError as exc:
+        await audit.failure(
+            "update", "acme_zone", zone_id, {"acme_key": key.name, "detail": str(exc)}
+        )
         raise HTTPException(
             status_code=exc.response.status_code, detail=str(exc)
         ) from exc
     records = [r.get("name") for r in body.get("rrsets", [])]
-    await audit_service.log_action(
-        db,
-        username=username,
-        user_id=key.user_id,
-        action="update",
-        resource_type="acme_zone",
-        resource_id=zone_id,
-        details={"acme_key": key.name, "records": records},
-        ip_address=request.client.host if request.client else None,
+    await audit.success(
+        "update", "acme_zone", zone_id, {"acme_key": key.name, "records": records}
     )

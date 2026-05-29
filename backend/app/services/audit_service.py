@@ -63,6 +63,60 @@ async def log_action(
         _send_to_syslog(syslog_cfg, entry)
 
 
+class AuditLogger:
+    """Contexte d'audit pré-rempli avec les infos de l'utilisateur et l'IP."""
+
+    def __init__(
+        self,
+        db: AsyncSession,
+        username: str,
+        user_id: int | None = None,
+        ip: str | None = None,
+    ) -> None:
+        self.db = db
+        self.username = username
+        self.user_id = user_id
+        self.ip = ip
+
+    async def log(
+        self,
+        action: str,
+        resource_type: str,
+        resource_id: str | None = None,
+        details: dict | None = None,
+        status: str = "success",
+    ) -> None:
+        await log_action(
+            self.db,
+            username=self.username,
+            user_id=self.user_id,
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            details=details,
+            ip_address=self.ip,
+            status=status,
+        )
+
+    async def success(
+        self,
+        action: str,
+        resource_type: str,
+        resource_id: str | None = None,
+        details: dict | None = None,
+    ) -> None:
+        await self.log(action, resource_type, resource_id, details, "success")
+
+    async def failure(
+        self,
+        action: str,
+        resource_type: str,
+        resource_id: str | None = None,
+        details: dict | None = None,
+    ) -> None:
+        await self.log(action, resource_type, resource_id, details, "failure")
+
+
 def _send_to_syslog(cfg: SyslogSettings, entry: AuditLog) -> None:
     facility = _FACILITIES.get(cfg.facility, 16)
     socktype = socket.SOCK_DGRAM if cfg.protocol == "udp" else socket.SOCK_STREAM

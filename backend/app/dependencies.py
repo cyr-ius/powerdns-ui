@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, Security, status
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +7,7 @@ from app.config import settings
 from app.database import get_db
 from app.models.user import User
 from app.services import acme_service, admin_service, auth_service
+from app.services.audit_service import AuditLogger
 
 bearer_scheme = HTTPBearer(
     auto_error=False, description="JWT Bearer token in Authorization header"
@@ -63,6 +64,15 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
             detail="Access restricted to administrators",
         )
     return current_user
+
+
+def get_audit_logger(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> AuditLogger:
+    ip = request.client.host if request.client else None
+    return AuditLogger(db, current_user.username, current_user.id, ip)
 
 
 async def get_acme_creator(

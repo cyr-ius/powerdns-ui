@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_audit_logger, get_current_user
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -15,7 +15,8 @@ from app.schemas.auth import (
     TokenResponse,
     UserResponse,
 )
-from app.services import admin_service, audit_service, auth_service
+from app.services import admin_service, auth_service
+from app.services.audit_service import AuditLogger
 
 logger = logging.getLogger(__name__)
 
@@ -55,32 +56,25 @@ async def login(
     ip = request.client.host if request.client else None
     db_cfg = await admin_service.get_oidc_settings(db)
     local_disabled = db_cfg.local_login_disabled if db_cfg else False
+    audit = AuditLogger(db, payload.username, ip=ip)
     if local_disabled:
+        await audit.failure(
+            "login",
+            "auth",
+            details={"detail": "Local connection is disabled. Use SSO."},
+        )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Local connection is disabled. Use SSO.",
         )
     user = await auth_service.authenticate_user(db, payload.username, payload.password)
     if not user:
-        await audit_service.log_action(
-            db,
-            username=payload.username,
-            action="login",
-            resource_type="auth",
-            ip_address=ip,
-            status="failure",
-        )
+        await audit.failure("login", "auth")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect credentials"
         )
-    await audit_service.log_action(
-        db,
-        username=user.username,
-        user_id=user.id,
-        action="login",
-        resource_type="auth",
-        ip_address=ip,
-    )
+    audit.user_id = user.id
+    await audit.success("login", "auth")
     token = auth_service.create_access_token({"sub": user.username})
     return TokenResponse(access_token=token)
 
@@ -105,22 +99,16 @@ async def me(
 @router.put("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(
     payload: ChangePasswordRequest,
-    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     if current_user.is_oidc:
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="change_password",
-            resource_type="user",
-            resource_id=current_user.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "SSO users cannot change their password"},
+        await audit.failure(
+            "change_password",
+            "user",
+            current_user.username,
+            {"detail": "SSO users cannot change their password"},
         )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -129,32 +117,22 @@ async def change_password(
     if not current_user.hashed_password or not auth_service.verify_password(
         payload.current_password, current_user.hashed_password
     ):
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="change_password",
-            resource_type="user",
-            resource_id=current_user.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Current password is incorrect"},
+        await audit.failure(
+            "change_password",
+            "user",
+            current_user.username,
+            {"detail": "Current password is incorrect"},
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
     if len(payload.new_password) < 8:
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="change_password",
-            resource_type="user",
-            resource_id=current_user.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "New password must contain at least 8 characters"},
+        await audit.failure(
+            "change_password",
+            "user",
+            current_user.username,
+            {"detail": "New password must contain at least 8 characters"},
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -163,15 +141,7 @@ async def change_password(
     current_user.hashed_password = auth_service.hash_password(payload.new_password)
     db.add(current_user)
     await db.commit()
-    await audit_service.log_action(
-        db,
-        username=current_user.username,
-        user_id=current_user.id,
-        action="change_password",
-        resource_type="user",
-        resource_id=current_user.username,
-        ip_address=ip,
-    )
+    await audit.success("change_password", "user", current_user.username)
 
 
 @router.get("/oidc/login", response_model=OidcLoginResponse)

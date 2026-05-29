@@ -1,12 +1,12 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_admin
+from app.dependencies import get_audit_logger, get_current_admin
 from app.models.user import User
 from app.schemas.pdns import Network, NetworkAssign
-from app.services import audit_service
+from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api/networks", dependencies=[Depends(get_current_admin)])
@@ -38,39 +38,26 @@ async def assign_network_view(
     ip: str,
     prefixlen: int,
     payload: NetworkAssign,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    client_ip = request.client.host if request.client else None
     try:
         await pdns_request(
             "PUT",
             f"{_SERVER}/networks/{ip}/{prefixlen}",
             json=payload.model_dump(),
         )
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="assign",
-            resource_type="network",
-            resource_id=f"{ip}/{prefixlen}",
-            details={"view": payload.model_dump().get("view")},
-            ip_address=client_ip,
+        await audit.success(
+            "assign",
+            "network",
+            f"{ip}/{prefixlen}",
+            {"view": payload.model_dump().get("view")},
         )
     except httpx.HTTPStatusError as exc:
         http_exc = _pdns_error_handler(exc)
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="assign",
-            resource_type="network",
-            resource_id=f"{ip}/{prefixlen}",
-            ip_address=client_ip,
-            status="failure",
-            details={"detail": http_exc.detail},
+        await audit.failure(
+            "assign", "network", f"{ip}/{prefixlen}", {"detail": http_exc.detail}
         )
         raise http_exc from exc
 
@@ -79,33 +66,16 @@ async def assign_network_view(
 async def delete_network(
     ip: str,
     prefixlen: int,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    client_ip = request.client.host if request.client else None
     try:
         await pdns_request("DELETE", f"{_SERVER}/networks/{ip}/{prefixlen}")
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="network",
-            resource_id=f"{ip}/{prefixlen}",
-            ip_address=client_ip,
-        )
+        await audit.success("delete", "network", f"{ip}/{prefixlen}")
     except httpx.HTTPStatusError as exc:
         http_exc = _pdns_error_handler(exc)
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="network",
-            resource_id=f"{ip}/{prefixlen}",
-            ip_address=client_ip,
-            status="failure",
-            details={"detail": http_exc.detail},
+        await audit.failure(
+            "delete", "network", f"{ip}/{prefixlen}", {"detail": http_exc.detail}
         )
         raise http_exc from exc

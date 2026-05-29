@@ -1,11 +1,11 @@
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_audit_logger, get_current_user
 from app.models.user import User
 from app.schemas.pdns import (
     CacheFlushResult,
@@ -14,7 +14,8 @@ from app.schemas.pdns import (
     ServerInfo,
     StatisticItem,
 )
-from app.services import admin_service, audit_service
+from app.services import admin_service
+from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api", dependencies=[Depends(get_current_user)])
@@ -60,20 +61,14 @@ async def get_server_info() -> dict:
 
 @router.get("/config", response_model=list[ConfigSetting])
 async def get_config(
-    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> list:
-    ip = request.client.host if request.client else None
     if not current_user.is_admin:
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="read",
-            resource_type="server_config",
-            ip_address=ip,
-            status="failure",
+        await audit.failure(
+            "read",
+            "server_config",
             details={"detail": "Access restricted to administrators"},
         )
         raise HTTPException(
@@ -141,36 +136,19 @@ async def flush_cache(
     domain: Annotated[
         str, Query(min_length=1, description="Domain name to flush from cache")
     ],
-    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
-    ip = request.client.host if request.client else None
     try:
         result = await pdns_request(
             "PUT", f"{_SERVER}/cache/flush", params={"domain": domain}
         )
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="flush_cache",
-            resource_type="server",
-            resource_id=domain,
-            ip_address=ip,
-        )
+        await audit.success("flush_cache", "server", domain)
         return result
     except httpx.HTTPStatusError as exc:
         http_exc = _pdns_error(exc)
-        await audit_service.log_action(
-            db,
-            username=current_user.username,
-            user_id=current_user.id,
-            action="flush_cache",
-            resource_type="server",
-            resource_id=domain,
-            ip_address=ip,
-            status="failure",
-            details={"detail": http_exc.detail},
+        await audit.failure(
+            "flush_cache", "server", domain, {"detail": http_exc.detail}
         )
         raise http_exc from exc

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.database import get_db
-from app.dependencies import get_current_admin
+from app.dependencies import get_audit_logger, get_current_admin
 from app.models.account import UserAccount
 from app.models.record_type import RecordType
 from app.models.user import User
@@ -22,7 +22,8 @@ from app.schemas.admin import (
     UserCreateRequest,
     UserUpdateRequest,
 )
-from app.services import admin_service, audit_service
+from app.services import admin_service
+from app.services.audit_service import AuditLogger
 from app.services.auth_service import clear_oidc_cache, get_user_by_username
 
 router = APIRouter(prefix="/api/admin", dependencies=[Depends(get_current_admin)])
@@ -39,38 +40,27 @@ async def list_users(db: AsyncSession = Depends(get_db)) -> list:
 @router.post("/users", response_model=AdminUserResponse, status_code=201)
 async def create_user(
     payload: UserCreateRequest,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
-    ip = request.client.host if request.client else None
     if await get_user_by_username(db, payload.username):
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="create",
-            resource_type="user",
-            resource_id=payload.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Nom d'utilisateur déjà utilisé"},
+        await audit.failure(
+            "create",
+            "user",
+            payload.username,
+            {"detail": "Nom d'utilisateur déjà utilisé"},
         )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Nom d'utilisateur déjà utilisé",
         )
     if len(payload.password) < 8:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="create",
-            resource_type="user",
-            resource_id=payload.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "The password must contain at least 8 characters."},
+        await audit.failure(
+            "create",
+            "user",
+            payload.username,
+            {"detail": "The password must contain at least 8 characters."},
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -83,15 +73,7 @@ async def create_user(
         email=payload.email,
         is_admin=payload.is_admin,
     )
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="create",
-        resource_type="user",
-        resource_id=payload.username,
-        ip_address=ip,
-    )
+    await audit.success("create", "user", payload.username)
     accounts = await admin_service.get_user_account_names(db, user.id)  # type: ignore[arg-type]
     account_roles = await admin_service.get_user_account_roles(db, user.id)  # type: ignore[arg-type]
     return {**user.model_dump(), "accounts": accounts, "account_roles": account_roles}
@@ -101,37 +83,19 @@ async def create_user(
 async def update_user(
     user_id: int,
     payload: UserUpdateRequest,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
-    ip = request.client.host if request.client else None
     user = await admin_service.get_user_by_id(db, user_id)
     if not user:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="update",
-            resource_type="user",
-            resource_id=str(user_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "User not found"},
+        await audit.failure(
+            "update", "user", str(user_id), {"detail": "User not found"}
         )
         raise HTTPException(status_code=404, detail="User not found")
     data = payload.model_dump(exclude_none=True)
     user = await admin_service.update_user(db, user, data)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="update",
-        resource_type="user",
-        resource_id=user.username,
-        details=data,
-        ip_address=ip,
-    )
+    await audit.success("update", "user", user.username, data)
     accounts = await admin_service.get_user_account_names(db, user.id)  # type: ignore[arg-type]
     account_roles = await admin_service.get_user_account_roles(db, user.id)  # type: ignore[arg-type]
     return {**user.model_dump(), "accounts": accounts, "account_roles": account_roles}
@@ -141,117 +105,68 @@ async def update_user(
 async def reset_password(
     user_id: int,
     payload: ResetPasswordRequest,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     user = await admin_service.get_user_by_id(db, user_id)
     if not user:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="reset_password",
-            resource_type="user",
-            resource_id=str(user_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "User not found"},
+        await audit.failure(
+            "reset_password", "user", str(user_id), {"detail": "User not found"}
         )
         raise HTTPException(status_code=404, detail="User not found")
     if user.is_oidc:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="reset_password",
-            resource_type="user",
-            resource_id=user.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "SSO users cannot have their password reset"},
+        await audit.failure(
+            "reset_password",
+            "user",
+            user.username,
+            {"detail": "SSO users cannot have their password reset"},
         )
         raise HTTPException(
             status_code=400,
             detail="SSO users cannot have their password reset",
         )
     if len(payload.new_password) < 8:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="reset_password",
-            resource_type="user",
-            resource_id=user.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "New password must contain at least 8 characters"},
+        await audit.failure(
+            "reset_password",
+            "user",
+            user.username,
+            {"detail": "New password must contain at least 8 characters"},
         )
         raise HTTPException(
             status_code=422,
             detail="New password must contain at least 8 characters",
         )
     await admin_service.reset_password(db, user, payload.new_password)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="reset_password",
-        resource_type="user",
-        resource_id=user.username,
-        ip_address=ip,
-    )
+    await audit.success("reset_password", "user", user.username)
 
 
 @router.delete("/users/{user_id}", status_code=204)
 async def delete_user(
     user_id: int,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     if current_admin.id == user_id:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="user",
-            resource_id=current_admin.username,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Impossible to delete your own account"},
+        await audit.failure(
+            "delete",
+            "user",
+            current_admin.username,
+            {"detail": "Impossible to delete your own account"},
         )
         raise HTTPException(
             status_code=400, detail="Impossible to delete your own account"
         )
     user = await admin_service.get_user_by_id(db, user_id)
     if not user:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="user",
-            resource_id=str(user_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "User not found"},
+        await audit.failure(
+            "delete", "user", str(user_id), {"detail": "User not found"}
         )
         raise HTTPException(status_code=404, detail="User not found")
     username_deleted = user.username
     await admin_service.delete_user(db, user)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="delete",
-        resource_type="user",
-        resource_id=username_deleted,
-        ip_address=ip,
-    )
+    await audit.success("delete", "user", username_deleted)
 
 
 # ── Accounts ──────────────────────────────────────────────────────────────────
@@ -265,36 +180,22 @@ async def list_accounts(db: AsyncSession = Depends(get_db)) -> list:
 @router.post("/accounts", response_model=AccountResponse, status_code=201)
 async def create_account(
     payload: AccountCreate,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
-    ip = request.client.host if request.client else None
     if await admin_service.get_account_by_name(db, payload.name):
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="create",
-            resource_type="account",
-            resource_id=payload.name,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "An account with this name already exists"},
+        await audit.failure(
+            "create",
+            "account",
+            payload.name,
+            {"detail": "An account with this name already exists"},
         )
         raise HTTPException(
             status_code=409, detail="An account with this name already exists"
         )
     account = await admin_service.create_account(db, payload.name, payload.description)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="create",
-        resource_type="account",
-        resource_id=payload.name,
-        ip_address=ip,
-    )
+    await audit.success("create", "account", payload.name)
     return {**account.model_dump(), "user_count": 0}
 
 
@@ -302,37 +203,19 @@ async def create_account(
 async def update_account(
     account_id: int,
     payload: AccountUpdate,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
-    ip = request.client.host if request.client else None
     account = await admin_service.get_account_by_id(db, account_id)
     if not account:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="update",
-            resource_type="account",
-            resource_id=str(account_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Account not found"},
+        await audit.failure(
+            "update", "account", str(account_id), {"detail": "Account not found"}
         )
         raise HTTPException(status_code=404, detail="Account not found")
     data = payload.model_dump(exclude_none=True)
     account = await admin_service.update_account(db, account, data)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="update",
-        resource_type="account",
-        resource_id=account.name,
-        details=data,
-        ip_address=ip,
-    )
+    await audit.success("update", "account", account.name, data)
     count = await db.exec(  # type: ignore[call-overload]
         select(UserAccount).where(UserAccount.account_id == account.id)
     )
@@ -343,71 +226,38 @@ async def update_account(
 async def set_account_users(
     account_id: int,
     payload: UserAccountAssign,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     account = await admin_service.get_account_by_id(db, account_id)
     if not account:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="assign_users",
-            resource_type="account",
-            resource_id=str(account_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Account not found"},
+        await audit.failure(
+            "assign_users", "account", str(account_id), {"detail": "Account not found"}
         )
         raise HTTPException(status_code=404, detail="Account not found")
     await admin_service.set_account_users(db, account_id, payload.user_ids)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="assign_users",
-        resource_type="account",
-        resource_id=account.name,
-        details={"user_ids": payload.user_ids},
-        ip_address=ip,
+    await audit.success(
+        "assign_users", "account", account.name, {"user_ids": payload.user_ids}
     )
 
 
 @router.delete("/accounts/{account_id}", status_code=204)
 async def delete_account(
     account_id: int,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     account = await admin_service.get_account_by_id(db, account_id)
     if not account:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="account",
-            resource_id=str(account_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Account not found"},
+        await audit.failure(
+            "delete", "account", str(account_id), {"detail": "Account not found"}
         )
         raise HTTPException(status_code=404, detail="Account not found")
     account_name = account.name
     await admin_service.delete_account(db, account)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="delete",
-        resource_type="account",
-        resource_id=account_name,
-        ip_address=ip,
-    )
+    await audit.success("delete", "account", account_name)
 
 
 # ── OIDC Settings ─────────────────────────────────────────────────────────────
@@ -432,20 +282,13 @@ async def get_oidc_settings(db: AsyncSession = Depends(get_db)) -> OidcSettingsR
 @router.put("/oidc", response_model=OidcSettingsResponse)
 async def update_oidc_settings(
     payload: OidcSettingsUpdate,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> OidcSettingsResponse:
     clear_oidc_cache()
     cfg = await admin_service.upsert_oidc_settings(db, payload.model_dump())
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="update",
-        resource_type="oidc_settings",
-        ip_address=request.client.host if request.client else None,
-    )
+    await audit.success("update", "oidc_settings")
     return OidcSettingsResponse(**cfg.model_dump(exclude={"id"}))
 
 
@@ -461,26 +304,17 @@ async def list_record_types(db: AsyncSession = Depends(get_db)) -> list:
 @router.post("/record-types", response_model=RecordTypeResponse, status_code=201)
 async def create_record_type(
     payload: RecordTypeCreate,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> RecordType:
-    ip = request.client.host if request.client else None
     name = payload.name.upper()
     existing = await db.exec(  # type: ignore[call-overload]
         select(RecordType).where(RecordType.name == name)
     )
     if existing.first():
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="create",
-            resource_type="record_type",
-            resource_id=name,
-            ip_address=ip,
-            status="failure",
-            details={"detail": "This record type already exists"},
+        await audit.failure(
+            "create", "record_type", name, {"detail": "This record type already exists"}
         )
         raise HTTPException(status_code=409, detail="This record type already exists")
     rt = RecordType(
@@ -491,15 +325,7 @@ async def create_record_type(
     db.add(rt)
     await db.commit()
     await db.refresh(rt)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="create",
-        resource_type="record_type",
-        resource_id=name,
-        ip_address=ip,
-    )
+    await audit.success("create", "record_type", name)
     return rt
 
 
@@ -507,24 +333,15 @@ async def create_record_type(
 async def update_record_type(
     rt_id: int,
     payload: RecordTypeUpdate,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> RecordType:
-    ip = request.client.host if request.client else None
     result = await db.exec(select(RecordType).where(RecordType.id == rt_id))  # type: ignore[call-overload]
     rt = result.first()
     if not rt:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="update",
-            resource_type="record_type",
-            resource_id=str(rt_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Record type not found"},
+        await audit.failure(
+            "update", "record_type", str(rt_id), {"detail": "Record type not found"}
         )
         raise HTTPException(status_code=404, detail="Record type not found")
     data = payload.model_dump(exclude_none=True)
@@ -533,51 +350,25 @@ async def update_record_type(
     db.add(rt)
     await db.commit()
     await db.refresh(rt)
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="update",
-        resource_type="record_type",
-        resource_id=rt.name,
-        details=data,
-        ip_address=ip,
-    )
+    await audit.success("update", "record_type", rt.name, data)
     return rt
 
 
 @router.delete("/record-types/{rt_id}", status_code=204)
 async def delete_record_type(
     rt_id: int,
-    request: Request,
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    ip = request.client.host if request.client else None
     result = await db.exec(select(RecordType).where(RecordType.id == rt_id))  # type: ignore[call-overload]
     rt = result.first()
     if not rt:
-        await audit_service.log_action(
-            db,
-            username=current_admin.username,
-            user_id=current_admin.id,
-            action="delete",
-            resource_type="record_type",
-            resource_id=str(rt_id),
-            ip_address=ip,
-            status="failure",
-            details={"detail": "Record type not found"},
+        await audit.failure(
+            "delete", "record_type", str(rt_id), {"detail": "Record type not found"}
         )
         raise HTTPException(status_code=404, detail="Record type not found")
     rt_name = rt.name
     await db.delete(rt)
     await db.commit()
-    await audit_service.log_action(
-        db,
-        username=current_admin.username,
-        user_id=current_admin.id,
-        action="delete",
-        resource_type="record_type",
-        resource_id=rt_name,
-        ip_address=ip,
-    )
+    await audit.success("delete", "record_type", rt_name)
