@@ -22,6 +22,11 @@ async def list_users(db: AsyncSession) -> list[dict]:
     return output
 
 
+async def count_admins(db: AsyncSession) -> int:
+    result = await db.exec(select(User).where(User.is_admin == True))  # noqa: E712  # type: ignore[call-overload]
+    return len(result.all())
+
+
 async def list_users_basic(db: AsyncSession) -> list[dict]:
     result = await db.exec(select(User).where(User.is_active == True))  # noqa: E712  # type: ignore[call-overload]
     return [{"id": u.id, "username": u.username} for u in result.all()]

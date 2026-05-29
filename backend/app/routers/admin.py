@@ -94,6 +94,18 @@ async def update_user(
         )
         raise HTTPException(status_code=404, detail="User not found")
     data = payload.model_dump(exclude_none=True)
+    if data.get("is_admin") is False and user.is_admin:
+        if await admin_service.count_admins(db) <= 1:
+            await audit.failure(
+                "update",
+                "user",
+                user.username,
+                {"detail": "Cannot demote the last super admin"},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Cannot demote the last super admin",
+            )
     user = await admin_service.update_user(db, user, data)
     await audit.success("update", "user", user.username, data)
     accounts = await admin_service.get_user_account_names(db, user.id)  # type: ignore[arg-type]
