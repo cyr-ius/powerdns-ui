@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 
 class AuditLogResponse(BaseModel):
@@ -63,3 +63,11 @@ class SmtpSettingsUpdate(BaseModel):
     recipient_email: str
     use_tls: bool
     use_starttls: bool
+
+    @model_validator(mode="after")
+    def recipient_required_when_enabled(self) -> SmtpSettingsUpdate:
+        if self.enabled and not self.recipient_email.strip():
+            raise ValueError(
+                "recipient_email is required when SMTP notifications are enabled"
+            )
+        return self
