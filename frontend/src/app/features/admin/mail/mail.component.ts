@@ -1,23 +1,23 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
+import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AuditService } from "../../../core/services/audit.service";
 import { SmtpSettings } from "../../../shared/models/audit.model";
 import { TranslateModule } from "@ngx-translate/core";
 
 @Component({
   selector: "app-admin-mail",
-  imports: [FormsModule, TranslateModule],
+  imports: [FormField, TranslateModule],
   templateUrl: "./mail.component.html",
 })
 export class AdminMailComponent implements OnInit {
   private readonly auditService = inject(AuditService);
 
   readonly isLoading = signal(true);
-  readonly isSaving = signal(false);
   readonly success = signal(false);
   readonly error = signal<string | null>(null);
+  readonly showPassword = signal(false);
 
-  smtp: SmtpSettings = {
+  readonly smtpModel = signal<SmtpSettings>({
     enabled: false,
     host: "localhost",
     port: 587,
@@ -27,13 +27,20 @@ export class AdminMailComponent implements OnInit {
     recipient_email: "",
     use_tls: false,
     use_starttls: true,
-  };
+  });
 
-  showPassword = false;
+  readonly smtpForm = form(this.smtpModel, (p) => {
+    required(p.host, { message: "MAIL.HOST_REQUIRED" });
+    required(p.port, { message: "MAIL.PORT_REQUIRED" });
+    required(p.recipient_email, { message: "MAIL.RECIPIENT_EMAIL_REQUIRED" });
+    disabled(p.host, ({ valueOf }) => valueOf(p.enabled) !== true);
+    disabled(p.port, ({ valueOf }) => valueOf(p.enabled) !== true);
+    disabled(p.recipient_email, ({ valueOf }) => valueOf(p.enabled) !== true);
+  });
 
   async ngOnInit(): Promise<void> {
     try {
-      this.smtp = await this.auditService.getSmtpSettings();
+      this.smtpModel.set(await this.auditService.getSmtpSettings());
     } catch {
       this.error.set("MAIL.LOAD_ERROR");
     } finally {
@@ -42,32 +49,34 @@ export class AdminMailComponent implements OnInit {
   }
 
   async onSave(): Promise<void> {
-    this.isSaving.set(true);
-    this.success.set(false);
-    this.error.set(null);
-    try {
-      this.smtp = await this.auditService.updateSmtpSettings(this.smtp);
-      this.success.set(true);
-    } catch {
-      this.error.set("MAIL.SAVE_ERROR");
-    } finally {
-      this.isSaving.set(false);
-    }
+    submit(this.smtpForm, async () => {
+      this.success.set(false);
+      this.error.set(null);
+      try {
+        const updated = await this.auditService.updateSmtpSettings(this.smtpModel());
+        this.smtpModel.set(updated);
+        this.success.set(true);
+      } catch {
+        this.error.set("MAIL.SAVE_ERROR");
+      }
+    });
   }
 
   onTlsChange(): void {
-    if (this.smtp.use_tls) {
-      this.smtp.use_starttls = false;
-      if (this.smtp.port === 587) this.smtp.port = 465;
-    } else {
-      if (this.smtp.port === 465) this.smtp.port = 587;
-    }
+    this.smtpModel.update((v) => {
+      if (v.use_tls) {
+        return { ...v, use_starttls: false, port: v.port === 587 ? 465 : v.port };
+      }
+      return { ...v, port: v.port === 465 ? 587 : v.port };
+    });
   }
 
   onStarttlsChange(): void {
-    if (this.smtp.use_starttls) {
-      this.smtp.use_tls = false;
-      if (this.smtp.port === 465) this.smtp.port = 587;
-    }
+    this.smtpModel.update((v) => {
+      if (v.use_starttls) {
+        return { ...v, use_tls: false, port: v.port === 465 ? 587 : v.port };
+      }
+      return v;
+    });
   }
 }

@@ -24,114 +24,151 @@
         </div>
       }
 
-      <!-- Enable audit email toggle -->
-      <div class="d-flex align-items-center justify-content-between p-3 rounded border mb-4">
-        <div>
-          <div class="fw-semibold">{{ "MAIL.ACTIVATE_AUDIT_EMAIL" | translate }}</div>
-          <div class="text-muted small">{{ "MAIL.ACTIVATE_AUDIT_EMAIL_HELP" | translate }}</div>
+      <form (submit)="onSave(); $event.preventDefault()">
+        <!-- Enable audit email toggle -->
+        <div class="d-flex align-items-center justify-content-between p-3 rounded border mb-4">
+          <div>
+            <div class="fw-semibold">{{ "MAIL.ACTIVATE_AUDIT_EMAIL" | translate }}</div>
+            <div class="text-muted small">{{ "MAIL.ACTIVATE_AUDIT_EMAIL_HELP" | translate }}</div>
+          </div>
+          <div class="form-check form-switch mb-0 ms-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="smtpEnabled"
+              [formField]="smtpForm.enabled"
+            />
+          </div>
         </div>
-        <div class="form-check form-switch mb-0 ms-3">
-          <input class="form-check-input" type="checkbox" role="switch" id="smtpEnabled" [(ngModel)]="smtp.enabled" />
-        </div>
-      </div>
 
-      <fieldset [disabled]="!smtp.enabled" [class.opacity-50]="!smtp.enabled">
-        <!-- Host + Port -->
-        <div class="row g-3 mb-3">
-          <div class="col-8">
-            <label class="form-label fw-medium">{{ "MAIL.HOST" | translate }}</label>
+        <fieldset [disabled]="!smtpModel().enabled" [class.opacity-50]="!smtpModel().enabled">
+          <!-- Host + Port -->
+          <div class="row g-3 mb-3">
+            <div class="col-8">
+              <label class="form-label fw-medium">
+                {{ "MAIL.HOST" | translate }}
+                <span class="text-danger ms-1">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                [formField]="smtpForm.host"
+                placeholder="smtp.example.com"
+                autocomplete="off"
+              />
+              @if (smtpForm.host().touched() && smtpForm.host().errors().length) {
+                <div class="invalid-feedback">{{ smtpForm.host().errors()[0].message | translate }}</div>
+              }
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-medium">
+                {{ "MAIL.PORT" | translate }}
+                <span class="text-danger ms-1">*</span>
+              </label>
+              <input type="number" class="form-control" [formField]="smtpForm.port" />
+              @if (smtpForm.port().touched() && smtpForm.port().errors().length) {
+                <div class="invalid-feedback">{{ smtpForm.port().errors()[0].message | translate }}</div>
+              }
+            </div>
+          </div>
+
+          <!-- TLS options -->
+          <div class="d-flex gap-4 mb-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="useTls"
+                [formField]="smtpForm.use_tls"
+                (change)="onTlsChange()"
+              />
+              <label class="form-check-label" for="useTls">{{ "MAIL.USE_TLS" | translate }}</label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="useStarttls"
+                [formField]="smtpForm.use_starttls"
+                (change)="onStarttlsChange()"
+              />
+              <label class="form-check-label" for="useStarttls">{{ "MAIL.USE_STARTTLS" | translate }}</label>
+            </div>
+          </div>
+
+          <!-- Username -->
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ "MAIL.USERNAME" | translate }}</label>
             <input
               type="text"
               class="form-control"
-              [(ngModel)]="smtp.host"
-              placeholder="smtp.example.com"
+              [formField]="smtpForm.username"
+              placeholder="{{ 'MAIL.USERNAME_PLACEHOLDER' | translate }}"
               autocomplete="off"
             />
           </div>
-          <div class="col-4">
-            <label class="form-label fw-medium">{{ "MAIL.PORT" | translate }}</label>
-            <input type="number" class="form-control" [(ngModel)]="smtp.port" min="1" max="65535" />
-          </div>
-        </div>
 
-        <!-- TLS options -->
-        <div class="d-flex gap-4 mb-3">
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="useTls"
-              [(ngModel)]="smtp.use_tls"
-              (change)="onTlsChange()"
-            />
-            <label class="form-check-label" for="useTls">{{ "MAIL.USE_TLS" | translate }}</label>
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ "MAIL.PASSWORD" | translate }}</label>
+            <div class="input-group">
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                [formField]="smtpForm.password"
+                autocomplete="new-password"
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="showPassword.set(!showPassword())"
+                [title]="(showPassword() ? 'COMMON.HIDE' : 'COMMON.SHOW') | translate"
+              >
+                <i class="bi" [class]="showPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+              </button>
+            </div>
           </div>
-          <div class="form-check">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="useStarttls"
-              [(ngModel)]="smtp.use_starttls"
-              (change)="onStarttlsChange()"
-            />
-            <label class="form-check-label" for="useStarttls">{{ "MAIL.USE_STARTTLS" | translate }}</label>
-          </div>
-        </div>
 
-        <!-- Username -->
-        <div class="mb-3">
-          <label class="form-label fw-medium">{{ "MAIL.USERNAME" | translate }}</label>
-          <input
-            type="text"
-            class="form-control"
-            [(ngModel)]="smtp.username"
-            placeholder="{{ 'MAIL.USERNAME_PLACEHOLDER' | translate }}"
-            autocomplete="off"
-          />
-        </div>
-
-        <!-- Password -->
-        <div class="mb-3">
-          <label class="form-label fw-medium">{{ "MAIL.PASSWORD" | translate }}</label>
-          <div class="input-group">
+          <!-- From email -->
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ "MAIL.FROM_EMAIL" | translate }}</label>
             <input
-              [type]="showPassword ? 'text' : 'password'"
+              type="email"
               class="form-control"
-              [(ngModel)]="smtp.password"
-              autocomplete="new-password"
+              [formField]="smtpForm.from_email"
+              placeholder="pdns-ui@example.com"
             />
-            <button
-              class="btn btn-outline-secondary"
-              type="button"
-              (click)="showPassword = !showPassword"
-              [title]="(showPassword ? 'COMMON.HIDE' : 'COMMON.SHOW') | translate"
-            >
-              <i class="bi" [class]="showPassword ? 'bi-eye-slash' : 'bi-eye'"></i>
-            </button>
+            <div class="form-text">{{ "MAIL.FROM_EMAIL_HELP" | translate }}</div>
           </div>
-        </div>
 
-        <!-- From email -->
-        <div class="mb-3">
-          <label class="form-label fw-medium">{{ "MAIL.FROM_EMAIL" | translate }}</label>
-          <input type="email" class="form-control" [(ngModel)]="smtp.from_email" placeholder="pdns-ui@example.com" />
-          <div class="form-text">{{ "MAIL.FROM_EMAIL_HELP" | translate }}</div>
-        </div>
+          <!-- Recipient email -->
+          <div class="mb-4">
+            <label class="form-label fw-medium">
+              {{ "MAIL.RECIPIENT_EMAIL" | translate }}
+              <span class="text-danger ms-1">*</span>
+            </label>
+            <input
+              type="email"
+              class="form-control"
+              [formField]="smtpForm.recipient_email"
+              placeholder="admin@example.com"
+            />
+            @if (smtpForm.recipient_email().touched() && smtpForm.recipient_email().errors().length) {
+              <div class="invalid-feedback">{{ smtpForm.recipient_email().errors()[0].message | translate }}</div>
+            } @else {
+              <div class="form-text">{{ "MAIL.RECIPIENT_EMAIL_HELP" | translate }}</div>
+            }
+          </div>
+        </fieldset>
 
-        <!-- Recipient email -->
-        <div class="mb-4">
-          <label class="form-label fw-medium">{{ "MAIL.RECIPIENT_EMAIL" | translate }}</label>
-          <input type="email" class="form-control" [(ngModel)]="smtp.recipient_email" placeholder="admin@example.com" />
-          <div class="form-text">{{ "MAIL.RECIPIENT_EMAIL_HELP" | translate }}</div>
-        </div>
-      </fieldset>
-
-      <button class="btn btn-primary" (click)="onSave()" [disabled]="isSaving()">
-        @if (isSaving()) {
-          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-        }
-        <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
-      </button>
+        <button type="submit" class="btn btn-primary" [disabled]="smtpForm().pending()">
+          @if (smtpForm().submitting()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          }
+          <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+        </button>
+      </form>
     </div>
   </div>
 }
