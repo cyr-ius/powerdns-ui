@@ -345,7 +345,10 @@
     "FROM_EMAIL": "Dirección remitente",
     "FROM_EMAIL_HELP": "Dirección utilizada como remitente en los emails",
     "RECIPIENT_EMAIL": "Destinatario de notificaciones de auditoría",
-    "RECIPIENT_EMAIL_HELP": "Dirección que recibirá los emails de eventos de auditoría"
+    "HOST_REQUIRED": "El servidor SMTP es obligatorio",
+    "PORT_REQUIRED": "El puerto es obligatorio",
+    "RECIPIENT_EMAIL_HELP": "Dirección que recibirá los emails de eventos de auditoría",
+    "RECIPIENT_EMAIL_REQUIRED": "La dirección del destinatario es obligatoria"
   },
   "OIDC": {
     "TITLE": "Configuración OIDC/SSO",

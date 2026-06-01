@@ -345,7 +345,10 @@
     "FROM_EMAIL": "From address",
     "FROM_EMAIL_HELP": "Sender address used in outgoing emails",
     "RECIPIENT_EMAIL": "Audit notification recipient",
-    "RECIPIENT_EMAIL_HELP": "Address that will receive audit event emails"
+    "HOST_REQUIRED": "SMTP host is required",
+    "PORT_REQUIRED": "Port is required",
+    "RECIPIENT_EMAIL_HELP": "Address that will receive audit event emails",
+    "RECIPIENT_EMAIL_REQUIRED": "Recipient address is required"
   },
   "OIDC": {
     "TITLE": "OIDC/SSO configuration",

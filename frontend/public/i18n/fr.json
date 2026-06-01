@@ -345,7 +345,10 @@
     "FROM_EMAIL": "Adresse expéditeur",
     "FROM_EMAIL_HELP": "Adresse utilisée comme expéditeur des emails",
     "RECIPIENT_EMAIL": "Destinataire des notifications d'audit",
-    "RECIPIENT_EMAIL_HELP": "Adresse qui recevra les emails d'événements d'audit"
+    "HOST_REQUIRED": "Le serveur SMTP est obligatoire",
+    "PORT_REQUIRED": "Le port est obligatoire",
+    "RECIPIENT_EMAIL_HELP": "Adresse qui recevra les emails d'événements d'audit",
+    "RECIPIENT_EMAIL_REQUIRED": "L'adresse destinataire est obligatoire"
   },
   "OIDC": {
     "TITLE": "Configuration OIDC/SSO",
