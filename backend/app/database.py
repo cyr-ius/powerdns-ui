@@ -78,6 +78,26 @@ async def init_db() -> None:
             )
         if "comment" not in acme_columns:
             await conn.execute(text("ALTER TABLE acmeapikey ADD COLUMN comment TEXT"))
+        result = await conn.execute(text("PRAGMA table_info(smtpsettings)"))
+        smtp_columns = {row[1] for row in result.fetchall()}
+        if "alert_actions" not in smtp_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_actions VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+        if "alert_resources" not in smtp_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_resources VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
+        if "alert_statuses" not in smtp_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_statuses VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
         # Seed default record types if the table is empty
         result = await conn.execute(text("SELECT COUNT(*) FROM recordtype"))
         if result.scalar() == 0:
