@@ -72,13 +72,18 @@
             type="text"
             class="form-control form-control-sm"
             [placeholder]="'AUDIT.FILTER_PLACEHOLDER' | translate"
-            [(ngModel)]="filterUsername"
+            [value]="filterUsername()"
+            (input)="filterUsername.set($any($event.target).value)"
             (keyup.enter)="applyFilters()"
           />
         </div>
         <div class="col-sm-2">
           <label class="form-label small mb-1">{{ "AUDIT.FILTER_ACTION" | translate }}</label>
-          <select class="form-select form-select-sm" [(ngModel)]="filterAction">
+          <select
+            class="form-select form-select-sm"
+            [value]="filterAction()"
+            (change)="filterAction.set($any($event.target).value)"
+          >
             <option value="">{{ "AUDIT.ALL" | translate }}</option>
             <option value="login">{{ "AUDIT.ACTION_LOGIN" | translate }}</option>
             <option value="change_password">{{ "AUDIT.ACTION_CHANGE_PASSWORD" | translate }}</option>
@@ -91,7 +96,11 @@
         </div>
         <div class="col-sm-2">
           <label class="form-label small mb-1">{{ "AUDIT.FILTER_RESOURCE" | translate }}</label>
-          <select class="form-select form-select-sm" [(ngModel)]="filterResource">
+          <select
+            class="form-select form-select-sm"
+            [value]="filterResource()"
+            (change)="filterResource.set($any($event.target).value)"
+          >
             <option value="">{{ "AUDIT.ALL" | translate }}</option>
             <option value="auth">{{ "AUDIT.RESOURCE_AUTH" | translate }}</option>
             <option value="user">{{ "AUDIT.RESOURCE_USER" | translate }}</option>
@@ -102,7 +111,11 @@
         </div>
         <div class="col-sm-2">
           <label class="form-label small mb-1">{{ "AUDIT.FILTER_STATUS" | translate }}</label>
-          <select class="form-select form-select-sm" [(ngModel)]="filterStatus">
+          <select
+            class="form-select form-select-sm"
+            [value]="filterStatus()"
+            (change)="filterStatus.set($any($event.target).value)"
+          >
             <option value="">{{ "AUDIT.ALL" | translate }}</option>
             <option value="success">{{ "AUDIT.STATUS_SUCCESS" | translate }}</option>
             <option value="failure">{{ "AUDIT.STATUS_FAILURE" | translate }}</option>
@@ -110,11 +123,21 @@
         </div>
         <div class="col-sm-2">
           <label class="form-label small mb-1">{{ "AUDIT.FILTER_FROM" | translate }}</label>
-          <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateFrom" />
+          <input
+            type="datetime-local"
+            class="form-control form-control-sm"
+            [value]="filterDateFrom()"
+            (change)="filterDateFrom.set($any($event.target).value)"
+          />
         </div>
         <div class="col-sm-2">
           <label class="form-label small mb-1">{{ "AUDIT.FILTER_TO" | translate }}</label>
-          <input type="datetime-local" class="form-control form-control-sm" [(ngModel)]="filterDateTo" />
+          <input
+            type="datetime-local"
+            class="form-control form-control-sm"
+            [value]="filterDateTo()"
+            (change)="filterDateTo.set($any($event.target).value)"
+          />
         </div>
       </div>
       <div class="d-flex gap-2 mt-2">
@@ -209,11 +232,11 @@
   <!-- Pagination -->
   @if (totalPages > 1) {
     <div class="d-flex justify-content-between align-items-center mt-3">
-      <button class="btn btn-sm btn-outline-secondary" [disabled]="page === 0" (click)="prevPage()">
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="page() === 0" (click)="prevPage()">
         <i class="bi bi-chevron-left"></i> {{ "COMMON.PREVIOUS" | translate }}
       </button>
-      <span class="text-muted small">{{ "AUDIT.PAGE" | translate: { page: page + 1, total: totalPages } }}</span>
-      <button class="btn btn-sm btn-outline-secondary" [disabled]="page >= totalPages - 1" (click)="nextPage()">
+      <span class="text-muted small">{{ "AUDIT.PAGE" | translate: { page: page() + 1, total: totalPages } }}</span>
+      <button class="btn btn-sm btn-outline-secondary" [disabled]="page() >= totalPages - 1" (click)="nextPage()">
         {{ "COMMON.NEXT" | translate }} <i class="bi bi-chevron-right"></i>
       </button>
     </div>
@@ -274,47 +297,53 @@
           </h5>
           <button class="btn-close" (click)="showEmailModal.set(false)"></button>
         </div>
-        <div class="modal-body">
-          @if (emailError()) {
-            <div class="alert alert-danger py-2 small">{{ emailError() }}</div>
-          }
+        <form (submit)="saveEmail(); $event.preventDefault()">
+          <div class="modal-body">
+            @if (emailError()) {
+              <div class="alert alert-danger py-2 small">{{ emailError() }}</div>
+            }
 
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="email_enabled" [(ngModel)]="emailDraft.enabled" />
-            <label class="form-check-label fw-medium" for="email_enabled">{{
-              "AUDIT.EMAIL_ACTIVATE" | translate
-            }}</label>
-          </div>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="email_enabled" [formField]="emailForm.enabled" />
+              <label class="form-check-label fw-medium" for="email_enabled">{{
+                "AUDIT.EMAIL_ACTIVATE" | translate
+              }}</label>
+            </div>
 
-          <div [class.opacity-50]="!emailDraft.enabled">
-            <div class="mb-3">
-              <label class="form-label fw-medium">{{ "AUDIT.EMAIL_RECIPIENT" | translate }}</label>
-              <input
-                type="email"
-                class="form-control"
-                [(ngModel)]="emailDraft.recipient_email"
-                [disabled]="!emailDraft.enabled"
-                placeholder="admin@example.com"
-              />
+            <fieldset [disabled]="!emailModel().enabled" [class.opacity-50]="!emailModel().enabled">
+              <div class="mb-3">
+                <label class="form-label fw-medium">{{ "AUDIT.EMAIL_RECIPIENT" | translate }}</label>
+                <input
+                  type="email"
+                  class="form-control"
+                  [formField]="emailForm.recipient_email"
+                  placeholder="admin@example.com"
+                />
+                @if (emailForm.recipient_email().touched() && emailForm.recipient_email().errors().length) {
+                  <div class="invalid-feedback d-block">
+                    {{ emailForm.recipient_email().errors()[0].message | translate }}
+                  </div>
+                }
+              </div>
+            </fieldset>
+
+            <div class="alert alert-info py-2 small d-flex align-items-start gap-2 mb-0">
+              <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+              <span [innerHTML]="'AUDIT.EMAIL_CONFIG_HINT' | translate"></span>
             </div>
           </div>
-
-          <div class="alert alert-info py-2 small d-flex align-items-start gap-2 mb-0">
-            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
-            <span [innerHTML]="'AUDIT.EMAIL_CONFIG_HINT' | translate"></span>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="showEmailModal.set(false)">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="emailForm().pending()">
+              @if (emailForm().submitting()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+            </button>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showEmailModal.set(false)">
-            {{ "COMMON.CANCEL" | translate }}
-          </button>
-          <button class="btn btn-primary" (click)="saveEmail()" [disabled]="isSavingEmail()">
-            @if (isSavingEmail()) {
-              <span class="spinner-border spinner-border-sm me-1"></span>
-            }
-            <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
-          </button>
-        </div>
+        </form>
       </div>
     </div>
   </div>
@@ -332,80 +361,73 @@
           </h5>
           <button class="btn-close" (click)="showSyslogModal.set(false)"></button>
         </div>
-        <div class="modal-body">
-          @if (syslogError()) {
-            <div class="alert alert-danger py-2 small">{{ syslogError() }}</div>
-          }
-
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="syslog_enabled" [(ngModel)]="syslogDraft.enabled" />
-            <label class="form-check-label fw-medium" for="syslog_enabled">{{
-              "AUDIT.SYSLOG_ACTIVATE" | translate
-            }}</label>
-          </div>
-
-          <div [class.opacity-50]="!syslogDraft.enabled">
-            <div class="row g-3">
-              <div class="col-8">
-                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_HOST" | translate }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="syslogDraft.host"
-                  [disabled]="!syslogDraft.enabled"
-                  placeholder="localhost"
-                />
-              </div>
-              <div class="col-4">
-                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PORT" | translate }}</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  [(ngModel)]="syslogDraft.port"
-                  [disabled]="!syslogDraft.enabled"
-                  min="1"
-                  max="65535"
-                />
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PROTOCOL" | translate }}</label>
-                <select class="form-select" [(ngModel)]="syslogDraft.protocol" [disabled]="!syslogDraft.enabled">
-                  <option value="udp">UDP</option>
-                  <option value="tcp">TCP</option>
-                </select>
-              </div>
-              <div class="col-6">
-                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_FACILITY" | translate }}</label>
-                <select class="form-select" [(ngModel)]="syslogDraft.facility" [disabled]="!syslogDraft.enabled">
-                  @for (f of facilities; track f) {
-                    <option [value]="f">{{ f }}</option>
-                  }
-                </select>
-              </div>
-              <div class="col-12">
-                <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_APP_NAME" | translate }}</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  [(ngModel)]="syslogDraft.app_name"
-                  [disabled]="!syslogDraft.enabled"
-                  placeholder="pdns-ui"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="showSyslogModal.set(false)">
-            {{ "COMMON.CANCEL" | translate }}
-          </button>
-          <button class="btn btn-primary" (click)="saveSyslog()" [disabled]="isSavingSyslog()">
-            @if (isSavingSyslog()) {
-              <span class="spinner-border spinner-border-sm me-1"></span>
+        <form (submit)="saveSyslog(); $event.preventDefault()">
+          <div class="modal-body">
+            @if (syslogError()) {
+              <div class="alert alert-danger py-2 small">{{ syslogError() }}</div>
             }
-            <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
-          </button>
-        </div>
+
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="syslog_enabled" [formField]="syslogForm.enabled" />
+              <label class="form-check-label fw-medium" for="syslog_enabled">{{
+                "AUDIT.SYSLOG_ACTIVATE" | translate
+              }}</label>
+            </div>
+
+            <fieldset [disabled]="!syslogModel().enabled" [class.opacity-50]="!syslogModel().enabled">
+              <div class="row g-3">
+                <div class="col-8">
+                  <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_HOST" | translate }}</label>
+                  <input type="text" class="form-control" [formField]="syslogForm.host" placeholder="localhost" />
+                  @if (syslogForm.host().touched() && syslogForm.host().errors().length) {
+                    <div class="invalid-feedback d-block">
+                      {{ syslogForm.host().errors()[0].message | translate }}
+                    </div>
+                  }
+                </div>
+                <div class="col-4">
+                  <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PORT" | translate }}</label>
+                  <input type="number" class="form-control" [formField]="syslogForm.port" />
+                  @if (syslogForm.port().touched() && syslogForm.port().errors().length) {
+                    <div class="invalid-feedback d-block">
+                      {{ syslogForm.port().errors()[0].message | translate }}
+                    </div>
+                  }
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_PROTOCOL" | translate }}</label>
+                  <select class="form-select" [formField]="syslogForm.protocol">
+                    <option value="udp">UDP</option>
+                    <option value="tcp">TCP</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_FACILITY" | translate }}</label>
+                  <select class="form-select" [formField]="syslogForm.facility">
+                    @for (f of facilities; track f) {
+                      <option [value]="f">{{ f }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-medium">{{ "AUDIT.SYSLOG_APP_NAME" | translate }}</label>
+                  <input type="text" class="form-control" [formField]="syslogForm.app_name" placeholder="pdns-ui" />
+                </div>
+              </div>
+            </fieldset>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="showSyslogModal.set(false)">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="syslogForm().pending()">
+              @if (syslogForm().submitting()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
