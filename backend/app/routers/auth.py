@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_audit_logger, get_current_user
+from app.dependencies import get_audit_logger, get_client_ip, get_current_user
 from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
@@ -53,10 +53,9 @@ async def get_auth_config(db: AsyncSession = Depends(get_db)) -> OidcConfig:
 async def login(
     payload: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)
 ) -> TokenResponse:
-    ip = request.client.host if request.client else None
     db_cfg = await admin_service.get_oidc_settings(db)
     local_disabled = db_cfg.local_login_disabled if db_cfg else False
-    audit = AuditLogger(db, payload.username, ip=ip)
+    audit = AuditLogger(db, payload.username, ip=get_client_ip(request))
     if local_disabled:
         await audit.failure(
             "login",
@@ -159,7 +158,6 @@ async def oidc_login(db: AsyncSession = Depends(get_db)) -> OidcLoginResponse:
 async def oidc_callback(
     request: Request, code: str, state: str, db: AsyncSession = Depends(get_db)
 ) -> RedirectResponse:
-    ip = request.client.host if request.client else None
     cfg = await _get_oidc_cfg(db)
     if not cfg:
         raise HTTPException(
@@ -171,14 +169,14 @@ async def oidc_callback(
         logger.warning(
             "OIDC state validation failed (params: %s)", dict(request.query_params)
         )
-        audit = AuditLogger(db, "oidc", ip=ip)
+        audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure("login", "auth", details={"detail": "Invalid OIDC state"})
         return RedirectResponse(url="/login?error=oidc_state_invalid")
     try:
         tokens = await auth_service.exchange_oidc_code(code, cfg)
     except Exception as exc:
         _log_oidc_error("token exchange", exc)
-        audit = AuditLogger(db, "oidc", ip=ip)
+        audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure(
             "login", "auth", details={"detail": "OIDC token exchange failed"}
         )
@@ -187,7 +185,7 @@ async def oidc_callback(
         userinfo = await auth_service.get_oidc_userinfo(tokens["access_token"], cfg)
     except Exception as exc:
         _log_oidc_error("userinfo fetch", exc)
-        audit = AuditLogger(db, "oidc", ip=ip)
+        audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure(
             "login", "auth", details={"detail": "OIDC userinfo fetch failed"}
         )
@@ -198,13 +196,15 @@ async def oidc_callback(
         user = await auth_service.get_or_create_oidc_user(
             db, username=username, email=email
         )
-        audit = AuditLogger(db, user.username, user_id=user.id, ip=ip)
+        audit = AuditLogger(
+            db, user.username, user_id=user.id, ip=get_client_ip(request)
+        )
         await audit.success("login", "auth", details={"method": "oidc"})
         jwt_token = auth_service.create_access_token({"sub": user.username})
         return RedirectResponse(url=f"/#token={jwt_token}")
     except Exception as exc:
         _log_oidc_error("user provisioning", exc)
-        audit = AuditLogger(db, username or "oidc", ip=ip)
+        audit = AuditLogger(db, username or "oidc", ip=get_client_ip(request))
         await audit.failure(
             "login", "auth", details={"detail": "OIDC user provisioning failed"}
         )

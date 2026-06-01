@@ -66,13 +66,21 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
+def get_client_ip(request: Request) -> str | None:
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else None
+
+
 def get_audit_logger(
     request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> AuditLogger:
-    ip = request.client.host if request.client else None
-    return AuditLogger(db, current_user.username, current_user.id, ip)
+    return AuditLogger(
+        db, current_user.username, current_user.id, get_client_ip(request)
+    )
 
 
 async def get_acme_creator(

@@ -26,6 +26,7 @@ from fastapi.security import APIKeyHeader
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_client_ip
 from app.models.acme_key import AcmeApiKey
 from app.services import acme_service, admin_service
 from app.services.audit_service import AuditLogger
@@ -118,8 +119,7 @@ async def list_zones(
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     username = await _resolve_username(db, key)
-    ip = request.client.host if request.client else None
-    audit = AuditLogger(db, username, key.user_id, ip)
+    audit = AuditLogger(db, username, key.user_id, get_client_ip(request))
     allowed = acme_service._decode_zones(key)
     try:
         zones: list[dict] = await pdns_request("GET", f"/servers/{server_id}/zones")
@@ -147,8 +147,7 @@ async def notify_zone(
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     username = await _resolve_username(db, key)
-    ip = request.client.host if request.client else None
-    audit = AuditLogger(db, username, key.user_id, ip)
+    audit = AuditLogger(db, username, key.user_id, get_client_ip(request))
     await _check_zone_allowed(key, zone_id, audit, "notify")
     try:
         data = await pdns_request("PUT", f"/servers/{server_id}/zones/{zone_id}/notify")
@@ -172,8 +171,7 @@ async def get_zone(
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> JSONResponse:
     username = await _resolve_username(db, key)
-    ip = request.client.host if request.client else None
-    audit = AuditLogger(db, username, key.user_id, ip)
+    audit = AuditLogger(db, username, key.user_id, get_client_ip(request))
     await _check_zone_allowed(key, zone_id, audit, "read")
     try:
         data = await pdns_request("GET", f"/servers/{server_id}/zones/{zone_id}")
@@ -197,8 +195,7 @@ async def patch_zone(
     key: AcmeApiKey = Depends(_get_acme_key),
 ) -> None:
     username = await _resolve_username(db, key)
-    ip = request.client.host if request.client else None
-    audit = AuditLogger(db, username, key.user_id, ip)
+    audit = AuditLogger(db, username, key.user_id, get_client_ip(request))
     await _check_zone_allowed(key, zone_id, audit, "update")
     body = await request.json()
     for rrset in body.get("rrsets", []):
