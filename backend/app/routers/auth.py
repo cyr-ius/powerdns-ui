@@ -159,6 +159,7 @@ async def oidc_login(db: AsyncSession = Depends(get_db)) -> OidcLoginResponse:
 async def oidc_callback(
     request: Request, code: str, state: str, db: AsyncSession = Depends(get_db)
 ) -> RedirectResponse:
+    ip = request.client.host if request.client else None
     cfg = await _get_oidc_cfg(db)
     if not cfg:
         raise HTTPException(
@@ -170,16 +171,26 @@ async def oidc_callback(
         logger.warning(
             "OIDC state validation failed (params: %s)", dict(request.query_params)
         )
+        audit = AuditLogger(db, "oidc", ip=ip)
+        await audit.failure("login", "auth", details={"detail": "Invalid OIDC state"})
         return RedirectResponse(url="/login?error=oidc_state_invalid")
     try:
         tokens = await auth_service.exchange_oidc_code(code, cfg)
     except Exception as exc:
         _log_oidc_error("token exchange", exc)
+        audit = AuditLogger(db, "oidc", ip=ip)
+        await audit.failure(
+            "login", "auth", details={"detail": "OIDC token exchange failed"}
+        )
         return RedirectResponse(url="/login?error=oidc_failed")
     try:
         userinfo = await auth_service.get_oidc_userinfo(tokens["access_token"], cfg)
     except Exception as exc:
         _log_oidc_error("userinfo fetch", exc)
+        audit = AuditLogger(db, "oidc", ip=ip)
+        await audit.failure(
+            "login", "auth", details={"detail": "OIDC userinfo fetch failed"}
+        )
         return RedirectResponse(url="/login?error=oidc_failed")
     try:
         username: str = userinfo.get("preferred_username") or userinfo.get("sub", "")
@@ -187,10 +198,16 @@ async def oidc_callback(
         user = await auth_service.get_or_create_oidc_user(
             db, username=username, email=email
         )
+        audit = AuditLogger(db, user.username, user_id=user.id, ip=ip)
+        await audit.success("login", "auth", details={"method": "oidc"})
         jwt_token = auth_service.create_access_token({"sub": user.username})
         return RedirectResponse(url=f"/#token={jwt_token}")
     except Exception as exc:
         _log_oidc_error("user provisioning", exc)
+        audit = AuditLogger(db, username or "oidc", ip=ip)
+        await audit.failure(
+            "login", "auth", details={"detail": "OIDC user provisioning failed"}
+        )
         return RedirectResponse(url="/login?error=oidc_failed")
 
 
