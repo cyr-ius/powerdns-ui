@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { firstValueFrom } from "rxjs";
-import { AuditLog, PdnsLogEntry, SyslogSettings } from "../../shared/models/audit.model";
+import { AuditLog, PdnsLogEntry, SmtpSettings, SyslogSettings } from "../../shared/models/audit.model";
 
 export interface AuditLogFilters {
   skip?: number;
@@ -48,5 +48,13 @@ export class AuditService {
 
   updateSyslogSettings(data: SyslogSettings): Promise<SyslogSettings> {
     return firstValueFrom(this.http.put<SyslogSettings>("/api/admin/audit/syslog", data));
+  }
+
+  getSmtpSettings(): Promise<SmtpSettings> {
+    return firstValueFrom(this.http.get<SmtpSettings>("/api/admin/audit/smtp"));
+  }
+
+  updateSmtpSettings(data: SmtpSettings): Promise<SmtpSettings> {
+    return firstValueFrom(this.http.put<SmtpSettings>("/api/admin/audit/smtp", data));
   }
 }

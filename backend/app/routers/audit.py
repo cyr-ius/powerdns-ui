@@ -10,6 +10,8 @@ from app.dependencies import get_current_admin
 from app.schemas.audit import (
     AuditLogResponse,
     PdnsLogEntry,
+    SmtpSettingsResponse,
+    SmtpSettingsUpdate,
     SyslogSettingsResponse,
     SyslogSettingsUpdate,
 )
@@ -126,4 +128,56 @@ async def update_syslog_settings(
         protocol=cfg.protocol,
         facility=cfg.facility,
         app_name=cfg.app_name,
+    )
+
+
+_SMTP_DEFAULTS = SmtpSettingsResponse(
+    enabled=False,
+    host="localhost",
+    port=587,
+    username="",
+    password="",
+    from_email="",
+    recipient_email="",
+    use_tls=False,
+    use_starttls=True,
+)
+
+
+@router.get("/smtp", response_model=SmtpSettingsResponse)
+async def get_smtp_settings(
+    db: AsyncSession = Depends(get_db),
+) -> SmtpSettingsResponse:
+    cfg = await audit_service.get_smtp_settings(db)
+    if cfg:
+        return SmtpSettingsResponse(
+            enabled=cfg.enabled,
+            host=cfg.host,
+            port=cfg.port,
+            username=cfg.username,
+            password=cfg.password,
+            from_email=cfg.from_email,
+            recipient_email=cfg.recipient_email,
+            use_tls=cfg.use_tls,
+            use_starttls=cfg.use_starttls,
+        )
+    return _SMTP_DEFAULTS
+
+
+@router.put("/smtp", response_model=SmtpSettingsResponse)
+async def update_smtp_settings(
+    payload: SmtpSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+) -> SmtpSettingsResponse:
+    cfg = await audit_service.upsert_smtp_settings(db, payload.model_dump())
+    return SmtpSettingsResponse(
+        enabled=cfg.enabled,
+        host=cfg.host,
+        port=cfg.port,
+        username=cfg.username,
+        password=cfg.password,
+        from_email=cfg.from_email,
+        recipient_email=cfg.recipient_email,
+        use_tls=cfg.use_tls,
+        use_starttls=cfg.use_starttls,
     )

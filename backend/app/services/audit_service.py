@@ -1,13 +1,16 @@
 import json
 import logging
 import logging.handlers
+import smtplib
 import socket
 from datetime import datetime
+from email.mime.text import MIMEText
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.models.audit_log import AuditLog
+from app.models.smtp_settings import SmtpSettings
 from app.models.syslog_settings import SyslogSettings
 
 logger = logging.getLogger(__name__)
@@ -61,6 +64,10 @@ async def log_action(
     syslog_cfg = await get_syslog_settings(db)
     if syslog_cfg and syslog_cfg.enabled:
         _send_to_syslog(syslog_cfg, entry)
+
+    smtp_cfg = await get_smtp_settings(db)
+    if smtp_cfg and smtp_cfg.enabled:
+        _send_audit_email(smtp_cfg, entry)
 
 
 class AuditLogger:
@@ -145,6 +152,63 @@ def _send_to_syslog(cfg: SyslogSettings, entry: AuditLog) -> None:
         syslog_logger.removeHandler(handler)
     except Exception as exc:
         logger.warning("Impossible d'envoyer vers syslog : %s", exc)
+
+
+async def get_smtp_settings(db: AsyncSession) -> SmtpSettings | None:
+    result = await db.exec(select(SmtpSettings).where(SmtpSettings.id == 1))  # type: ignore[call-overload]
+    return result.first()
+
+
+async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
+    existing = await get_smtp_settings(db)
+    if existing:
+        for key, value in data.items():
+            setattr(existing, key, value)
+        db.add(existing)
+    else:
+        existing = SmtpSettings(id=1, **data)
+        db.add(existing)
+    await db.commit()
+    await db.refresh(existing)
+    return existing
+
+
+def _send_audit_email(cfg: SmtpSettings, entry: AuditLog) -> None:
+    if not cfg.recipient_email or not cfg.host:
+        return
+    subject = f"[pdns-ui] Audit: {entry.action} on {entry.resource_type}"
+    body_lines = [
+        f"User      : {entry.username}",
+        f"Action    : {entry.action}",
+        f"Resource  : {entry.resource_type}",
+    ]
+    if entry.resource_id:
+        body_lines.append(f"Resource ID: {entry.resource_id}")
+    if entry.ip_address:
+        body_lines.append(f"IP        : {entry.ip_address}")
+    body_lines.append(f"Status    : {entry.status}")
+    if entry.details:
+        body_lines.append(f"Details   : {entry.details}")
+    body_lines.append(f"Date      : {entry.created_at}")
+    msg = MIMEText("\n".join(body_lines))
+    msg["Subject"] = subject
+    msg["From"] = cfg.from_email or "pdns-ui@localhost"
+    msg["To"] = cfg.recipient_email
+    try:
+        if cfg.use_tls:
+            with smtplib.SMTP_SSL(cfg.host, cfg.port) as smtp:
+                if cfg.username:
+                    smtp.login(cfg.username, cfg.password)
+                smtp.send_message(msg)
+        else:
+            with smtplib.SMTP(cfg.host, cfg.port) as smtp:
+                if cfg.use_starttls:
+                    smtp.starttls()
+                if cfg.username:
+                    smtp.login(cfg.username, cfg.password)
+                smtp.send_message(msg)
+    except Exception as exc:
+        logger.warning("Impossible d'envoyer l'email d'audit : %s", exc)
 
 
 async def list_audit_logs(

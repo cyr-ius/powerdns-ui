@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { AuditService } from "../../../core/services/audit.service";
-import { AuditLog, PdnsLogEntry, SyslogSettings } from "../../../shared/models/audit.model";
+import { AuditLog, PdnsLogEntry, SmtpSettings, SyslogSettings } from "../../../shared/models/audit.model";
 import { TranslateModule } from "@ngx-translate/core";
 
 type Tab = "audit" | "pdns";
@@ -87,6 +87,23 @@ export class AdminAuditComponent implements OnInit {
     "local7",
   ];
 
+  // Email audit modal
+  readonly showEmailModal = signal(false);
+  readonly isSavingEmail = signal(false);
+  readonly emailError = signal<string | null>(null);
+  readonly smtpSettings = signal<SmtpSettings>({
+    enabled: false,
+    host: "localhost",
+    port: 587,
+    username: "",
+    password: "",
+    from_email: "",
+    recipient_email: "",
+    use_tls: false,
+    use_starttls: true,
+  });
+  emailDraft: SmtpSettings = { ...this.smtpSettings() };
+
   readonly actionLabel = (a: string) => ACTION_LABELS[a] ?? a;
   readonly resourceLabel = (r: string) => RESOURCE_LABELS[r] ?? r;
 
@@ -94,7 +111,7 @@ export class AdminAuditComponent implements OnInit {
     s === "success" ? "bg-success-subtle text-success-emphasis" : "bg-danger-subtle text-danger-emphasis";
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.loadLogs(), this.loadSyslogSettings()]);
+    await Promise.all([this.loadLogs(), this.loadSyslogSettings(), this.loadSmtpSettings()]);
   }
 
   async switchTab(tab: Tab): Promise<void> {
@@ -211,6 +228,37 @@ export class AdminAuditComponent implements OnInit {
       this.syslogError.set("Error occurred while saving.");
     } finally {
       this.isSavingSyslog.set(false);
+    }
+  }
+
+  // ── Email modal ──────────────────────────────────────────────────────────────
+
+  async loadSmtpSettings(): Promise<void> {
+    try {
+      const cfg = await this.auditService.getSmtpSettings();
+      this.smtpSettings.set(cfg);
+    } catch {
+      // non-blocking
+    }
+  }
+
+  openEmailModal(): void {
+    this.emailDraft = { ...this.smtpSettings() };
+    this.emailError.set(null);
+    this.showEmailModal.set(true);
+  }
+
+  async saveEmail(): Promise<void> {
+    this.isSavingEmail.set(true);
+    this.emailError.set(null);
+    try {
+      const saved = await this.auditService.updateSmtpSettings(this.emailDraft);
+      this.smtpSettings.set(saved);
+      this.showEmailModal.set(false);
+    } catch {
+      this.emailError.set("Error occurred while saving.");
+    } finally {
+      this.isSavingEmail.set(false);
     }
   }
 }

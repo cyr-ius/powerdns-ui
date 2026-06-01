@@ -39,3 +39,27 @@ class SyslogSettingsUpdate(BaseModel):
 class PdnsLogEntry(BaseModel):
     name: str
     value: str
+
+
+class SmtpSettingsResponse(BaseModel):
+    enabled: bool
+    host: str
+    port: int
+    username: str
+    password: str
+    from_email: str
+    recipient_email: str
+    use_tls: bool
+    use_starttls: bool
+
+
+class SmtpSettingsUpdate(BaseModel):
+    enabled: bool
+    host: str
+    port: int
+    username: str
+    password: str
+    from_email: str
+    recipient_email: str
+    use_tls: bool
+    use_starttls: bool

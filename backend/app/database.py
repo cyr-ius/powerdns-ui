@@ -17,6 +17,7 @@ from app.models import (  # noqa: F401, E402
     audit_log,
     oidc_settings,
     record_type,
+    smtp_settings,
     syslog_settings,
     user,
     zone_record_type,

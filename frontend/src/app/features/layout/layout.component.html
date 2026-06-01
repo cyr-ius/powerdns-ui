@@ -147,6 +147,11 @@
           <span>{{ "NAV.DNS_TYPES" | translate }}</span>
         </a>
 
+        <a class="pdns-sidenav-link" routerLink="/admin/mail" routerLinkActive="active" (click)="closeSidebar()">
+          <i class="bi bi-envelope"></i>
+          <span>{{ "NAV.MAIL" | translate }}</span>
+        </a>
+
         <a class="pdns-sidenav-link" routerLink="/admin/audit" routerLinkActive="active" (click)="closeSidebar()">
           <i class="bi bi-journal-text"></i>
           <span>{{ "NAV.AUDIT_JOURNAL" | translate }}</span>

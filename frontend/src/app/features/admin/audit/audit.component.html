@@ -4,6 +4,24 @@
     <p class="text-muted small mb-0">{{ "AUDIT.SUBTITLE" | translate }}</p>
   </div>
   <div class="d-flex align-items-center gap-3">
+    <!-- Email audit status badge -->
+    <button
+      class="btn btn-sm d-flex align-items-center gap-2"
+      [class]="smtpSettings().enabled ? 'btn-outline-success' : 'btn-outline-secondary'"
+      [title]="'AUDIT.EMAIL_TITLE' | translate"
+      (click)="openEmailModal()"
+    >
+      <i class="bi" [class]="smtpSettings().enabled ? 'bi-envelope-check text-success' : 'bi-envelope text-muted'"></i>
+      <span>{{
+        "AUDIT.EMAIL_LABEL"
+          | translate
+            : {
+                status: smtpSettings().enabled
+                  ? ("AUDIT.EMAIL_ACTIVE" | translate)
+                  : ("AUDIT.EMAIL_INACTIVE" | translate),
+              }
+      }}</span>
+    </button>
     <!-- Syslog status badge -->
     <button
       class="btn btn-sm d-flex align-items-center gap-2"
@@ -240,6 +258,64 @@
           }
         </div>
       }
+    </div>
+  </div>
+}
+
+<!-- ── Email modal ────────────────────────────────────────────────────────── -->
+@if (showEmailModal()) {
+  <div class="modal-backdrop-overlay" (click)="showEmailModal.set(false)"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-envelope me-2 text-primary"></i>{{ "AUDIT.EMAIL_TITLE" | translate }}
+          </h5>
+          <button class="btn-close" (click)="showEmailModal.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          @if (emailError()) {
+            <div class="alert alert-danger py-2 small">{{ emailError() }}</div>
+          }
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="email_enabled" [(ngModel)]="emailDraft.enabled" />
+            <label class="form-check-label fw-medium" for="email_enabled">{{
+              "AUDIT.EMAIL_ACTIVATE" | translate
+            }}</label>
+          </div>
+
+          <div [class.opacity-50]="!emailDraft.enabled">
+            <div class="mb-3">
+              <label class="form-label fw-medium">{{ "AUDIT.EMAIL_RECIPIENT" | translate }}</label>
+              <input
+                type="email"
+                class="form-control"
+                [(ngModel)]="emailDraft.recipient_email"
+                [disabled]="!emailDraft.enabled"
+                placeholder="admin@example.com"
+              />
+            </div>
+          </div>
+
+          <div class="alert alert-info py-2 small d-flex align-items-start gap-2 mb-0">
+            <i class="bi bi-info-circle-fill mt-1 flex-shrink-0"></i>
+            <span [innerHTML]="'AUDIT.EMAIL_CONFIG_HINT' | translate"></span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showEmailModal.set(false)">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
+          <button class="btn btn-primary" (click)="saveEmail()" [disabled]="isSavingEmail()">
+            @if (isSavingEmail()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 }

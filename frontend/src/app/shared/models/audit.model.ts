@@ -24,3 +24,15 @@ export interface PdnsLogEntry {
   name: string;
   value: string;
 }
+
+export interface SmtpSettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  from_email: string;
+  recipient_email: string;
+  use_tls: boolean;
+  use_starttls: boolean;
+}

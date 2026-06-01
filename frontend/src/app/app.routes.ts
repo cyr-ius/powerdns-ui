@@ -128,6 +128,14 @@ export const routes: Routes = [
             (m) => m.AdminAuditComponent,
           ),
       },
+      {
+        path: 'admin/mail',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/admin/mail/mail.component').then(
+            (m) => m.AdminMailComponent,
+          ),
+      },
     ],
   },
   { path: '**', redirectTo: 'zones' },
