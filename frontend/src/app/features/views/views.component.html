@@ -184,7 +184,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeAddViewModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onCreateView()" [disabled]="isSubmitting()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onCreateView()"
+              [disabled]="isSubmitting() || newViewForm().invalid()"
+            >
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
@@ -240,7 +245,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeAddZoneModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onAddZone()" [disabled]="isSubmitting()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onAddZone()"
+              [disabled]="isSubmitting() || addZoneForm().invalid()"
+            >
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }

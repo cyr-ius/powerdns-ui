@@ -130,7 +130,11 @@
             <button class="btn btn-secondary" (click)="showCreateModal.set(false)">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button class="btn btn-primary" [disabled]="isCreating()" (click)="onCreateSubmit()">
+            <button
+              class="btn btn-primary"
+              [disabled]="isCreating() || createForm().invalid()"
+              (click)="onCreateSubmit()"
+            >
               @if (isCreating()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }

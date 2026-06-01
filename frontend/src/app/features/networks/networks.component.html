@@ -166,7 +166,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeAddModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onAdd()" [disabled]="isSubmitting()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onAdd()"
+              [disabled]="isSubmitting() || addForm().invalid()"
+            >
               @if (isSubmitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }

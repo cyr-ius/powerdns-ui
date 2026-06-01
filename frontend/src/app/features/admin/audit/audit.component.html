@@ -336,7 +336,7 @@
             <button type="button" class="btn btn-secondary" (click)="showEmailModal.set(false)">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="emailForm().pending()">
+            <button type="submit" class="btn btn-primary" [disabled]="emailForm().pending() || emailForm().invalid()">
               @if (emailForm().submitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
@@ -420,7 +420,7 @@
             <button type="button" class="btn btn-secondary" (click)="showSyslogModal.set(false)">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="submit" class="btn btn-primary" [disabled]="syslogForm().pending()">
+            <button type="submit" class="btn btn-primary" [disabled]="syslogForm().pending() || syslogForm().invalid()">
               @if (syslogForm().submitting()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }

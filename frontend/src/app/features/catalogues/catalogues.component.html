@@ -419,7 +419,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onCreate()" [disabled]="isCreating()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onCreate()"
+              [disabled]="isCreating() || createForm().invalid()"
+            >
               @if (isCreating()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
@@ -504,7 +509,7 @@
               type="button"
               class="btn btn-primary"
               (click)="onCreateConsumer()"
-              [disabled]="isCreatingConsumer()"
+              [disabled]="isCreatingConsumer() || createConsumerForm().invalid()"
             >
               @if (isCreatingConsumer()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>

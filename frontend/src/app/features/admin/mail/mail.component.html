@@ -162,7 +162,7 @@
           </div>
         </fieldset>
 
-        <button type="submit" class="btn btn-primary" [disabled]="smtpForm().pending()">
+        <button type="submit" class="btn btn-primary" [disabled]="smtpForm().pending() || smtpForm().invalid()">
           @if (smtpForm().submitting()) {
             <span class="spinner-border spinner-border-sm me-2" role="status"></span>
           }

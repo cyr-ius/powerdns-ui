@@ -1428,7 +1428,11 @@
           </div>
         }
 
-        <button class="btn btn-primary" (click)="onSaveSettings()" [disabled]="isSavingSettings()">
+        <button
+          class="btn btn-primary"
+          (click)="onSaveSettings()"
+          [disabled]="isSavingSettings() || settingsForm().invalid()"
+        >
           @if (isSavingSettings()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           }
@@ -1864,7 +1868,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onAddRecord()" [disabled]="isSubmittingRecord()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onAddRecord()"
+              [disabled]="isSubmittingRecord() || recordForm().invalid()"
+            >
               @if (isSubmittingRecord()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }
@@ -2032,7 +2041,12 @@
             <button type="button" class="btn btn-secondary" (click)="closeMetaModal()">
               {{ "COMMON.CANCEL" | translate }}
             </button>
-            <button type="button" class="btn btn-primary" (click)="onSaveMeta()" [disabled]="isSubmittingMeta()">
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onSaveMeta()"
+              [disabled]="isSubmittingMeta() || metaForm().invalid()"
+            >
               @if (isSubmittingMeta()) {
                 <span class="spinner-border spinner-border-sm me-1"></span>
               }

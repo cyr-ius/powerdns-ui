@@ -113,7 +113,11 @@
         </div>
       </div>
       <div class="col-md-auto">
-        <button class="btn btn-warning" (click)="onFlushCache()" [disabled]="isFlushing() || zonesLoading()">
+        <button
+          class="btn btn-warning"
+          (click)="onFlushCache()"
+          [disabled]="isFlushing() || zonesLoading() || flushForm().invalid()"
+        >
           @if (isFlushing()) {
             <span class="spinner-border spinner-border-sm me-1"></span>
           } @else {

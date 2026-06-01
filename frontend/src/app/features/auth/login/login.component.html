@@ -58,7 +58,11 @@
             }
           </div>
 
-          <button type="submit" class="btn btn-primary w-100" [disabled]="loginForm().submitting() || isLoading()">
+          <button
+            type="submit"
+            class="btn btn-primary w-100"
+            [disabled]="loginForm().submitting() || isLoading() || loginForm().invalid()"
+          >
             @if (loginForm().submitting()) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
             }
