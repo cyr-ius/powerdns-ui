@@ -42,7 +42,9 @@ DEFAULT_RECORD_TYPES = [
 
 async def init_db() -> None:
     async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+        await conn.run_sync(
+            lambda conn: SQLModel.metadata.create_all(conn, checkfirst=True)
+        )
         # SQLite schema migration: add columns added after initial schema
         result = await conn.execute(text("PRAGMA table_info(user)"))
         columns = {row[1] for row in result.fetchall()}
