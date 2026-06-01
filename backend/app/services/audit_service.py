@@ -66,7 +66,7 @@ async def log_action(
         _send_to_syslog(syslog_cfg, entry)
 
     smtp_cfg = await get_smtp_settings(db)
-    if smtp_cfg and smtp_cfg.enabled:
+    if smtp_cfg and smtp_cfg.enabled and _matches_alert_filters(smtp_cfg, entry):
         _send_audit_email(smtp_cfg, entry)
 
 
@@ -154,12 +154,38 @@ def _send_to_syslog(cfg: SyslogSettings, entry: AuditLog) -> None:
         logger.warning("Impossible d'envoyer vers syslog : %s", exc)
 
 
+def _parse_filter_list(raw: str) -> list[str]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, list) else []
+    except json.JSONDecodeError, ValueError:
+        return []
+
+
+def _matches_alert_filters(cfg: SmtpSettings, entry: AuditLog) -> bool:
+    actions = _parse_filter_list(cfg.alert_actions)
+    resources = _parse_filter_list(cfg.alert_resources)
+    statuses = _parse_filter_list(cfg.alert_statuses)
+    if actions and entry.action not in actions:
+        return False
+    if resources and entry.resource_type not in resources:
+        return False
+    if statuses and entry.status not in statuses:
+        return False
+    return True
+
+
 async def get_smtp_settings(db: AsyncSession) -> SmtpSettings | None:
     result = await db.exec(select(SmtpSettings).where(SmtpSettings.id == 1))  # type: ignore[call-overload]
     return result.first()
 
 
 async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
+    for key in ("alert_actions", "alert_resources", "alert_statuses"):
+        if key in data and isinstance(data[key], list):
+            data[key] = json.dumps(data[key])
     existing = await get_smtp_settings(db)
     if existing:
         for key, value in data.items():

@@ -51,6 +51,9 @@ class SmtpSettingsResponse(BaseModel):
     recipient_email: str
     use_tls: bool
     use_starttls: bool
+    alert_actions: list[str] = []
+    alert_resources: list[str] = []
+    alert_statuses: list[str] = []
 
 
 class SmtpSettingsUpdate(BaseModel):
@@ -63,6 +66,9 @@ class SmtpSettingsUpdate(BaseModel):
     recipient_email: str
     use_tls: bool
     use_starttls: bool
+    alert_actions: list[str] = []
+    alert_resources: list[str] = []
+    alert_statuses: list[str] = []
 
     @model_validator(mode="after")
     def recipient_required_when_enabled(self) -> SmtpSettingsUpdate:

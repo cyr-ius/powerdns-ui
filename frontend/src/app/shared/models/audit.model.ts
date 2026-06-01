@@ -35,4 +35,7 @@ export interface SmtpSettings {
   recipient_email: string;
   use_tls: boolean;
   use_starttls: boolean;
+  alert_actions: string[];
+  alert_resources: string[];
+  alert_statuses: string[];
 }

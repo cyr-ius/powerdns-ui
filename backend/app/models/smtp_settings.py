@@ -14,3 +14,6 @@ class SmtpSettings(SQLModel, table=True):
     recipient_email: str = Field(default="")
     use_tls: bool = Field(default=False)
     use_starttls: bool = Field(default=True)
+    alert_actions: str = Field(default="")
+    alert_resources: str = Field(default="")
+    alert_statuses: str = Field(default="")

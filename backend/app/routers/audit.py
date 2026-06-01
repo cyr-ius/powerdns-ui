@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from typing import Annotated
 
@@ -131,6 +132,16 @@ async def update_syslog_settings(
     )
 
 
+def _parse_filter_list(raw: str) -> list[str]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, list) else []
+    except json.JSONDecodeError, ValueError:
+        return []
+
+
 _SMTP_DEFAULTS = SmtpSettingsResponse(
     enabled=False,
     host="localhost",
@@ -141,6 +152,9 @@ _SMTP_DEFAULTS = SmtpSettingsResponse(
     recipient_email="",
     use_tls=False,
     use_starttls=True,
+    alert_actions=[],
+    alert_resources=[],
+    alert_statuses=[],
 )
 
 
@@ -160,6 +174,9 @@ async def get_smtp_settings(
             recipient_email=cfg.recipient_email,
             use_tls=cfg.use_tls,
             use_starttls=cfg.use_starttls,
+            alert_actions=_parse_filter_list(cfg.alert_actions),
+            alert_resources=_parse_filter_list(cfg.alert_resources),
+            alert_statuses=_parse_filter_list(cfg.alert_statuses),
         )
     return _SMTP_DEFAULTS
 
@@ -180,4 +197,7 @@ async def update_smtp_settings(
         recipient_email=cfg.recipient_email,
         use_tls=cfg.use_tls,
         use_starttls=cfg.use_starttls,
+        alert_actions=_parse_filter_list(cfg.alert_actions),
+        alert_resources=_parse_filter_list(cfg.alert_resources),
+        alert_statuses=_parse_filter_list(cfg.alert_statuses),
     )

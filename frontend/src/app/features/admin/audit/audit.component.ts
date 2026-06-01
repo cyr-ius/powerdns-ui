@@ -110,6 +110,9 @@ export class AdminAuditComponent implements OnInit {
     recipient_email: "",
     use_tls: false,
     use_starttls: true,
+    alert_actions: [],
+    alert_resources: [],
+    alert_statuses: [],
   });
 
   readonly emailModel = signal<SmtpSettings>({ ...this.smtpSettings() });
@@ -117,6 +120,14 @@ export class AdminAuditComponent implements OnInit {
     required(p.recipient_email, { message: "AUDIT.EMAIL_RECIPIENT_REQUIRED" });
     disabled(p.recipient_email, ({ valueOf }) => valueOf(p.enabled) !== true);
   });
+
+  private usernameDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  onUsernameInput(value: string): void {
+    this.filterUsername.set(value);
+    if (this.usernameDebounce) clearTimeout(this.usernameDebounce);
+    this.usernameDebounce = setTimeout(() => void this.applyFilters(), 400);
+  }
 
   readonly actionLabel = (a: string) => ACTION_LABELS[a] ?? a;
   readonly resourceLabel = (r: string) => RESOURCE_LABELS[r] ?? r;
@@ -259,6 +270,25 @@ export class AdminAuditComponent implements OnInit {
     this.emailModel.set({ ...this.smtpSettings() });
     this.emailError.set(null);
     this.showEmailModal.set(true);
+  }
+
+  readonly alertActions = ["login", "change_password", "reset_password", "create", "update", "delete", "update_records", "update_oidc_settings"];
+  readonly alertResources = ["auth", "user", "account", "zone", "oidc_settings"];
+  readonly alertStatuses = ["success", "failure"];
+
+  isChecked(list: string[], value: string): boolean {
+    return list.includes(value);
+  }
+
+  toggleFilter(field: "alert_actions" | "alert_resources" | "alert_statuses", value: string): void {
+    const current = [...this.emailModel()[field]];
+    const idx = current.indexOf(value);
+    if (idx === -1) {
+      current.push(value);
+    } else {
+      current.splice(idx, 1);
+    }
+    this.emailModel.update((m) => ({ ...m, [field]: current }));
   }
 
   async saveEmail(): Promise<void> {

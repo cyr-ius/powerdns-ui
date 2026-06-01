@@ -325,7 +325,9 @@
     "EMAIL_TITLE": "Email Audit Notifications",
     "EMAIL_ACTIVATE": "Enable email notifications for audit events",
     "EMAIL_RECIPIENT": "Recipient address",
-    "EMAIL_CONFIG_HINT": "Configure the SMTP server in <strong>Administration &rsaquo; Mail Server</strong>."
+    "EMAIL_CONFIG_HINT": "Configure the SMTP server in <strong>Administration &rsaquo; Mail Server</strong>.",
+    "EMAIL_ALERT_FILTERS_TITLE": "Alert filters",
+    "EMAIL_ALERT_FILTERS_HINT": "Select the criteria that trigger an alert. If no box is checked in a category, all values are included."
   },
   "MAIL": {
     "TITLE": "Mail Server",

@@ -325,7 +325,9 @@
     "EMAIL_TITLE": "Notificaciones de auditoría por email",
     "EMAIL_ACTIVATE": "Activar notificaciones por email para eventos de auditoría",
     "EMAIL_RECIPIENT": "Dirección destinataria",
-    "EMAIL_CONFIG_HINT": "Configure el servidor SMTP en <strong>Administración &rsaquo; Servidor de correo</strong>."
+    "EMAIL_CONFIG_HINT": "Configure el servidor SMTP en <strong>Administración &rsaquo; Servidor de correo</strong>.",
+    "EMAIL_ALERT_FILTERS_TITLE": "Filtros de alerta",
+    "EMAIL_ALERT_FILTERS_HINT": "Seleccione los criterios que desencadenan una alerta. Si no se marca ninguna casilla en una categoría, se incluyen todos los valores."
   },
   "MAIL": {
     "TITLE": "Servidor de correo",

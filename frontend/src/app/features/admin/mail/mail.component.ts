@@ -27,6 +27,9 @@ export class AdminMailComponent implements OnInit {
     recipient_email: "",
     use_tls: false,
     use_starttls: true,
+    alert_actions: [],
+    alert_resources: [],
+    alert_statuses: [],
   });
 
   readonly smtpForm = form(this.smtpModel, (p) => {
