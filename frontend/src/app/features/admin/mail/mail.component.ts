@@ -2,11 +2,11 @@ import { Component, OnInit, inject, signal } from "@angular/core";
 import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AuditService } from "../../../core/services/audit.service";
 import { SmtpSettings } from "../../../shared/models/audit.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-admin-mail",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./mail.component.html",
 })
 export class AdminMailComponent implements OnInit {

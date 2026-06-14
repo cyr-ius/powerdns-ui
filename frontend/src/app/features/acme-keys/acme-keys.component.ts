@@ -1,11 +1,11 @@
 import { DatePipe } from "@angular/common";
 import { Component, inject, OnInit, signal } from "@angular/core";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
 
 @Component({
   selector: "app-acme-keys",
-  imports: [DatePipe, TranslateModule],
+  imports: [DatePipe, TranslatePipe],
   templateUrl: "./acme-keys.component.html",
   styleUrl: "./acme-keys.component.css",
 })

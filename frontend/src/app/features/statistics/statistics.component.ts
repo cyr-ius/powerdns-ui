@@ -3,7 +3,7 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { CacheFlushResult, ServerInfo, SimpleStatisticItem, StatisticItem, Zone } from "../../shared/models/pdns.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 const KEY_STATS = [
   "uptime",
@@ -23,7 +23,7 @@ const KEY_STATS = [
 
 @Component({
   selector: "app-statistics",
-  imports: [FormField, DatePipe, TranslateModule],
+  imports: [FormField, DatePipe, TranslatePipe],
   templateUrl: "./statistics.component.html",
   styleUrl: "./statistics.component.css",
 })

@@ -4,11 +4,11 @@ import { RouterLink } from "@angular/router";
 import { PdnsService } from "../../../core/services/pdns.service";
 import { Zone } from "../../../shared/models/pdns.model";
 import { cidrToReverseZoneName } from "../../../shared/utils/dns-reverse.utils";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-zone-list",
-  imports: [RouterLink, FormField, TranslateModule],
+  imports: [RouterLink, FormField, TranslatePipe],
   templateUrl: "./zone-list.component.html",
   styleUrl: "./zone-list.component.css",
 })

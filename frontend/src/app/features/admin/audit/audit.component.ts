@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from "@angular/core";
 import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AuditService } from "../../../core/services/audit.service";
 import { AuditLog, PdnsLogEntry, SmtpSettings, SyslogSettings } from "../../../shared/models/audit.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 type Tab = "audit" | "pdns";
 
@@ -27,7 +27,7 @@ const RESOURCE_LABELS: Record<string, string> = {
 
 @Component({
   selector: "app-admin-audit",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./audit.component.html",
   styleUrl: "./audit.component.css",
 })

@@ -2,11 +2,11 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { AdminService } from "../../../core/services/admin.service";
 import { AdminUser } from "../../../shared/models/admin.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-admin-users",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./users.component.html",
   styleUrl: "./users.component.css",
 })

@@ -2,11 +2,11 @@ import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { Autoprimary } from "../../shared/models/pdns.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-autoprimaries",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./autoprimaries.component.html",
 })
 export class AutoprimariesComponent implements OnInit {

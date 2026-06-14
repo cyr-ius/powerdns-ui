@@ -2,11 +2,11 @@ import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField } from "@angular/forms/signals";
 import { PdnsService } from "../../core/services/pdns.service";
 import { ConfigSetting } from "../../shared/models/pdns.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-server-config",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./server-config.component.html",
   styleUrl: "./server-config.component.css",
 })

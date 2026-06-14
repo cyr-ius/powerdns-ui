@@ -11,7 +11,7 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
-    provideTranslateService({ defaultLanguage: 'en' }),
+    provideTranslateService({ lang: 'en' }),
     provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
   ],
 };

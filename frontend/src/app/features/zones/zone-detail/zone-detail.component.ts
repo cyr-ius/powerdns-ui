@@ -20,7 +20,7 @@ import {
   ZoneRole,
 } from "../../../shared/models/pdns.model";
 import { buildPtrName, findBestReverseZone } from "../../../shared/utils/dns-reverse.utils";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 const ALL_DNS_TYPES = ["A", "AAAA", "CAA", "CNAME", "DNAME", "LOC", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "TXT"];
 const CRYPTO_ALGORITHMS = ["ECDSAP256SHA256", "ECDSAP384SHA384", "ED25519", "ED448", "RSASHA256", "RSASHA512"];
@@ -50,7 +50,7 @@ export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | 
 
 @Component({
   selector: "app-zone-detail",
-  imports: [RouterLink, FormField, TranslateModule, NgTemplateOutlet],
+  imports: [RouterLink, FormField, TranslatePipe, NgTemplateOutlet],
   templateUrl: "./zone-detail.component.html",
   styleUrl: "./zone-detail.component.css",
 })

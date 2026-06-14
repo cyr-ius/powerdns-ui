@@ -9,14 +9,14 @@ import { AuthService } from "../../core/services/auth.service";
 import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
 import { PdnsService } from "../../core/services/pdns.service";
 import { Theme, ThemeService } from "../../core/services/theme.service";
-import { TranslateModule, TranslateService } from "@ngx-translate/core";
+import { TranslatePipe, TranslateService } from "@ngx-translate/core";
 import { Zone } from "../../shared/models/pdns.model";
 
 type Tab = "info" | "appearance" | "password" | "apikeys" | "acmekeys";
 
 @Component({
   selector: "app-profile",
-  imports: [DatePipe, RouterLink, FormField, TranslateModule],
+  imports: [DatePipe, RouterLink, FormField, TranslatePipe],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.css",
 })

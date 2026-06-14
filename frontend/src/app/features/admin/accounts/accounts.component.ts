@@ -4,11 +4,11 @@ import { AdminService } from "../../../core/services/admin.service";
 import { PdnsService } from "../../../core/services/pdns.service";
 import { Account, AdminUser } from "../../../shared/models/admin.model";
 import { Zone } from "../../../shared/models/pdns.model";
-import { TranslateModule } from "@ngx-translate/core";
+import { TranslatePipe } from "@ngx-translate/core";
 
 @Component({
   selector: "app-admin-accounts",
-  imports: [FormField, TranslateModule],
+  imports: [FormField, TranslatePipe],
   templateUrl: "./accounts.component.html",
   styleUrl: "./accounts.component.css",
 })
