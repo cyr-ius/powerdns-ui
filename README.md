@@ -63,7 +63,7 @@ Web management interface for [PowerDNS Authoritative Server](https://www.powerdn
 
 ```
 ┌─────────────────────────────────────┐
-│          Browser (Angular 21)       │
+│          Browser (Angular 22)       │
 └───────────────┬─────────────────────┘
                 │ HTTP
 ┌───────────────▼─────────────────────┐
