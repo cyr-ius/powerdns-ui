@@ -1,11 +1,11 @@
 # ─── Stage 1: Build Angular Frontend ──────────────────────────────────────
-FROM node:22-alpine AS frontend-builder
+FROM node:26-alpine AS frontend-builder
 
 WORKDIR /build/frontend
 
 # Install dependencies
-COPY frontend/package.json ./
-RUN npm install
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 
 # Copy source and build
 COPY frontend/ ./
