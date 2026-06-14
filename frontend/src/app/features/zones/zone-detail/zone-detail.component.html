@@ -486,7 +486,9 @@
     <!-- ── Tab: Records ────────────────────────────────────────── -->
     @if (activeTab() === "records") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">{{ "ZONE_DETAIL.RECORDS_TITLE" | translate }}</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-list-ul me-2 text-primary"></i>{{ "ZONE_DETAIL.RECORDS_TITLE" | translate }}</span
+        >
         @if (canWrite()) {
           <button class="btn btn-sm btn-primary" (click)="openRecordModal()">
             <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ADD_RECORD" | translate }}
@@ -658,7 +660,9 @@
     <!-- ── Tab: Metadata ────────────────────────────────────────────── -->
     @if (activeTab() === "metadata") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">{{ "ZONE_DETAIL.METADATA_TITLE" | translate }}</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-tags me-2 text-primary"></i>{{ "ZONE_DETAIL.METADATA_TITLE" | translate }}</span
+        >
         <button class="btn btn-sm btn-primary" (click)="openMetaModal()">
           <i class="bi bi-plus-lg me-1"></i>{{ "COMMON.ADD" | translate }}
         </button>
@@ -716,7 +720,9 @@
     <!-- ── Tab: DNSSEC ─────────────────────────────────────────────────── -->
     @if (activeTab() === "dnssec") {
       <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
-        <span class="fw-semibold">{{ "ZONE_DETAIL.DNSSEC_TITLE" | translate }}</span>
+        <span class="fw-semibold"
+          ><i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSSEC_TITLE" | translate }}</span
+        >
         <div class="d-flex gap-2">
           @if (zone()!.kind !== "Slave" && zone()!.kind !== "Secondary") {
             <button
@@ -1204,7 +1210,7 @@
     @if (activeTab() === "dnsupdate") {
       <div class="card-header py-3 border-bottom">
         <span class="fw-semibold"
-          ><i class="bi bi-pencil-square me-2 text-info"></i>{{ "ZONE_DETAIL.DNSUPDATE_TITLE" | translate }}</span
+          ><i class="bi bi-pencil-square me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSUPDATE_TITLE" | translate }}</span
         >
         <div class="text-muted small mt-1">
           {{ "ZONE_DETAIL.DNSUPDATE_DESC" | translate }}
@@ -1394,9 +1400,13 @@
     }
     <!-- ── Tab: Settings ─────────────────────────────────────────────── -->
     @if (activeTab() === "settings") {
-      <div class="card-body" style="max-width: 560px">
-        <h6 class="fw-bold mb-3">{{ "ZONE_DETAIL.SETTINGS_TITLE" | translate }}</h6>
+      <div class="card-header py-3 border-bottom">
+        <span class="fw-semibold">
+          <i class="bi bi-gear me-2 text-primary"></i>{{ "ZONE_DETAIL.SETTINGS_TITLE" | translate }}
+        </span>
+      </div>
 
+      <div class="card-body" style="max-width: 560px">
         @if (settingsError()) {
           <div class="alert alert-danger py-2 small">{{ settingsError() }}</div>
         }
