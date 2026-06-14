@@ -29,7 +29,7 @@
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>{{ "APIKEYS.COL_USER" | translate }}</th>
+            <th>{{ "APIKEYS.COL_OWNER" | translate }}</th>
             <th>{{ "COMMON.NAME" | translate }}</th>
             <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
             <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
@@ -42,7 +42,15 @@
         <tbody>
           @for (key of keys(); track trackById($index, key)) {
             <tr>
-              <td class="text-muted small">{{ key.username }}</td>
+              <td class="small">
+                @if (key.username) {
+                  <span class="text-muted">{{ key.username }}</span>
+                } @else {
+                  <span class="badge bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-person-x me-1"></i>{{ "APIKEYS.ORPHAN_BADGE" | translate }}
+                  </span>
+                }
+              </td>
               <td class="fw-medium">{{ key.name }}</td>
               <td>
                 @if (key.key_type === "acme") {
@@ -91,3 +99,14 @@
     }
   </div>
 </div>
+
+@if (hasOrphans()) {
+  <p class="text-muted small mt-3 d-flex gap-2">
+    <i class="bi bi-info-circle mt-1"></i>
+    <span>
+      <span class="badge bg-warning-subtle text-warning-emphasis me-1">
+        <i class="bi bi-person-x me-1"></i>{{ "APIKEYS.ORPHAN_BADGE" | translate }}</span
+      >{{ "APIKEYS.ORPHAN_NOTE" | translate }}
+    </span>
+  </p>
+}

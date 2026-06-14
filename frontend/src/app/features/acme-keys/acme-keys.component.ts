@@ -1,5 +1,5 @@
 import { DatePipe } from "@angular/common";
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { TranslatePipe } from "@ngx-translate/core";
 import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
 
@@ -15,6 +15,7 @@ export class AcmeKeysComponent implements OnInit {
   readonly keys = signal<AcmeApiKey[]>([]);
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
+  readonly hasOrphans = computed(() => this.keys().some((k) => !k.username));
 
   async ngOnInit(): Promise<void> {
     await this.loadKeys();
