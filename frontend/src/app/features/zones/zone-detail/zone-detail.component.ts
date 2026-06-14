@@ -46,7 +46,7 @@ const METADATA_KINDS = [
   "TSIG-ALLOW-DNSUPDATE",
 ];
 
-export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members" | "apikeys" | "acmekeys";
+export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members" | "acmekeys";
 
 @Component({
   selector: "app-zone-detail",
@@ -246,11 +246,6 @@ export class ZoneDetailComponent implements OnInit {
     }),
   );
 
-  // ── API Keys (REST) ──────────────────────────────────────────────────────
-  readonly zoneRestApiKeys = signal<AcmeApiKey[]>([]);
-  readonly isLoadingApiKeys = signal(false);
-  private apiKeysLoaded = false;
-
   // ── ACME Keys (appartenant à la zone) ────────────────────────────────────
   readonly zoneAcmeKeys = signal<AcmeApiKey[]>([]);
   readonly isLoadingAcmeKeys = signal(false);
@@ -340,7 +335,6 @@ export class ZoneDetailComponent implements OnInit {
     void this.loadZoneRecordTypes();
     if (this.isZoneAdmin()) {
       void this.loadMembers();
-      void this.loadZoneApiKeys();
       void this.loadZoneAcmeKeys();
     }
   }
@@ -380,23 +374,7 @@ export class ZoneDetailComponent implements OnInit {
     if (tab === "dnssec" && this.cryptoKeys().length === 0) void this.loadCryptoKeys();
     if ((tab === "transfer" || tab === "dnsupdate") && this.tsigKeys().length === 0) void this.loadTsigKeys();
     if (tab === "members" && !this.membersLoaded) void this.loadMembers();
-    if (tab === "apikeys" && !this.apiKeysLoaded) void this.loadZoneApiKeys();
     if (tab === "acmekeys" && !this.acmeKeysLoaded) void this.loadZoneAcmeKeys();
-  }
-
-  async loadZoneApiKeys(): Promise<void> {
-    this.isLoadingApiKeys.set(true);
-    try {
-      const keys = this.auth.isAdmin()
-        ? await this.acmeKeysSvc.listAllKeys()
-        : await this.acmeKeysSvc.listKeys();
-      this.zoneRestApiKeys.set(keys.filter((k) => k.key_type === "api"));
-      this.apiKeysLoaded = true;
-    } catch {
-      // non-bloquant
-    } finally {
-      this.isLoadingApiKeys.set(false);
-    }
   }
 
   async loadZoneAcmeKeys(): Promise<void> {
