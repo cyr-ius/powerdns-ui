@@ -185,8 +185,8 @@ async def list_all_keys(db: AsyncSession) -> list[tuple[AcmeApiKey, str, int]]:
     """Retourne toutes les clés avec le nom d'utilisateur du créateur (usage admin)."""
     rows = await db.execute(
         sa_select(AcmeApiKey, User.username, User.id)  # type: ignore[call-overload]
-        .join(User, AcmeApiKey.user_id == User.id)
-        .order_by(User.username, AcmeApiKey.created_at)
+        .join(User, AcmeApiKey.user_id == User.id, isouter=True)
+        .order_by(AcmeApiKey.created_at)
     )
     return [(key, username, uid) for key, username, uid in rows.all()]
 

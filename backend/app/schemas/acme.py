@@ -37,8 +37,8 @@ class AcmeApiKeyCreated(AcmeApiKeyResponse):
 
 
 class AcmeApiKeyAdminResponse(AcmeApiKeyResponse):
-    username: str
-    user_id: int
+    username: str | None = None
+    user_id: int | None = None
 
 
 class AcmeApiKeyZonesUpdate(BaseModel):
