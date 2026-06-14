@@ -47,6 +47,7 @@ Web management interface for [PowerDNS Authoritative Server](https://www.powerdn
 - **Reverse DNS** — IPv4/IPv6 PTR zone creation with automatic PTR record generation
 - **Lua Records** — per-zone activation of dynamic Lua records (admin/zone-admin only), automatically adds the `LUA` record type
 - **Catalog Zones** — Producer zones (manual member management) and Consumer zones (automatic sync via AXFR from a Producer)
+- **ACME Keys** — per-zone and per-user API keys for DNS-01 ACME challenges (Let's Encrypt / cert-manager integration)
 - **TSIG Keys** — creation and management of signing keys
 - **Autoprimaries** — automatic primary server configuration
 - **DNS Views** _(LMDB only)_ — split-horizon, zone ↔ view association
