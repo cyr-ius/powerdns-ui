@@ -1,18 +1,16 @@
 import { DatePipe } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
-import { Component, computed, inject, OnInit, signal } from "@angular/core";
+import { Component, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 import { AppInfoService } from "../../core/services/app-info.service";
 import { AuthService } from "../../core/services/auth.service";
 import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
-import { PdnsService } from "../../core/services/pdns.service";
 import { Theme, ThemeService } from "../../core/services/theme.service";
 import { TranslatePipe, TranslateService } from "@ngx-translate/core";
-import { Zone } from "../../shared/models/pdns.model";
 
-type Tab = "info" | "appearance" | "password" | "apikeys" | "acmekeys";
+type Tab = "info" | "appearance" | "password" | "apikeys";
 
 @Component({
   selector: "app-profile",
@@ -27,7 +25,6 @@ export class ProfileComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
   private readonly acmeKeysSvc = inject(AcmeKeysService);
-  private readonly pdns = inject(PdnsService);
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   readonly activeTab = signal<Tab>("info");
@@ -93,10 +90,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // ── API Keys ──────────────────────────────────────────────────────────────
+  // ── API Keys (REST) ───────────────────────────────────────────────────────
   readonly keys = signal<AcmeApiKey[]>([]);
-  readonly apiKeys = computed(() => this.keys().filter((k) => k.key_type === "api"));
-  readonly acmeKeys = computed(() => this.keys().filter((k) => k.key_type === "acme"));
   readonly isLoadingKeys = signal(false);
   readonly keysError = signal<string | null>(null);
 
@@ -105,16 +100,9 @@ export class ProfileComponent implements OnInit {
   readonly createError = signal<string | null>(null);
 
   readonly createdKey = signal<string | null>(null);
-  readonly createdKeyType = signal<"acme" | "api">("api");
   readonly copied = signal(false);
 
-  readonly editingKey = signal<AcmeApiKey | null>(null);
-  readonly availableZones = signal<Zone[]>([]);
-  readonly selectedZones = signal<Set<string>>(new Set());
-  readonly isSavingZones = signal(false);
-  readonly zonesError = signal<string | null>(null);
-
-  readonly createModel = signal({ name: "", secret: "", keyType: "api" as "acme" | "api", comment: "" });
+  readonly createModel = signal({ name: "", secret: "", comment: "" });
   readonly createForm = form(this.createModel, (s) => {
     required(s.name, { message: "APIKEYS.NAME_REQUIRED" });
   });
@@ -138,9 +126,8 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  openCreateModal(forceType?: "acme" | "api"): void {
-    const defaultType = forceType ?? (this.auth.isAcmeCreator() ? "acme" : "api");
-    this.createModel.set({ name: "", secret: "", keyType: defaultType, comment: "" });
+  openCreateModal(): void {
+    this.createModel.set({ name: "", secret: "", comment: "" });
     this.createError.set(null);
     this.showCreateModal.set(true);
   }
@@ -154,21 +141,16 @@ export class ProfileComponent implements OnInit {
     this.copied.set(false);
   }
 
-  setKeyType(type: "acme" | "api"): void {
-    this.createModel.update((m) => ({ ...m, keyType: type }));
-  }
-
   onCreate(): void {
     submit(this.createForm, async () => {
       this.isCreating.set(true);
       this.createError.set(null);
       try {
-        const { name, secret, keyType, comment } = this.createModel();
-        const created = await this.acmeKeysSvc.createKey(name, keyType, secret.trim() || undefined, comment.trim() || undefined);
+        const { name, secret, comment } = this.createModel();
+        const created = await this.acmeKeysSvc.createKey(name, "api", secret.trim() || undefined, comment.trim() || undefined);
         this.showCreateModal.set(false);
         this.keys.update((list) => [...list, created]);
         this.createdKey.set(created.key);
-        this.createdKeyType.set(created.key_type);
       } catch {
         this.createError.set("APIKEYS.CREATE_ERROR");
       } finally {
@@ -212,45 +194,6 @@ export class ProfileComponent implements OnInit {
         this.isEditing.set(false);
       }
     });
-  }
-
-  async openZoneModal(key: AcmeApiKey): Promise<void> {
-    this.editingKey.set(key);
-    this.selectedZones.set(new Set(key.zones));
-    this.zonesError.set(null);
-    try {
-      this.availableZones.set(await this.pdns.getZones());
-    } catch {
-      this.zonesError.set("APIKEYS.ZONES_LOAD_ERROR");
-    }
-  }
-
-  closeZoneModal(): void {
-    this.editingKey.set(null);
-  }
-
-  toggleZone(zoneName: string): void {
-    this.selectedZones.update((set) => {
-      const next = new Set(set);
-      next.has(zoneName) ? next.delete(zoneName) : next.add(zoneName);
-      return next;
-    });
-  }
-
-  async saveZones(): Promise<void> {
-    const key = this.editingKey();
-    if (!key) return;
-    this.isSavingZones.set(true);
-    this.zonesError.set(null);
-    try {
-      const updated = await this.acmeKeysSvc.updateZones(key.id, [...this.selectedZones()]);
-      this.keys.update((list) => list.map((k) => (k.id === updated.id ? updated : k)));
-      this.editingKey.set(null);
-    } catch {
-      this.zonesError.set("APIKEYS.ZONES_SAVE_ERROR");
-    } finally {
-      this.isSavingZones.set(false);
-    }
   }
 
   async deleteKey(key: AcmeApiKey): Promise<void> {

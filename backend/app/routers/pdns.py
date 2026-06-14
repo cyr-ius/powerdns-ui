@@ -24,6 +24,12 @@ from app.dependencies import get_audit_logger, get_current_user
 from app.models.record_type import RecordType
 from app.models.user import User
 from app.models.zone_record_type import ZoneRecordType
+from app.schemas.acme import (
+    AcmeApiKeyCreated,
+    AcmeApiKeyResponse,
+    AcmeApiKeyUpdate,
+    AcmeApiKeyZoneCreate,
+)
 from app.schemas.admin import (
     UserBasicResponse,
     ZoneMemberAdd,
@@ -43,7 +49,7 @@ from app.schemas.pdns import (
     ZoneDetail,
     ZoneUpdate,
 )
-from app.services import admin_service
+from app.services import acme_service, admin_service
 from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request, pdns_request_text
 
@@ -1073,3 +1079,83 @@ async def email_security_check(
         "dmarc": _check_dmarc(dmarc_txt),
         "dkim": _check_dkim(rrsets, zone_name),
     }
+
+
+# ── ACME Keys (appartenant à la zone) ─────────────────────────────────────────
+
+
+@router.get("/{zone_id}/acme-keys", response_model=list[AcmeApiKeyResponse])
+async def list_zone_acme_keys(
+    zone_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    zone, role = await _check_zone_access(zone_id, current_user, db)
+    await _require_min_role(role, "admin")
+    keys = await acme_service.list_zone_keys(db, zone.get("name", zone_id))
+    return [acme_service.key_to_response(k) for k in keys]
+
+
+@router.post("/{zone_id}/acme-keys", response_model=AcmeApiKeyCreated, status_code=201)
+async def create_zone_acme_key(
+    zone_id: str,
+    payload: AcmeApiKeyZoneCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
+) -> dict:
+    zone, role = await _check_zone_access(
+        zone_id, current_user, db, audit, "create_acme_key"
+    )
+    await _require_min_role(role, "admin", audit, "create_acme_key", "zone", zone_id)
+    zone_name = zone.get("name", zone_id)
+    key, raw = await acme_service.create_zone_key(
+        db,
+        zone_name,
+        current_user.id,  # type: ignore[arg-type]
+        payload.name,
+        payload.key or None,
+        payload.comment,
+    )
+    await audit.success("create", "acme_key", payload.name, {"zone": zone_name})
+    return {**acme_service.key_to_response(key), "key": raw}
+
+
+@router.patch("/{zone_id}/acme-keys/{key_id}", response_model=AcmeApiKeyResponse)
+async def update_zone_acme_key(
+    zone_id: str,
+    key_id: int,
+    payload: AcmeApiKeyUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
+) -> dict:
+    zone, role = await _check_zone_access(
+        zone_id, current_user, db, audit, "update_acme_key"
+    )
+    await _require_min_role(role, "admin", audit, "update_acme_key", "zone", zone_id)
+    zone_name = zone.get("name", zone_id)
+    updated = await acme_service.update_zone_key(db, key_id, zone_name, payload.comment)
+    if updated is None:
+        raise HTTPException(status_code=404, detail="Clé ACME introuvable")
+    await audit.success("update", "acme_key", updated.name)
+    return acme_service.key_to_response(updated)
+
+
+@router.delete("/{zone_id}/acme-keys/{key_id}", status_code=204)
+async def delete_zone_acme_key(
+    zone_id: str,
+    key_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
+) -> None:
+    zone, role = await _check_zone_access(
+        zone_id, current_user, db, audit, "delete_acme_key"
+    )
+    await _require_min_role(role, "admin", audit, "delete_acme_key", "zone", zone_id)
+    zone_name = zone.get("name", zone_id)
+    deleted = await acme_service.delete_zone_key(db, key_id, zone_name)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Clé ACME introuvable")
+    await audit.success("delete", "acme_key", str(key_id), {"zone": zone_name})

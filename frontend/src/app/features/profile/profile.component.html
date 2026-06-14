@@ -32,21 +32,11 @@
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
       <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
-      @if (apiKeys().length > 0) {
-        <span class="badge bg-secondary ms-1">{{ apiKeys().length }}</span>
+      @if (keys().length > 0) {
+        <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
       }
     </button>
   </li>
-  @if (auth.isAcmeCreator()) {
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab() === 'acmekeys'" (click)="activeTab.set('acmekeys')">
-        <i class="bi bi-shield-check me-1"></i>{{ "PROFILE.TAB_ACME_KEYS" | translate }}
-        @if (acmeKeys().length > 0) {
-          <span class="badge bg-secondary ms-1">{{ acmeKeys().length }}</span>
-        }
-      </button>
-    </li>
-  }
 </ul>
 
 <!-- ══ Tab: Information & About ════════════════════════════════════════════ -->
@@ -334,7 +324,7 @@
       <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
       </a>
-      <button class="btn btn-primary btn-sm" (click)="openCreateModal('api')">
+      <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
         <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
       </button>
     </div>
@@ -357,7 +347,7 @@
           <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
           <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
         </div>
-      } @else if (apiKeys().length === 0) {
+      } @else if (keys().length === 0) {
         <div class="text-center py-4">
           <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
           <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_API_KEYS" | translate }}</p>
@@ -375,7 +365,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (key of apiKeys(); track trackById($index, key)) {
+            @for (key of keys(); track trackById($index, key)) {
               <tr>
                 <td class="fw-medium">{{ key.name }}</td>
                 <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
@@ -395,108 +385,6 @@
                       [title]="'APIKEYS.EDIT_TITLE' | translate"
                     >
                       <i class="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger"
-                      (click)="deleteKey(key)"
-                      [title]="'COMMON.DELETE' | translate"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      }
-    </div>
-  </div>
-}
-
-<!-- ══ Tab: ACME Keys ═══════════════════════════════════════════════════ -->
-@if (activeTab() === "acmekeys") {
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE_ACME" | translate }}</p>
-    <button class="btn btn-primary btn-sm" (click)="openCreateModal('acme')">
-      <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
-    </button>
-  </div>
-
-  @if (keysError()) {
-    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      <span>{{ keysError() | translate }}</span>
-      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadApiKeys()">
-        {{ "COMMON.RETRY" | translate }}
-      </button>
-    </div>
-  }
-
-  <div class="card shadow-sm">
-    <div class="table-responsive">
-      @if (isLoadingKeys()) {
-        <div class="text-center py-4">
-          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
-        </div>
-      } @else if (acmeKeys().length === 0) {
-        <div class="text-center py-4">
-          <i class="bi bi-shield-check text-muted" style="font-size: 2rem"></i>
-          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_ACME_KEYS" | translate }}</p>
-          <p class="text-muted small">{{ "APIKEYS.NO_ACME_KEYS_HELP" | translate }}</p>
-        </div>
-      } @else {
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>{{ "COMMON.NAME" | translate }}</th>
-              <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
-              <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
-              <th>{{ "APIKEYS.COMMENT" | translate }}</th>
-              <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
-              <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (key of acmeKeys(); track trackById($index, key)) {
-              <tr>
-                <td class="fw-medium">{{ key.name }}</td>
-                <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
-                <td>
-                  @if (key.zones.length === 0) {
-                    <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
-                  } @else {
-                    <div class="d-flex flex-wrap gap-1">
-                      @for (z of key.zones; track z) {
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
-                      }
-                    </div>
-                  }
-                </td>
-                <td class="small text-muted">
-                  @if (key.comment) {
-                    <span [title]="key.comment">{{ key.comment }}</span>
-                  } @else {
-                    <span class="fst-italic text-muted">—</span>
-                  }
-                </td>
-                <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
-                <td class="text-end">
-                  <div class="d-flex gap-1 justify-content-end">
-                    <button
-                      class="btn btn-sm btn-outline-secondary"
-                      (click)="openEditModal(key)"
-                      [title]="'APIKEYS.EDIT_TITLE' | translate"
-                    >
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-outline-secondary"
-                      (click)="openZoneModal(key)"
-                      [title]="'APIKEYS.MANAGE_ZONES' | translate"
-                    >
-                      <i class="bi bi-globe2"></i>
                     </button>
                     <button
                       class="btn btn-sm btn-outline-danger"
@@ -533,52 +421,6 @@
           <div class="modal-body">
             @if (createError()) {
               <div class="alert alert-danger py-2 small">{{ createError() | translate }}</div>
-            }
-
-            @if (auth.isAcmeCreator()) {
-              <div class="mb-3">
-                <label class="form-label fw-medium">{{ "APIKEYS.TYPE_LABEL" | translate }}</label>
-                <div class="d-flex flex-column gap-2">
-                  <div
-                    class="form-check border rounded p-3 key-type-option"
-                    [class.border-success]="createModel().keyType === 'api'"
-                    [class.bg-success-subtle]="createModel().keyType === 'api'"
-                    (click)="setKeyType('api')"
-                  >
-                    <input
-                      class="form-check-input"
-                      type="radio"
-                      name="keyType"
-                      value="api"
-                      [checked]="createModel().keyType === 'api'"
-                      (change)="setKeyType('api')"
-                    />
-                    <label class="form-check-label ms-1 fw-medium">
-                      {{ "APIKEYS.TYPE_API_LABEL" | translate }}
-                    </label>
-                    <div class="text-muted small mt-1">{{ "APIKEYS.TYPE_API_DESC" | translate }}</div>
-                  </div>
-                  <div
-                    class="form-check border rounded p-3 key-type-option"
-                    [class.border-primary]="createModel().keyType === 'acme'"
-                    [class.bg-primary-subtle]="createModel().keyType === 'acme'"
-                    (click)="setKeyType('acme')"
-                  >
-                    <input
-                      class="form-check-input"
-                      type="radio"
-                      name="keyType"
-                      value="acme"
-                      [checked]="createModel().keyType === 'acme'"
-                      (change)="setKeyType('acme')"
-                    />
-                    <label class="form-check-label ms-1 fw-medium">
-                      {{ "APIKEYS.TYPE_ACME_LABEL" | translate }}
-                    </label>
-                    <div class="text-muted small mt-1">{{ "APIKEYS.TYPE_ACME_DESC" | translate }}</div>
-                  </div>
-                </div>
-              </div>
             }
 
             <div class="mb-3">
@@ -668,19 +510,10 @@
               <i class="bi" [class]="copied() ? 'bi-check-lg text-success' : 'bi-clipboard'"></i>
             </button>
           </div>
-          @if (createdKeyType() === "acme") {
-            <div class="form-text mt-2">{{ "APIKEYS.CERTBOT_CREDENTIALS_HINT" | translate }}</div>
-            <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
-dns_pdns_endpoint  = https://&lt;your-powerdns-ui-url&gt;
-dns_pdns_api_key   = {{ createdKey() }}
-dns_pdns_server_id = localhost</pre
-            >
-          } @else {
-            <div class="form-text mt-2">{{ "APIKEYS.API_CREDENTIALS_HINT" | translate }}</div>
-            <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
+          <div class="form-text mt-2">{{ "APIKEYS.API_CREDENTIALS_HINT" | translate }}</div>
+          <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
 curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones</pre
-            >
-          }
+          >
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" (click)="closeCreatedKeyModal()">
@@ -736,58 +569,6 @@ curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- ── Zone assignment modal ─────────────────────────────────────────────── -->
-@if (editingKey()) {
-  <div class="modal-backdrop-overlay" (click)="closeZoneModal()"></div>
-  <div class="modal d-block" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content shadow">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="bi bi-globe2 me-2 text-primary"></i
-            >{{ "APIKEYS.MANAGE_ZONES_TITLE" | translate: { name: editingKey()!.name } }}
-          </h5>
-          <button type="button" class="btn-close" (click)="closeZoneModal()"></button>
-        </div>
-        <div class="modal-body">
-          @if (zonesError()) {
-            <div class="alert alert-danger py-2 small">{{ zonesError() | translate }}</div>
-          }
-          <p class="text-muted small">{{ "APIKEYS.ZONES_HELP" | translate }}</p>
-          <div class="list-group list-group-flush" style="max-height: 360px; overflow-y: auto">
-            @for (zone of availableZones(); track zone.name) {
-              <label class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2">
-                <input
-                  type="checkbox"
-                  class="form-check-input mt-0"
-                  [checked]="selectedZones().has(zone.name)"
-                  (change)="toggleZone(zone.name)"
-                />
-                <span class="font-monospace small">{{ zone.name }}</span>
-                <span class="ms-auto badge bg-secondary-subtle text-secondary-emphasis small">{{ zone.kind }}</span>
-              </label>
-            }
-          </div>
-        </div>
-        <div class="modal-footer">
-          <span class="me-auto small text-muted"
-            >{{ selectedZones().size }} {{ "APIKEYS.ZONES_SELECTED" | translate }}</span
-          >
-          <button type="button" class="btn btn-secondary" (click)="closeZoneModal()">
-            {{ "COMMON.CANCEL" | translate }}
-          </button>
-          <button type="button" class="btn btn-primary" (click)="saveZones()" [disabled]="isSavingZones()">
-            @if (isSavingZones()) {
-              <span class="spinner-border spinner-border-sm me-1"></span>
-            }
-            {{ "COMMON.SAVE" | translate }}
-          </button>
-        </div>
       </div>
     </div>
   </div>

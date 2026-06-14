@@ -1,10 +1,10 @@
-import { NgTemplateOutlet } from "@angular/common";
+import { DatePipe, NgTemplateOutlet } from "@angular/common";
 import { Component, computed, ElementRef, inject, OnInit, signal, viewChild } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { AdminService } from "../../../core/services/admin.service";
 import { AuthService } from "../../../core/services/auth.service";
-import { AcmeApiKey, AcmeKeysService } from "../../../core/services/acme-keys.service";
+import { AcmeApiKey, AcmeApiKeyCreated, AcmeKeysService } from "../../../core/services/acme-keys.service";
 import { PdnsService, EmailCheckResult, SoaCheckResult } from "../../../core/services/pdns.service";
 import type { RecordType, ZoneRecordTypes } from "../../../shared/models/admin.model";
 import {
@@ -46,11 +46,11 @@ const METADATA_KINDS = [
   "TSIG-ALLOW-DNSUPDATE",
 ];
 
-export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members" | "apikeys";
+export type Tab = "records" | "metadata" | "dnssec" | "settings" | "transfer" | "dnsupdate" | "members" | "apikeys" | "acmekeys";
 
 @Component({
   selector: "app-zone-detail",
-  imports: [RouterLink, FormField, TranslatePipe, NgTemplateOutlet],
+  imports: [RouterLink, FormField, TranslatePipe, NgTemplateOutlet, DatePipe],
   templateUrl: "./zone-detail.component.html",
   styleUrl: "./zone-detail.component.css",
 })
@@ -246,10 +246,29 @@ export class ZoneDetailComponent implements OnInit {
     }),
   );
 
-  // ── API Keys ──────────────────────────────────────────────────────────────
-  readonly zoneApiKeys = signal<AcmeApiKey[]>([]);
+  // ── API Keys (REST) ──────────────────────────────────────────────────────
+  readonly zoneRestApiKeys = signal<AcmeApiKey[]>([]);
   readonly isLoadingApiKeys = signal(false);
   private apiKeysLoaded = false;
+
+  // ── ACME Keys (appartenant à la zone) ────────────────────────────────────
+  readonly zoneAcmeKeys = signal<AcmeApiKey[]>([]);
+  readonly isLoadingAcmeKeys = signal(false);
+  readonly acmeKeysError = signal<string | null>(null);
+  private acmeKeysLoaded = false;
+
+  // ── Création clé ACME ─────────────────────────────────────────────────────
+  readonly showAcmeCreateModal = signal(false);
+  readonly isCreatingAcmeKey = signal(false);
+  readonly acmeCreateError = signal<string | null>(null);
+  readonly createdAcmeKey = signal<AcmeApiKeyCreated | null>(null);
+  readonly showAcmeSecretModal = signal(false);
+  readonly acmeCopied = signal(false);
+
+  readonly acmeCreateModel = signal({ name: "", secret: "", comment: "" });
+  readonly acmeCreateForm = form(this.acmeCreateModel, (s) => {
+    required(s.name);
+  });
 
   // ── Email security check (SPF/DMARC/DKIM) ───────────────────────────────
   readonly emailCheck = signal<EmailCheckResult | null>(null);
@@ -322,6 +341,7 @@ export class ZoneDetailComponent implements OnInit {
     if (this.isZoneAdmin()) {
       void this.loadMembers();
       void this.loadZoneApiKeys();
+      void this.loadZoneAcmeKeys();
     }
   }
 
@@ -361,27 +381,94 @@ export class ZoneDetailComponent implements OnInit {
     if ((tab === "transfer" || tab === "dnsupdate") && this.tsigKeys().length === 0) void this.loadTsigKeys();
     if (tab === "members" && !this.membersLoaded) void this.loadMembers();
     if (tab === "apikeys" && !this.apiKeysLoaded) void this.loadZoneApiKeys();
+    if (tab === "acmekeys" && !this.acmeKeysLoaded) void this.loadZoneAcmeKeys();
   }
 
   async loadZoneApiKeys(): Promise<void> {
     this.isLoadingApiKeys.set(true);
     try {
-      const all = this.auth.isAdmin()
+      const keys = this.auth.isAdmin()
         ? await this.acmeKeysSvc.listAllKeys()
         : await this.acmeKeysSvc.listKeys();
-      const zoneName = (this.zone()?.name ?? "").replace(/\.$/, "");
-      this.zoneApiKeys.set(
-        all.filter(
-          (k) =>
-            k.key_type === "api" ||
-            k.zones.some((z) => z.replace(/\.$/, "") === zoneName),
-        ),
-      );
+      this.zoneRestApiKeys.set(keys.filter((k) => k.key_type === "api"));
       this.apiKeysLoaded = true;
     } catch {
-      // non-blocking
+      // non-bloquant
     } finally {
       this.isLoadingApiKeys.set(false);
+    }
+  }
+
+  async loadZoneAcmeKeys(): Promise<void> {
+    this.isLoadingAcmeKeys.set(true);
+    this.acmeKeysError.set(null);
+    try {
+      const keys = await this.acmeKeysSvc.listZoneAcmeKeys(this.zoneId);
+      this.zoneAcmeKeys.set(keys);
+      this.acmeKeysLoaded = true;
+    } catch {
+      this.acmeKeysError.set("ZONE_DETAIL.ACME_KEYS_LOAD_ERROR");
+    } finally {
+      this.isLoadingAcmeKeys.set(false);
+    }
+  }
+
+  openAcmeCreateModal(): void {
+    this.acmeCreateModel.set({ name: "", secret: "", comment: "" });
+    this.acmeCreateError.set(null);
+    this.showAcmeCreateModal.set(true);
+  }
+
+  closeAcmeCreateModal(): void {
+    this.showAcmeCreateModal.set(false);
+  }
+
+  onCreateAcmeKey(): void {
+    submit(this.acmeCreateForm, async () => {
+      this.isCreatingAcmeKey.set(true);
+      this.acmeCreateError.set(null);
+      try {
+        const { name, secret, comment } = this.acmeCreateModel();
+        const created = await this.acmeKeysSvc.createZoneAcmeKey(
+          this.zoneId,
+          name,
+          secret.trim() || undefined,
+          comment.trim() || undefined,
+        );
+        this.createdAcmeKey.set(created);
+        this.showAcmeCreateModal.set(false);
+        this.showAcmeSecretModal.set(true);
+        this.acmeCopied.set(false);
+        this.zoneAcmeKeys.update((keys) => [...keys, created]);
+      } catch {
+        this.acmeCreateError.set("ZONE_DETAIL.ACME_KEY_CREATE_ERROR");
+      } finally {
+        this.isCreatingAcmeKey.set(false);
+      }
+    });
+  }
+
+  copyAcmeKey(): void {
+    const key = this.createdAcmeKey()?.key;
+    if (!key) return;
+    void navigator.clipboard.writeText(key).then(() => {
+      this.acmeCopied.set(true);
+      setTimeout(() => this.acmeCopied.set(false), 2000);
+    });
+  }
+
+  closeAcmeSecretModal(): void {
+    this.showAcmeSecretModal.set(false);
+    this.createdAcmeKey.set(null);
+  }
+
+  async deleteAcmeKey(key: AcmeApiKey): Promise<void> {
+    if (!confirm(`Supprimer la clé ACME « ${key.name} » ?`)) return;
+    try {
+      await this.acmeKeysSvc.deleteZoneAcmeKey(this.zoneId, key.id);
+      this.zoneAcmeKeys.update((keys) => keys.filter((k) => k.id !== key.id));
+    } catch {
+      this.acmeKeysError.set("ZONE_DETAIL.ACME_KEY_DELETE_ERROR");
     }
   }
 

@@ -11,6 +11,12 @@ class AcmeApiKeyCreate(BaseModel):
     comment: str | None = None
 
 
+class AcmeApiKeyZoneCreate(BaseModel):
+    name: str
+    key: str | None = None
+    comment: str | None = None
+
+
 class AcmeApiKeyUpdate(BaseModel):
     comment: str | None = None
 
@@ -20,6 +26,7 @@ class AcmeApiKeyResponse(BaseModel):
     name: str
     key_prefix: str
     zones: list[str]
+    zone_name: str | None
     key_type: str
     comment: str | None
     created_at: datetime

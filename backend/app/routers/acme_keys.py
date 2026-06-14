@@ -10,9 +10,8 @@ from app.schemas.acme import (
     AcmeApiKeyCreated,
     AcmeApiKeyResponse,
     AcmeApiKeyUpdate,
-    AcmeApiKeyZonesUpdate,
 )
-from app.services import acme_service, admin_service
+from app.services import acme_service
 from app.services.audit_service import AuditLogger
 
 router = APIRouter(prefix="/api/acme-keys", dependencies=[Depends(get_current_user)])
@@ -23,6 +22,8 @@ async def list_acme_keys(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
+    """Liste les clés API (key_type=api) de l'utilisateur courant.
+    Les clés ACME sont désormais gérées par zone via /api/zones/{zone_id}/acme-keys."""
     keys = await acme_service.list_keys(db, current_user.id)
     return [acme_service.key_to_response(k) for k in keys]
 
@@ -47,21 +48,21 @@ async def create_acme_key(
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict:
+    """Crée une clé API (key_type=api) pour l'utilisateur courant.
+    La création de clés ACME se fait désormais depuis l'onglet ACME Keys de la zone."""
     if payload.key_type == "acme":
-        if not current_user.is_admin and not await admin_service.user_is_account_admin(
-            db,
-            current_user.id,  # type: ignore[arg-type]
-        ):
-            await audit.failure(
-                "create",
-                "acme_key",
-                payload.name,
-                {"detail": "Account admin or super admin required to create ACME keys"},
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account admin or super admin required to create ACME keys",
-            )
+        await audit.failure(
+            "create",
+            "acme_key",
+            payload.name,
+            {
+                "detail": "Les clés ACME doivent être créées depuis la zone via /api/zones/{zone_id}/acme-keys"
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Les clés ACME doivent être créées depuis la zone via /api/zones/{zone_id}/acme-keys",
+        )
     key, raw = await acme_service.create_key(
         db,
         current_user.id,
@@ -87,42 +88,11 @@ async def update_acme_key(
     )
     if updated is None:
         await audit.failure(
-            "update", "acme_key", str(key_id), {"detail": "API key not found"}
+            "update", "acme_key", str(key_id), {"detail": "Clé API introuvable"}
         )
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=404, detail="Clé API introuvable")
     await audit.success("update", "acme_key", updated.name)
     return acme_service.key_to_response(updated)
-
-
-@router.put("/{key_id}/zones", response_model=AcmeApiKeyResponse)
-async def update_acme_key_zones(
-    key_id: int,
-    payload: AcmeApiKeyZonesUpdate,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-    audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
-    key = await acme_service.get_key(db, key_id, current_user.id)
-    if key is None:
-        await audit.failure(
-            "update_zones", "acme_key", str(key_id), {"detail": "API key not found"}
-        )
-        raise HTTPException(status_code=404, detail="API key not found")
-    if key.key_type != "acme":
-        await audit.failure(
-            "update_zones",
-            "acme_key",
-            key.name,
-            {"detail": "Zone assignment is only available for ACME keys"},
-        )
-        raise HTTPException(
-            status_code=400, detail="Zone assignment is only available for ACME keys"
-        )
-    updated = await acme_service.update_zones(
-        db, key_id, current_user.id, payload.zones
-    )
-    await audit.success("update_zones", "acme_key", key.name, {"zones": payload.zones})
-    return acme_service.key_to_response(updated)  # type: ignore[arg-type]
 
 
 @router.delete("/{key_id}", status_code=204)
@@ -138,7 +108,7 @@ async def delete_acme_key(
         deleted = await acme_service.delete_key(db, key_id, current_user.id)
     if not deleted:
         await audit.failure(
-            "delete", "acme_key", str(key_id), {"detail": "API key not found"}
+            "delete", "acme_key", str(key_id), {"detail": "Clé API introuvable"}
         )
-        raise HTTPException(status_code=404, detail="API key not found")
+        raise HTTPException(status_code=404, detail="Clé API introuvable")
     await audit.success("delete", "acme_key", str(key_id))

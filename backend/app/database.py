@@ -1,3 +1,4 @@
+import json
 from collections.abc import AsyncGenerator
 
 from sqlalchemy import text
@@ -78,6 +79,27 @@ async def init_db() -> None:
             )
         if "comment" not in acme_columns:
             await conn.execute(text("ALTER TABLE acmeapikey ADD COLUMN comment TEXT"))
+        if "zone_name" not in acme_columns:
+            await conn.execute(
+                text("ALTER TABLE acmeapikey ADD COLUMN zone_name VARCHAR(255)")
+            )
+            # Migrer les clés ACME existantes : zone_name = première zone de la liste zones
+            rows = (
+                await conn.execute(
+                    text("SELECT id, zones FROM acmeapikey WHERE key_type = 'acme'")
+                )
+            ).fetchall()
+            for key_id, zones_json in rows:
+                try:
+                    zones = json.loads(zones_json) if zones_json else []
+                except Exception:
+                    zones = []
+                if zones:
+                    zone = zones[0].rstrip(".") + "."
+                    await conn.execute(
+                        text("UPDATE acmeapikey SET zone_name = :zone WHERE id = :id"),
+                        {"zone": zone, "id": key_id},
+                    )
         result = await conn.execute(text("PRAGMA table_info(smtpsettings)"))
         smtp_columns = {row[1] for row in result.fetchall()}
         if "alert_actions" not in smtp_columns:

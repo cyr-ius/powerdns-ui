@@ -474,8 +474,16 @@
       <li class="nav-item">
         <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="setTab('apikeys')">
           <i class="bi bi-key me-1"></i>{{ "ZONE_DETAIL.TAB_API_KEYS" | translate }}
-          @if (zoneApiKeys().length > 0) {
-            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zoneApiKeys().length }}</span>
+          @if (zoneRestApiKeys().length > 0) {
+            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zoneRestApiKeys().length }}</span>
+          }
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="activeTab() === 'acmekeys'" (click)="setTab('acmekeys')">
+          <i class="bi bi-shield-check me-1"></i>{{ "ZONE_DETAIL.TAB_ACME_KEYS" | translate }}
+          @if (zoneAcmeKeys().length > 0) {
+            <span class="badge bg-primary-subtle text-primary-emphasis ms-1">{{ zoneAcmeKeys().length }}</span>
           }
         </button>
       </li>
@@ -1710,7 +1718,7 @@
       }
     }
 
-    <!-- ── Tab: API Keys ──────────────────────────────────────────────────── -->
+    <!-- ── Tab: API Keys (REST) ───────────────────────────────────────────── -->
     @if (activeTab() === "apikeys") {
       <div class="card-header py-3 border-bottom">
         <span class="fw-semibold">
@@ -1724,7 +1732,7 @@
         <div class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
         </div>
-      } @else if (zoneApiKeys().length === 0) {
+      } @else if (zoneRestApiKeys().length === 0) {
         <div class="text-center py-5">
           <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
           <p class="text-muted mt-2 mb-0 small">{{ "ZONE_DETAIL.API_KEYS_EMPTY" | translate }}</p>
@@ -1738,36 +1746,91 @@
                   <th>{{ "APIKEYS.COL_USER" | translate }}</th>
                 }
                 <th>{{ "COMMON.NAME" | translate }}</th>
-                <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
                 <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
                 <th>{{ "ZONE_DETAIL.API_KEY_SCOPE" | translate }}</th>
               </tr>
             </thead>
             <tbody>
-              @for (key of zoneApiKeys(); track key.id) {
+              @for (key of zoneRestApiKeys(); track key.id) {
                 <tr>
                   @if (auth.isAdmin()) {
                     <td class="text-muted small">{{ key.username }}</td>
                   }
                   <td class="fw-medium">{{ key.name }}</td>
-                  <td>
-                    @if (key.key_type === "acme") {
-                      <span class="badge bg-primary-subtle text-primary-emphasis">ACME</span>
-                    } @else {
-                      <span class="badge bg-success-subtle text-success-emphasis">API</span>
-                    }
-                  </td>
                   <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
                   <td>
-                    @if (key.key_type === "api") {
-                      <span class="text-muted small fst-italic">{{
-                        "ZONE_DETAIL.API_KEY_UNRESTRICTED" | translate
-                      }}</span>
-                    } @else {
-                      <span class="badge bg-success-subtle text-success-emphasis">
-                        <i class="bi bi-check-lg me-1"></i>{{ "ZONE_DETAIL.API_KEY_ZONE_ALLOWED" | translate }}
-                      </span>
-                    }
+                    <span class="text-muted small fst-italic">{{
+                      "ZONE_DETAIL.API_KEY_UNRESTRICTED" | translate
+                    }}</span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+
+    <!-- ── Tab: ACME Keys ─────────────────────────────────────────────────── -->
+    @if (activeTab() === "acmekeys") {
+      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+        <div>
+          <span class="fw-semibold">
+            <i class="bi bi-shield-check me-2 text-primary"></i>{{ "ZONE_DETAIL.TAB_ACME_KEYS" | translate }}
+          </span>
+          <div class="text-muted small mt-1">
+            {{ "ZONE_DETAIL.ACME_KEYS_DESC" | translate }}
+          </div>
+        </div>
+        <button class="btn btn-sm btn-primary" (click)="openAcmeCreateModal()">
+          <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ACME_KEY_CREATE" | translate }}
+        </button>
+      </div>
+
+      @if (acmeKeysError()) {
+        <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>{{ acmeKeysError() | translate }}
+          <button type="button" class="btn-close btn-sm ms-auto" (click)="acmeKeysError.set(null)"></button>
+        </div>
+      }
+
+      @if (isLoadingAcmeKeys()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+        </div>
+      } @else if (zoneAcmeKeys().length === 0) {
+        <div class="text-center py-5">
+          <i class="bi bi-shield-check text-muted" style="font-size: 2rem"></i>
+          <p class="text-muted mt-2 mb-0 small">{{ "ZONE_DETAIL.ACME_KEYS_EMPTY" | translate }}</p>
+          <p class="text-muted small mt-1">{{ "ZONE_DETAIL.ACME_KEYS_EMPTY_HELP" | translate }}</p>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>{{ "COMMON.NAME" | translate }}</th>
+                <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
+                <th>{{ "APIKEYS.COMMENT" | translate }}</th>
+                <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+                <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (key of zoneAcmeKeys(); track key.id) {
+                <tr>
+                  <td class="fw-medium">{{ key.name }}</td>
+                  <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+                  <td class="text-muted small">{{ key.comment || "—" }}</td>
+                  <td class="text-muted small">{{ key.created_at | date: "dd/MM/yyyy" }}</td>
+                  <td class="text-end text-nowrap">
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteAcmeKey(key)"
+                      [title]="'COMMON.DELETE' | translate"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
                   </td>
                 </tr>
               }
@@ -2057,6 +2120,132 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Créer une clé ACME ─────────────────────────────────────────────────── -->
+@if (showAcmeCreateModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeAcmeCreateModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-shield-plus me-2 text-primary"></i>{{ "ZONE_DETAIL.ACME_KEY_CREATE_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeAcmeCreateModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreateAcmeKey()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (acmeCreateError()) {
+              <div class="alert alert-danger py-2 small">{{ acmeCreateError() | translate }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "COMMON.NAME" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="acmeCreateForm.name().touched() && acmeCreateForm.name().errors().length"
+                placeholder="certbot-prod"
+                [formField]="acmeCreateForm.name"
+              />
+              @if (acmeCreateForm.name().touched() && acmeCreateForm.name().errors().length) {
+                <div class="invalid-feedback">{{ acmeCreateForm.name().errors()[0].message }}</div>
+              }
+              <div class="form-text">{{ "ZONE_DETAIL.ACME_KEY_NAME_HELP" | translate }}</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "APIKEYS.SECRET" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.SECRET_OPTIONAL" | translate }}</span></label
+              >
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [placeholder]="'APIKEYS.SECRET_PLACEHOLDER' | translate"
+                [formField]="acmeCreateForm.secret"
+              />
+              <div class="form-text">{{ "APIKEYS.SECRET_HELP" | translate }}</div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium"
+                >{{ "APIKEYS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [formField]="acmeCreateForm.comment"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAcmeCreateModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onCreateAcmeKey()"
+              [disabled]="isCreatingAcmeKey() || acmeCreateForm().invalid()"
+            >
+              @if (isCreatingAcmeKey()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.GENERATE" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Clé ACME créée (affichage secret) ──────────────────────────────── -->
+@if (showAcmeSecretModal() && createdAcmeKey()) {
+  <div class="modal-backdrop-overlay"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-shield-check me-2 text-success"></i>{{ "APIKEYS.KEY_CREATED_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-warning py-2 d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span class="small">{{ "APIKEYS.KEY_ONCE_WARNING" | translate }}</span>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium small">{{ "APIKEYS.YOUR_KEY" | translate }}</label>
+            <div class="input-group">
+              <input type="text" class="form-control font-monospace small" [value]="createdAcmeKey()!.key" readonly />
+              <button class="btn btn-outline-secondary" type="button" (click)="copyAcmeKey()">
+                <i class="bi" [class.bi-clipboard]="!acmeCopied()" [class.bi-clipboard-check-fill]="acmeCopied()"></i>
+              </button>
+            </div>
+          </div>
+          <div class="text-muted small">
+            <p class="mb-1">{{ "APIKEYS.CERTBOT_CREDENTIALS_HINT" | translate }}</p>
+            <pre class="bg-body-secondary rounded p-2 small mb-0">
+dns_pdns_endpoint = https://&lt;your-domain&gt;
+dns_pdns_api_key  = {{ createdAcmeKey()!.key }}
+dns_pdns_server_id = localhost</pre
+            >
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" (click)="closeAcmeSecretModal()">
+            <i class="bi bi-check-lg me-1"></i>{{ "COMMON.CLOSE" | translate }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
