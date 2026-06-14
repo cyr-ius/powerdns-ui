@@ -1,6 +1,6 @@
 import { DatePipe } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
@@ -12,7 +12,7 @@ import { Theme, ThemeService } from "../../core/services/theme.service";
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 import { Zone } from "../../shared/models/pdns.model";
 
-type Tab = "info" | "appearance" | "password" | "apikeys";
+type Tab = "info" | "appearance" | "password" | "apikeys" | "acmekeys";
 
 @Component({
   selector: "app-profile",
@@ -95,6 +95,8 @@ export class ProfileComponent implements OnInit {
 
   // ── API Keys ──────────────────────────────────────────────────────────────
   readonly keys = signal<AcmeApiKey[]>([]);
+  readonly apiKeys = computed(() => this.keys().filter((k) => k.key_type === "api"));
+  readonly acmeKeys = computed(() => this.keys().filter((k) => k.key_type === "acme"));
   readonly isLoadingKeys = signal(false);
   readonly keysError = signal<string | null>(null);
 
@@ -136,8 +138,8 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  openCreateModal(): void {
-    const defaultType = this.auth.isAcmeCreator() ? "acme" : "api";
+  openCreateModal(forceType?: "acme" | "api"): void {
+    const defaultType = forceType ?? (this.auth.isAcmeCreator() ? "acme" : "api");
     this.createModel.set({ name: "", secret: "", keyType: defaultType, comment: "" });
     this.createError.set(null);
     this.showCreateModal.set(true);

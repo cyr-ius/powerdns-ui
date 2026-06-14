@@ -32,11 +32,21 @@
   <li class="nav-item">
     <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
       <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
-      @if (keys().length > 0) {
-        <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
+      @if (apiKeys().length > 0) {
+        <span class="badge bg-secondary ms-1">{{ apiKeys().length }}</span>
       }
     </button>
   </li>
+  @if (auth.isAcmeCreator()) {
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'acmekeys'" (click)="activeTab.set('acmekeys')">
+        <i class="bi bi-shield-check me-1"></i>{{ "PROFILE.TAB_ACME_KEYS" | translate }}
+        @if (acmeKeys().length > 0) {
+          <span class="badge bg-secondary ms-1">{{ acmeKeys().length }}</span>
+        }
+      </button>
+    </li>
+  }
 </ul>
 
 <!-- ══ Tab: Information & About ════════════════════════════════════════════ -->
@@ -316,15 +326,15 @@
   </div>
 }
 
-<!-- ══ Tab: API Keys ════════════════════════════════════════════════════ -->
+<!-- ══ Tab: API Keys (REST) ══════════════════════════════════════════════ -->
 @if (activeTab() === "apikeys") {
   <div class="d-flex align-items-center justify-content-between mb-3">
-    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE" | translate }}</p>
+    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE_API" | translate }}</p>
     <div class="d-flex gap-2">
       <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
       </a>
-      <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
+      <button class="btn btn-primary btn-sm" (click)="openCreateModal('api')">
         <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
       </button>
     </div>
@@ -347,18 +357,100 @@
           <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
           <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
         </div>
-      } @else if (keys().length === 0) {
+      } @else if (apiKeys().length === 0) {
         <div class="text-center py-4">
           <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
-          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_KEYS" | translate }}</p>
-          <p class="text-muted small">{{ "APIKEYS.NO_KEYS_HELP" | translate }}</p>
+          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_API_KEYS" | translate }}</p>
+          <p class="text-muted small">{{ "APIKEYS.NO_API_KEYS_HELP" | translate }}</p>
         </div>
       } @else {
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>{{ "COMMON.NAME" | translate }}</th>
-              <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
+              <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
+              <th>{{ "APIKEYS.COMMENT" | translate }}</th>
+              <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+              <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (key of apiKeys(); track trackById($index, key)) {
+              <tr>
+                <td class="fw-medium">{{ key.name }}</td>
+                <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+                <td class="small text-muted">
+                  @if (key.comment) {
+                    <span [title]="key.comment">{{ key.comment }}</span>
+                  } @else {
+                    <span class="fst-italic text-muted">—</span>
+                  }
+                </td>
+                <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
+                <td class="text-end">
+                  <div class="d-flex gap-1 justify-content-end">
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="openEditModal(key)"
+                      [title]="'APIKEYS.EDIT_TITLE' | translate"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      (click)="deleteKey(key)"
+                      [title]="'COMMON.DELETE' | translate"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  </div>
+}
+
+<!-- ══ Tab: ACME Keys ═══════════════════════════════════════════════════ -->
+@if (activeTab() === "acmekeys") {
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE_ACME" | translate }}</p>
+    <button class="btn btn-primary btn-sm" (click)="openCreateModal('acme')">
+      <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
+    </button>
+  </div>
+
+  @if (keysError()) {
+    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ keysError() | translate }}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" (click)="loadApiKeys()">
+        {{ "COMMON.RETRY" | translate }}
+      </button>
+    </div>
+  }
+
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      @if (isLoadingKeys()) {
+        <div class="text-center py-4">
+          <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
+        </div>
+      } @else if (acmeKeys().length === 0) {
+        <div class="text-center py-4">
+          <i class="bi bi-shield-check text-muted" style="font-size: 2rem"></i>
+          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_ACME_KEYS" | translate }}</p>
+          <p class="text-muted small">{{ "APIKEYS.NO_ACME_KEYS_HELP" | translate }}</p>
+        </div>
+      } @else {
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>{{ "COMMON.NAME" | translate }}</th>
               <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
               <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
               <th>{{ "APIKEYS.COMMENT" | translate }}</th>
@@ -367,30 +459,19 @@
             </tr>
           </thead>
           <tbody>
-            @for (key of keys(); track trackById($index, key)) {
+            @for (key of acmeKeys(); track trackById($index, key)) {
               <tr>
                 <td class="fw-medium">{{ key.name }}</td>
-                <td>
-                  @if (key.key_type === "acme") {
-                    <span class="badge bg-primary-subtle text-primary-emphasis">ACME</span>
-                  } @else {
-                    <span class="badge bg-success-subtle text-success-emphasis">API</span>
-                  }
-                </td>
                 <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
                 <td>
-                  @if (key.key_type === "acme") {
-                    @if (key.zones.length === 0) {
-                      <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
-                    } @else {
-                      <div class="d-flex flex-wrap gap-1">
-                        @for (z of key.zones; track z) {
-                          <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
-                        }
-                      </div>
-                    }
+                  @if (key.zones.length === 0) {
+                    <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
                   } @else {
-                    <span class="text-muted small">—</span>
+                    <div class="d-flex flex-wrap gap-1">
+                      @for (z of key.zones; track z) {
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
+                      }
+                    </div>
                   }
                 </td>
                 <td class="small text-muted">
@@ -410,15 +491,13 @@
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
-                    @if (key.key_type === "acme") {
-                      <button
-                        class="btn btn-sm btn-outline-secondary"
-                        (click)="openZoneModal(key)"
-                        [title]="'APIKEYS.MANAGE_ZONES' | translate"
-                      >
-                        <i class="bi bi-globe2"></i>
-                      </button>
-                    }
+                    <button
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="openZoneModal(key)"
+                      [title]="'APIKEYS.MANAGE_ZONES' | translate"
+                    >
+                      <i class="bi bi-globe2"></i>
+                    </button>
                     <button
                       class="btn btn-sm btn-outline-danger"
                       (click)="deleteKey(key)"
