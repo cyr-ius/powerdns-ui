@@ -219,6 +219,7 @@
     "CHECKING": "Checking…",
     "TAB_API_KEYS": "API Keys",
     "API_KEYS_EMPTY": "No API or ACME keys are associated with this zone.",
+    "API_KEYS_DESC": "These keys grant access to this zone via the REST API. They are created from your profile and can be restricted to specific zones.",
     "API_KEY_SCOPE": "Scope",
     "API_KEY_UNRESTRICTED": "Unrestricted access",
     "API_KEY_ZONE_ALLOWED": "Zone allowed",

@@ -1712,10 +1712,13 @@
 
     <!-- ── Tab: API Keys ──────────────────────────────────────────────────── -->
     @if (activeTab() === "apikeys") {
-      <div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+      <div class="card-header py-3 border-bottom">
         <span class="fw-semibold">
           <i class="bi bi-key me-2 text-primary"></i>{{ "ZONE_DETAIL.TAB_API_KEYS" | translate }}
         </span>
+        <div class="text-muted small mt-1">
+          {{ "ZONE_DETAIL.API_KEYS_DESC" | translate }}
+        </div>
       </div>
       @if (isLoadingApiKeys()) {
         <div class="text-center py-4">

@@ -219,6 +219,7 @@
     "CHECKING": "Verificando…",
     "TAB_API_KEYS": "Claves API",
     "API_KEYS_EMPTY": "No hay claves API o ACME asociadas a esta zona.",
+    "API_KEYS_DESC": "Estas claves permiten el acceso a esta zona a través de la API REST. Se crean desde su perfil y pueden restringirse a zonas específicas.",
     "API_KEY_SCOPE": "Alcance",
     "API_KEY_UNRESTRICTED": "Acceso sin restricciones",
     "API_KEY_ZONE_ALLOWED": "Zona autorizada",
