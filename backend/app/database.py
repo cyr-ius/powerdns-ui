@@ -100,6 +100,53 @@ async def init_db() -> None:
                         text("UPDATE acmeapikey SET zone_name = :zone WHERE id = :id"),
                         {"zone": zone, "id": key_id},
                     )
+        # Make acmeapikey.user_id nullable so ACME keys survive the deletion of
+        # their creator (authorization is carried by the zone, not the user).
+        # SQLite cannot ALTER a column's nullability, so rebuild the table.
+        acme_info = (
+            await conn.execute(text("PRAGMA table_info(acmeapikey)"))
+        ).fetchall()
+        user_id_notnull = any(row[1] == "user_id" and row[3] == 1 for row in acme_info)
+        if user_id_notnull:
+            await conn.execute(text("ALTER TABLE acmeapikey RENAME TO acmeapikey_old"))
+            await conn.execute(
+                text(
+                    """
+                    CREATE TABLE acmeapikey (
+                        id INTEGER PRIMARY KEY,
+                        user_id INTEGER,
+                        zone_name VARCHAR(255),
+                        name VARCHAR(100) NOT NULL,
+                        key_prefix VARCHAR(12) NOT NULL,
+                        key_hash VARCHAR NOT NULL,
+                        zones VARCHAR NOT NULL DEFAULT '[]',
+                        key_type VARCHAR(10) NOT NULL DEFAULT 'acme',
+                        comment TEXT,
+                        created_at DATETIME NOT NULL,
+                        FOREIGN KEY(user_id) REFERENCES user (id)
+                    )
+                    """
+                )
+            )
+            await conn.execute(
+                text(
+                    "INSERT INTO acmeapikey (id, user_id, zone_name, name, "
+                    "key_prefix, key_hash, zones, key_type, comment, created_at) "
+                    "SELECT id, user_id, zone_name, name, key_prefix, key_hash, "
+                    "zones, key_type, comment, created_at FROM acmeapikey_old"
+                )
+            )
+            await conn.execute(text("DROP TABLE acmeapikey_old"))
+            await conn.execute(
+                text("CREATE INDEX ix_acmeapikey_user_id ON acmeapikey (user_id)")
+            )
+            await conn.execute(
+                text(
+                    "CREATE UNIQUE INDEX ix_acmeapikey_key_hash "
+                    "ON acmeapikey (key_hash)"
+                )
+            )
+
         result = await conn.execute(text("PRAGMA table_info(smtpsettings)"))
         smtp_columns = {row[1] for row in result.fetchall()}
         if "alert_actions" not in smtp_columns:

@@ -94,6 +94,8 @@ def _normalize_acme_body(body: dict) -> dict:
 
 
 async def _resolve_username(db: AsyncSession, key: AcmeApiKey) -> str:
+    if key.user_id is None:
+        return "acme-key"
     user = await admin_service.get_user_by_id(db, key.user_id)
     return user.username if user else f"user:{key.user_id}"
 

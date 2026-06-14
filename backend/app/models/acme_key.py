@@ -7,7 +7,7 @@ class AcmeApiKey(SQLModel, table=True):
     __tablename__ = "acmeapikey"  # pyright: ignore[reportAssignmentType]
 
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id", index=True)
+    user_id: int | None = Field(default=None, foreign_key="user.id", index=True)
     zone_name: str | None = Field(default=None, max_length=255)
     name: str = Field(max_length=100)
     key_prefix: str = Field(max_length=12)

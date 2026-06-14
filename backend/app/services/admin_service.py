@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.models.account import Account, UserAccount, ZoneRole
+from app.models.acme_key import AcmeApiKey
 from app.models.oidc_settings import OidcSettings
 from app.models.user import User
 from app.services.auth_service import hash_password
@@ -80,6 +81,14 @@ async def delete_user(db: AsyncSession, user: User) -> None:
     )
     for row in assoc.all():
         await db.delete(row)
+    # Detach ACME keys from their creator: they stay valid (authorization is
+    # carried by the zone) but no longer point to a deleted user.
+    keys = await db.exec(  # type: ignore[call-overload]
+        select(AcmeApiKey).where(AcmeApiKey.user_id == user.id)
+    )
+    for key in keys.all():
+        key.user_id = None
+        db.add(key)
     await db.delete(user)
     await db.commit()
 
