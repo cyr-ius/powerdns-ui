@@ -83,7 +83,7 @@ async def init_db() -> None:
             await conn.execute(
                 text("ALTER TABLE acmeapikey ADD COLUMN zone_name VARCHAR(255)")
             )
-            # Migrer les clés ACME existantes : zone_name = première zone de la liste zones
+            # Migrate existing ACME keys: zone_name = first zone from the zones list
             rows = (
                 await conn.execute(
                     text("SELECT id, zones FROM acmeapikey WHERE key_type = 'acme'")
