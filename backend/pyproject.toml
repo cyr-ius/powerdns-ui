@@ -6,7 +6,7 @@ requires-python = ">=3.14"
 
 dependencies = [
     # FastAPI + ASGI server
-    "fastapi[standard]==0.137.2",
+    "fastapi[standard]==0.138.1",
     "pydantic[email]",
     "pydantic-settings",
     # Async database
