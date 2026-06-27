@@ -6,6 +6,7 @@ from app.models.acme_key import AcmeApiKey
 from app.models.oidc_settings import OidcSettings
 from app.models.user import User
 from app.services.auth_service import hash_password
+from app.services.pdns_service import pdns_request
 
 # ── Users ─────────────────────────────────────────────────────────────────────
 
@@ -139,6 +140,9 @@ async def update_account(db: AsyncSession, account: Account, data: dict) -> Acco
 
 
 async def delete_account(db: AsyncSession, account: Account) -> None:
+    # Detach PowerDNS zones still referencing this account by name, otherwise
+    # they would keep pointing to an account that no longer exists.
+    await _clear_account_on_zones(account.name)
     assoc = await db.exec(  # type: ignore[call-overload]
         select(UserAccount).where(UserAccount.account_id == account.id)
     )
@@ -146,6 +150,18 @@ async def delete_account(db: AsyncSession, account: Account) -> None:
         await db.delete(row)
     await db.delete(account)
     await db.commit()
+
+
+async def _clear_account_on_zones(account_name: str) -> None:
+    """Reset the `account` field on every PowerDNS zone bound to this account."""
+    zones = await pdns_request("GET", "/servers/localhost/zones")
+    for zone in zones:
+        if (zone.get("account") or "") == account_name:
+            await pdns_request(
+                "PUT",
+                f"/servers/localhost/zones/{zone['id']}",
+                json={"account": ""},
+            )
 
 
 async def set_account_users(
