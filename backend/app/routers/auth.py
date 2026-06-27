@@ -1,12 +1,14 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.cookies import clear_auth_cookie, set_auth_cookie
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_client_ip, get_current_user
 from app.models.user import User
+from app.ratelimit import InMemoryRateLimiter
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
@@ -21,6 +23,13 @@ from app.services.audit_service import AuditLogger
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth")
+
+# Throttle login attempts per client IP to slow down credential brute-forcing.
+_login_rate_limiter = InMemoryRateLimiter(max_attempts=10, window_seconds=300)
+
+
+def login_rate_limit(request: Request) -> None:
+    _login_rate_limiter.check(get_client_ip(request) or "unknown")
 
 
 async def _get_oidc_cfg(db: AsyncSession) -> dict | None:
@@ -51,7 +60,11 @@ async def get_auth_config(db: AsyncSession = Depends(get_db)) -> OidcConfig:
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    payload: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)
+    payload: LoginRequest,
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    _: None = Depends(login_rate_limit),
 ) -> TokenResponse:
     db_cfg = await admin_service.get_oidc_settings(db)
     local_disabled = db_cfg.local_login_disabled if db_cfg else False
@@ -75,7 +88,13 @@ async def login(
     audit.user_id = user.id
     await audit.success("login", "auth")
     token = auth_service.create_access_token({"sub": user.username})
+    set_auth_cookie(response, request, token)
     return TokenResponse(access_token=token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response) -> None:
+    clear_auth_cookie(response)
 
 
 @router.get("/me", response_model=UserResponse)
@@ -201,7 +220,9 @@ async def oidc_callback(
         )
         await audit.success("login", "auth", details={"method": "oidc"})
         jwt_token = auth_service.create_access_token({"sub": user.username})
-        return RedirectResponse(url=f"/#token={jwt_token}")
+        redirect = RedirectResponse(url="/")
+        set_auth_cookie(redirect, request, jwt_token)
+        return redirect
     except Exception as exc:
         _log_oidc_error("user provisioning", exc)
         audit = AuditLogger(db, username or "oidc", ip=get_client_ip(request))

@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
 
+    # Name of the HttpOnly cookie carrying the JWT for browser sessions. The
+    # token is never exposed to JavaScript, which neutralises XSS token theft.
+    auth_cookie_name: str = "pdns_token"
+
     admin_username: str = "admin"
     admin_password: str = DEFAULT_ADMIN_PASSWORD
 

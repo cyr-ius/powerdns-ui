@@ -20,6 +20,7 @@ api_key_header = APIKeyHeader(
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     x_api_key: str | None = Security(api_key_header),
     db: AsyncSession = Depends(get_db),
@@ -30,11 +31,17 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Try JWT Bearer token first
-    if credentials:
+    # Accept the JWT from the Authorization header (API clients) or from the
+    # HttpOnly auth cookie (browser sessions, set at login).
+    token = (
+        credentials.credentials
+        if credentials
+        else request.cookies.get(settings.auth_cookie_name)
+    )
+    if token:
         try:
             payload = jwt.decode(
-                credentials.credentials,
+                token,
                 settings.secret_key,
                 algorithms=[settings.algorithm],
             )
