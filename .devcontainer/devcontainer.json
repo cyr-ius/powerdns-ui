@@ -15,29 +15,14 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // Python / FastAPI
         "ms-python.python",
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-
-        // Angular / TypeScript
         "angular.ng-template",
-        "ms-vscode.vscode-typescript-next",
         "esbenp.prettier-vscode",
         "dbaeumer.vscode-eslint",
-
-        // Docker & DevOps
         "ms-azuretools.vscode-docker",
-        "ms-vscode-remote.remote-containers",
-
-        // Git & qualité
         "streetsidesoftware.code-spell-checker",
-        "streetsidesoftware.code-spell-checker-french",
-
-        // REST / API
-        "humao.rest-client",
-
-        // Général
         "editorconfig.editorconfig",
         "anthropic.claude-code",
         "alexcvzz.vscode-sqlite"
@@ -75,13 +60,6 @@
         "[yaml]": {
           "editor.defaultFormatter": "esbenp.prettier-vscode"
         },
-        "json.schemas": [
-          {
-            "fileMatch": ["homeassistant/components/*/manifest.json"],
-            "url": "${containerWorkspaceFolder}/script/json_schemas/manifest_schema.json"
-          }
-        ],
-
         // ── Général ──────────────────────────────────────────────────────
         "editor.tabSize": 2,
         "editor.insertSpaces": true,
@@ -98,8 +76,16 @@
   // forwardPorts crée un tunnel localhost uniquement — insuffisant pour OIDC avec IP réelle
   "appPort": ["0.0.0.0:4200:4200", "0.0.0.0:8000:8000"],
   "portsAttributes": {
-    "4200": { "label": "Angular Frontend", "onAutoForward": "notify", "host": "0.0.0.0" },
-    "8000": { "label": "FastAPI Backend", "onAutoForward": "notify", "host": "0.0.0.0" }
+    "4200": {
+      "label": "Angular Frontend",
+      "onAutoForward": "notify",
+      "host": "0.0.0.0"
+    },
+    "8000": {
+      "label": "FastAPI Backend",
+      "onAutoForward": "notify",
+      "host": "0.0.0.0"
+    }
   },
 
   // ─── Environment varaibles ──────────────────────────────────────────────
