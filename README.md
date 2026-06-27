@@ -109,8 +109,9 @@ services:
     restart: unless-stopped
     depends_on: [pdns]
     environment:
-      - ADMIN_PASSWORD=changeme
-      - SECRET_KEY=change-this-secret-key-in-production
+      # Leave ADMIN_PASSWORD/SECRET_KEY unset to auto-generate secure values:
+      # a one-time admin password is printed in the logs on first start, and a
+      # random SECRET_KEY is generated and persisted under DATA_DIR.
       - PDNS_AUTH_API_URL=http://pdns:8081
       - PDNS_AUTH_API_KEY=change-this-api-key-in-production
     volumes:
