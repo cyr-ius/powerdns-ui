@@ -8,41 +8,36 @@ import { OidcConfig, TokenResponse, User } from "../../shared/models/auth.model"
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
-  private readonly TOKEN_KEY = "pdns_token";
 
-  private readonly _token = signal<string | null>(localStorage.getItem(this.TOKEN_KEY));
+  // The session JWT lives in an HttpOnly cookie set by the backend and is never
+  // accessible to JavaScript. Auth state is derived from the loaded user.
   private readonly _user = signal<User | null>(null);
   private readonly _oidcConfig = signal<OidcConfig | null>(null);
 
-  readonly isAuthenticated = computed(() => !!this._token());
+  readonly isAuthenticated = computed(() => !!this._user());
   readonly currentUser = computed(() => this._user());
   readonly isAdmin = computed(() => this._user()?.is_admin ?? false);
   readonly isAcmeCreator = computed(() => (this._user()?.is_admin || this._user()?.is_account_admin) ?? false);
   readonly oidcConfig = computed(() => this._oidcConfig());
   readonly sessionExpired = signal(false);
 
-  getToken(): string | null {
-    return this._token();
+  /** Restore the session on startup from the HttpOnly cookie, if present. */
+  async bootstrap(): Promise<void> {
+    try {
+      this._user.set(await firstValueFrom(this.http.get<User>("/api/auth/me")));
+    } catch {
+      this._user.set(null);
+    }
   }
 
   async login(username: string, password: string): Promise<void> {
-    const resp = await firstValueFrom(this.http.post<TokenResponse>("/api/auth/login", { username, password }));
-    this._storeToken(resp.access_token);
-    await this.fetchCurrentUser();
-  }
-
-  async loginWithToken(token: string): Promise<void> {
-    this._storeToken(token);
+    // The backend sets the auth cookie on this response; we only fetch the user.
+    await firstValueFrom(this.http.post<TokenResponse>("/api/auth/login", { username, password }));
     await this.fetchCurrentUser();
   }
 
   async fetchCurrentUser(): Promise<void> {
-    try {
-      const user = await firstValueFrom(this.http.get<User>("/api/auth/me"));
-      this._user.set(user);
-    } catch {
-      this.logout();
-    }
+    this._user.set(await firstValueFrom(this.http.get<User>("/api/auth/me")));
   }
 
   async loadOidcConfig(): Promise<void> {
@@ -56,22 +51,18 @@ export class AuthService {
   }
 
   markSessionExpired(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    this._token.set(null);
     this._user.set(null);
     this.sessionExpired.set(true);
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.sessionExpired.set(false);
-    localStorage.removeItem(this.TOKEN_KEY);
-    this._token.set(null);
+    try {
+      await firstValueFrom(this.http.post("/api/auth/logout", {}));
+    } catch {
+      // Ignore network errors: clearing local state is enough to log out.
+    }
     this._user.set(null);
-    this.router.navigate(["/login"]);
-  }
-
-  private _storeToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-    this._token.set(token);
+    await this.router.navigate(["/login"]);
   }
 }

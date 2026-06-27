@@ -31,12 +31,6 @@ export class LoginComponent implements OnInit {
       await this.router.navigate(["/zones"]);
       return;
     }
-    const token = this.route.snapshot.queryParamMap.get("token");
-    if (token) {
-      await this.auth.loginWithToken(token);
-      await this.router.navigate(["/zones"]);
-      return;
-    }
     const oidcError = this.route.snapshot.queryParamMap.get("error");
     if (oidcError) {
       this.error.set("The SSO login failed. Please try again.");

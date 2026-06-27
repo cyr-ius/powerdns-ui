@@ -12,12 +12,15 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  const token = auth.getToken();
-  const authReq = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  // Auth travels in an HttpOnly cookie; ensure it is sent with API calls.
+  const authReq = req.clone({ withCredentials: true });
 
   return next(authReq).pipe(
     catchError((error) => {
-      if (error.status === 401 && !req.url.includes("/api/auth/login") && !auth.sessionExpired()) {
+      // A 401 on the auth endpoints is expected when simply not logged in
+      // (e.g. the startup /me probe) and must not surface as "session expired".
+      const isAuthEndpoint = req.url.includes("/api/auth/");
+      if (error.status === 401 && !isAuthEndpoint && !auth.sessionExpired()) {
         auth.markSessionExpired();
       }
       return throwError(() => error);
