@@ -32,8 +32,10 @@ services:
       - pdns
     environment:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
-      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production}
+      # Leave empty to auto-generate (one-time admin password printed in logs;
+      # random SECRET_KEY generated and persisted under DATA_DIR).
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - SECRET_KEY=${SECRET_KEY:-}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}
       - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
@@ -67,7 +69,7 @@ services:
     environment:
       - MARIADB_USER=${MARIADB_USER:-powerdns}
       - MARIADB_PASSWORD=${MARIADB_PASSWORD:-pdns}
-      - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}    
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-powerdns}
     command: ["python", "/app/backend/scripts/init_pdns_schema.py", "--host", "pdns-db"]
 
 volumes:
