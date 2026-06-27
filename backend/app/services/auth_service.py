@@ -71,13 +71,25 @@ async def create_user(
     return user
 
 
+class OidcAccountConflictError(Exception):
+    """Raised when an OIDC identity collides with an existing local account."""
+
+
 async def get_or_create_oidc_user(
     db: AsyncSession, username: str, email: str | None
 ) -> User:
     user = await get_user_by_username(db, username)
-    if not user:
-        user = await create_user(db, username=username, email=email, is_oidc=True)
-    return user
+    if user is not None:
+        # The OIDC `username` (preferred_username/sub) is attacker-influenceable
+        # at many IdPs and is not a trustworthy unique identifier. Refuse to log
+        # in as an existing *local* account (e.g. the built-in 'admin'); only
+        # accept a match against an account that was itself created via OIDC.
+        if not user.is_oidc:
+            raise OidcAccountConflictError(
+                f"Username '{username}' is already used by a local account"
+            )
+        return user
+    return await create_user(db, username=username, email=email, is_oidc=True)
 
 
 def _oidc_cfg(override: dict | None) -> dict:

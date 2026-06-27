@@ -4,6 +4,7 @@ Copyright (C) 2021-2024  Cyr-ius (github.com/cyr-ius)
 """
 
 import logging
+import secrets
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,7 +12,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 
-from app.config import settings
+from app.config import DEFAULT_ADMIN_PASSWORD, settings
 from app.database import async_session, init_db
 from app.routers import (
     acme,
@@ -43,10 +44,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with async_session() as db:
         admin_user = await get_user_by_username(db, settings.admin_username)
         if not admin_user:
+            password = settings.admin_password
+            if not password or password == DEFAULT_ADMIN_PASSWORD:
+                # Never provision the built-in admin with the public default
+                # password: generate a one-time random secret and surface it
+                # so the operator can log in and change it.
+                password = secrets.token_urlsafe(16)
+                logger.warning(
+                    "ADMIN_PASSWORD not configured — generated a one-time random "
+                    "password for the initial '%s' account: %s — change it after "
+                    "first login.",
+                    settings.admin_username,
+                    password,
+                )
             await create_user(
                 db,
                 username=settings.admin_username,
-                password=settings.admin_password,
+                password=password,
                 is_admin=True,
             )
             logger.info("Utilisateur admin créé : %s", settings.admin_username)
