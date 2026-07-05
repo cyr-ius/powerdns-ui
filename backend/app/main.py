@@ -36,8 +36,11 @@ from app.security import SecurityHeadersMiddleware
 from app.services.auth_service import create_user, get_user_by_username
 from app.utils import resolve_safe_path
 
-logging.basicConfig(level=settings.log_level)
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=settings.log_level,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 
 @asynccontextmanager
