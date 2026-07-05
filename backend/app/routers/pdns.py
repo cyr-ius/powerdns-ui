@@ -716,8 +716,15 @@ async def update_zone(
 ) -> None:
     zone, role = await _check_zone_access(zone_id, current_user, db, audit, "update")
     await _require_min_role(role, "admin", audit, "update", "zone", zone_id)
-    # Prevent non-global-admins from changing the account field
-    if not current_user.is_admin and payload.account != zone.get("account"):
+    # Prevent non-global-admins from changing the account field. The check only
+    # triggers when the account is explicitly provided (model_fields_set), so a
+    # per-account admin saving other settings without touching `account` is not
+    # wrongly rejected, while any explicit change — including to null — is denied.
+    if (
+        not current_user.is_admin
+        and "account" in payload.model_fields_set
+        and payload.account != zone.get("account")
+    ):
         await audit.failure(
             "update",
             "zone",

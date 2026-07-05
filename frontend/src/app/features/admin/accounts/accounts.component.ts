@@ -178,7 +178,9 @@ export class AdminAccountsComponent implements OnInit {
         }),
         ...toRemove.map((name) => {
           const z = zoneMap.get(name)!;
-          return this.pdns.updateZone(name, { name: z.name, kind: z.kind, account: null });
+          // Detach with an empty string, not null: the backend drops null
+          // fields (exclude_none), so null would never reach PowerDNS.
+          return this.pdns.updateZone(name, { name: z.name, kind: z.kind, account: "" });
         }),
       ]);
       this.showZonesModal.set(false);
