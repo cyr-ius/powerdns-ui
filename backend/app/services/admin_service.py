@@ -29,6 +29,22 @@ async def count_admins(db: AsyncSession) -> int:
     return len(result.all())
 
 
+async def count_active_oidc_admins(db: AsyncSession) -> int:
+    """Count admins able to sign in through OIDC (active, admin, OIDC-provisioned).
+
+    These are the only admins who can still authenticate once local login is
+    disabled, so this count guards against locking everyone out.
+    """
+    result = await db.exec(  # type: ignore[call-overload]
+        select(User).where(
+            User.is_admin == True,  # noqa: E712
+            User.is_active == True,  # noqa: E712
+            User.is_oidc == True,  # noqa: E712
+        )
+    )
+    return len(result.all())
+
+
 async def list_users_basic(db: AsyncSession) -> list[dict]:
     result = await db.exec(select(User).where(User.is_active == True))  # noqa: E712  # type: ignore[call-overload]
     return [{"id": u.id, "username": u.username} for u in result.all()]

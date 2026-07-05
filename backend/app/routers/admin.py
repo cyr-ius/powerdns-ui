@@ -94,12 +94,31 @@ async def update_user(
         )
         raise HTTPException(status_code=404, detail="User not found")
     data = payload.model_dump(exclude_none=True)
+    demoting = data.get("is_admin") is False
+    deactivating = data.get("is_active") is False
     if user.is_admin and await admin_service.count_admins(db) <= 1:
-        if data.get("is_admin") is False or data.get("is_active") is False:
+        if demoting or deactivating:
             detail = (
                 "Cannot demote the last super admin"
-                if data.get("is_admin") is False
+                if demoting
                 else "Cannot deactivate the last super admin"
+            )
+            await audit.failure("update", "user", user.username, {"detail": detail})
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
+    # In OIDC-only mode (local login disabled), OIDC admins are the only ones who
+    # can still sign in: refuse to remove the last one to avoid a lockout.
+    if (demoting or deactivating) and user.is_oidc and user.is_admin and user.is_active:
+        oidc_cfg = await admin_service.get_oidc_settings(db)
+        if (
+            oidc_cfg
+            and oidc_cfg.enabled
+            and oidc_cfg.local_login_disabled
+            and await admin_service.count_active_oidc_admins(db) <= 1
+        ):
+            detail = (
+                "Cannot demote the last OIDC admin while local login is disabled"
+                if demoting
+                else "Cannot deactivate the last OIDC admin while local login is disabled"
             )
             await audit.failure("update", "user", user.username, {"detail": detail})
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
@@ -173,6 +192,19 @@ async def delete_user(
             "delete", "user", str(user_id), {"detail": "User not found"}
         )
         raise HTTPException(status_code=404, detail="User not found")
+    # In OIDC-only mode (local login disabled), removing the last OIDC admin would
+    # lock everyone out since local admins can no longer sign in.
+    if user.is_oidc and user.is_admin and user.is_active:
+        oidc_cfg = await admin_service.get_oidc_settings(db)
+        if (
+            oidc_cfg
+            and oidc_cfg.enabled
+            and oidc_cfg.local_login_disabled
+            and await admin_service.count_active_oidc_admins(db) <= 1
+        ):
+            detail = "Cannot delete the last OIDC admin while local login is disabled"
+            await audit.failure("delete", "user", user.username, {"detail": detail})
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
     username_deleted = user.username
     await admin_service.delete_user(db, user)
     await audit.success("delete", "user", username_deleted)
@@ -295,6 +327,16 @@ async def update_oidc_settings(
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> OidcSettingsResponse:
+    # Refuse to lock everyone out: disabling local login only makes sense when at
+    # least one OIDC admin can still sign in.
+    if (
+        payload.enabled
+        and payload.local_login_disabled
+        and await admin_service.count_active_oidc_admins(db) < 1
+    ):
+        detail = "Cannot disable local login without an active OIDC admin"
+        await audit.failure("update", "oidc_settings", details={"detail": detail})
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)
     clear_oidc_cache()
     cfg = await admin_service.upsert_oidc_settings(db, payload.model_dump())
     await audit.success("update", "oidc_settings")
