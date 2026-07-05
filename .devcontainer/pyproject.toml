@@ -5,15 +5,12 @@ description = "My Project"
 requires-python = ">=3.14"
 
 dependencies = [
-    # FastAPI + ASGI server
-    "fastapi[standard]==0.135.2",
+    "fastapi[standard]==0.139.0",
     "pydantic[email]",
     "pydantic-settings",
-    # Async database
-    "sqlmodel==0.0.37",
+    "sqlmodel==0.0.39",
     "sqlalchemy[asyncio]",
     "alembic",
-    # Auth / Security
     "python-jose[cryptography]",
     "python-multipart",
 ]

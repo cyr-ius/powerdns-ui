@@ -5,22 +5,18 @@ description = "PowerDNS UI"
 requires-python = ">=3.14"
 
 dependencies = [
-    # FastAPI + ASGI server
     "fastapi[standard]==0.139.0",
     "pydantic[email]",
     "pydantic-settings",
-    # Async database
     "sqlmodel==0.0.39",
     "sqlalchemy[asyncio]",
     "aiosqlite",
     "aiomysql",
     "dnspython",
     "alembic",
-    # Auth / Security
     "python-jose[cryptography]",
     "bcrypt",
     "python-multipart",
-    # HTTP client (for PDNS API + OIDC)
     "httpx",
 ]
 
