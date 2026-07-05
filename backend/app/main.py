@@ -10,7 +10,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import DEFAULT_ADMIN_PASSWORD, settings
 from app.database import async_session, init_db
@@ -80,8 +82,8 @@ app = FastAPI(
     description="REST API for PowerDNS management",
     lifespan=lifespan,
     version=settings.app_version,
-    openapi_url="/api/openapi.json",
-    docs_url="/api/docs",
+    openapi_url="/api/openapi.json" if settings.swagger_enabled else None,
+    docs_url=None,
     redoc_url=None,
 )
 
@@ -103,6 +105,28 @@ app.include_router(server.router)
 app.include_router(autoprimaries.router)
 app.include_router(networks.router)
 app.include_router(views.router)
+
+# ── Self-hosted static assets (Swagger UI, no Internet dependency) ─────────────
+static_dir = Path(__file__).resolve().parent / "static"
+app.mount("/api/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/api/docs", include_in_schema=False)
+async def swagger_ui():
+    if not settings.swagger_enabled:
+        raise HTTPException(status_code=404, detail="Not Found")
+    return get_swagger_ui_html(
+        openapi_url="/api/openapi.json",
+        title="Portalcrane API",
+        swagger_js_url="/api/static/swagger/swagger-ui-bundle.js",
+        swagger_css_url="/api/static/swagger/swagger-ui.css",
+        swagger_favicon_url="/favicon.ico",
+    )
+
+
+@app.get("/api/health")
+async def health() -> dict:
+    return {"status": "healthy", "app": "Powerdns UI", "version": settings.app_version}
 
 
 # ── Serve Angular SPA (must be last) ─────────────────────────────────────────

@@ -5,11 +5,6 @@ from app.config import GITHUB_REPOSITORY
 router = APIRouter()
 
 
-@router.get("/api/health")
-async def health() -> dict:
-    return {"status": "ok"}
-
-
 @router.get("/api/info")
 async def info(request: Request) -> dict:
     return {

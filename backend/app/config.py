@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     pdns_auth_api_url: str = "http://pdns:8081"
     pdns_auth_api_key: str = "change-this-api-key-in-production"  # noqa: S105
 
+    swagger_enabled: bool = True
+
 
 def _resolve_secret_key(value: str) -> str:
     """Return a strong JWT signing key, never the public default.
