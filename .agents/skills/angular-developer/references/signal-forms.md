@@ -580,7 +580,10 @@ export class App {
       if (isNaN(date.getTime())) return undefined;
       const today = new Date();
       if (date < today) {
-        return { kind: "pastData", message: "Launch date must be in the future" };
+        return {
+          kind: "pastData",
+          message: "Launch date must be in the future",
+        };
       }
       return undefined;
     });
@@ -758,7 +761,10 @@ const val = this.form.field().value();
 // WRONG
 this.form.address.street.set("Main St");
 // RIGHT - update the model signal instead
-this.model.update((m) => ({ ...m, address: { ...m.address, street: "Main St" } }));
+this.model.update((m) => ({
+  ...m,
+  address: { ...m.address, street: "Main St" },
+}));
 ```
 
 ### `Type 'string[]' is not assignable to type 'string'`
