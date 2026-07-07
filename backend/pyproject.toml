@@ -10,14 +10,9 @@ dependencies = [
     "pydantic-settings",
     "sqlmodel==0.0.39",
     "sqlalchemy[asyncio]",
-    "aiosqlite",
-    "aiomysql",
-    "dnspython",
     "alembic",
     "python-jose[cryptography]",
-    "bcrypt",
     "python-multipart",
-    "httpx",
 ]
 
 [dependency-groups]
