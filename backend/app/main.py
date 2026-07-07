@@ -14,7 +14,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import DEFAULT_ADMIN_PASSWORD, settings
+from app.config import settings
 from app.database import async_session, init_db
 from app.routers import (
     acme,
@@ -49,19 +49,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     async with async_session() as db:
         admin_user = await get_user_by_username(db, settings.admin_username)
         if not admin_user:
-            password = settings.admin_password
-            if not password or password == DEFAULT_ADMIN_PASSWORD:
-                # Never provision the built-in admin with the public default
-                # password: generate a one-time random secret and surface it
-                # so the operator can log in and change it.
-                password = secrets.token_urlsafe(16)
-                logger.warning(
-                    "ADMIN_PASSWORD not configured — generated a one-time random "
-                    "password for the initial '%s' account: %s — change it after "
-                    "first login.",
-                    settings.admin_username,
-                    password,
-                )
+            # The admin password can no longer be supplied via configuration:
+            # always generate a one-time random secret and surface it in the
+            # logs so the operator can log in and change it after first login.
+            password = secrets.token_urlsafe(16)
+            logger.warning(
+                "Generated a one-time random password for the initial '%s' "
+                "account: %s — change it after first login.",
+                settings.admin_username,
+                password,
+            )
             await create_user(
                 db,
                 username=settings.admin_username,

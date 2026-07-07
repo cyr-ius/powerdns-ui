@@ -16,7 +16,6 @@ GITHUB_REPOSITORY = "cyr-ius/powerdns-ui"
 # MUST never be used as live credentials/keys: each one is treated as "unset"
 # and replaced by a securely generated value at runtime.
 DEFAULT_SECRET_KEY = "change-this-secret-key-in-production"  # noqa: S105
-DEFAULT_ADMIN_PASSWORD = "changeme"  # noqa: S105
 _SECRET_KEY_FILE = Path(DATA_DIR) / ".secret_key"
 
 
@@ -38,7 +37,6 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "pdns_token"
 
     admin_username: str = "admin"
-    admin_password: str = DEFAULT_ADMIN_PASSWORD
 
     database_url: str = DEFAULT_DATABASE_URL
 
