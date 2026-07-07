@@ -32,7 +32,7 @@ from app.routers import (
     views,
 )
 from app.routers.acme import router_api as acme_api_router
-from app.security import SecurityHeadersMiddleware
+from app.security import RateLimitMiddleware, SecurityHeadersMiddleware
 from app.services.auth_service import create_user, get_user_by_username
 from app.utils import resolve_safe_path
 
@@ -89,6 +89,16 @@ app = FastAPI(
 
 # ── Middleware ───────────────────────────────────────────────────────────────
 app.add_middleware(SecurityHeadersMiddleware)
+if settings.rate_limit_enabled:
+    # Added last → outermost: throttled requests are rejected before any work.
+    app.add_middleware(
+        RateLimitMiddleware,
+        max_requests=settings.rate_limit_max_requests,
+        window_seconds=settings.rate_limit_window_seconds,
+        login_max_attempts=settings.rate_limit_login_max_attempts,
+        login_window_seconds=settings.rate_limit_login_window_seconds,
+        login_path=settings.rate_limit_login_path,
+    )
 
 # ── API routers ───────────────────────────────────────────────────────────────
 app.include_router(acme.router)

@@ -3,6 +3,7 @@ from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBea
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.client_ip import get_client_ip
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
@@ -71,13 +72,6 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
             detail="Access restricted to administrators",
         )
     return current_user
-
-
-def get_client_ip(request: Request) -> str | None:
-    forwarded_for = request.headers.get("X-Forwarded-For")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.client.host if request.client else None
 
 
 def get_audit_logger(

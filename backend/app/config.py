@@ -45,6 +45,22 @@ class Settings(BaseSettings):
 
     swagger_enabled: bool = True
 
+    # Reverse proxy: comma-separated trusted proxy IPs/CIDRs (e.g.
+    # "10.0.0.0/8,172.16.0.0/12"). X-Forwarded-For is honoured only when the
+    # direct peer matches one of these; otherwise it is ignored to prevent
+    # client IP spoofing. Leave empty when not behind a proxy.
+    trusted_proxies: str = ""
+
+    # Global in-memory rate limiting (per-process; front with a shared store
+    # such as Redis for multi-worker / multi-instance deployments). A stricter
+    # window is applied to the login endpoint to slow credential brute-forcing.
+    rate_limit_enabled: bool = True
+    rate_limit_max_requests: int = 300
+    rate_limit_window_seconds: int = 60
+    rate_limit_login_max_attempts: int = 10
+    rate_limit_login_window_seconds: int = 300
+    rate_limit_login_path: str = "/api/auth/login"
+
 
 def _resolve_secret_key(value: str) -> str:
     """Return a strong JWT signing key, never the public default.
