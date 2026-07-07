@@ -8,7 +8,6 @@ from app.cookies import clear_auth_cookie, set_auth_cookie
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_client_ip, get_current_user
 from app.models.user import User
-from app.ratelimit import InMemoryRateLimiter
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
@@ -23,13 +22,6 @@ from app.services.audit_service import AuditLogger
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth")
-
-# Throttle login attempts per client IP to slow down credential brute-forcing.
-_login_rate_limiter = InMemoryRateLimiter(max_attempts=10, window_seconds=300)
-
-
-def login_rate_limit(request: Request) -> None:
-    _login_rate_limiter.check(get_client_ip(request) or "unknown")
 
 
 async def _get_oidc_cfg(db: AsyncSession) -> dict | None:
@@ -64,7 +56,6 @@ async def login(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
-    _: None = Depends(login_rate_limit),
 ) -> TokenResponse:
     db_cfg = await admin_service.get_oidc_settings(db)
     local_disabled = db_cfg.local_login_disabled if db_cfg else False
