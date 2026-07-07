@@ -17,6 +17,7 @@ Web management interface for [PowerDNS Authoritative Server](https://www.powerdn
   - [Build from Source](#build-from-source)
 - [PowerDNS Configuration](#powerdns-configuration)
 - [Environment Variables](#environment-variables)
+- [Rate Limiting & Reverse Proxy](#rate-limiting--reverse-proxy)
 - [MariaDB Backend (gmysql)](#mariadb-backend-gmysql)
   - [When to run it](#when-to-run-it)
   - [Usage](#usage)
@@ -168,18 +169,38 @@ views=yes
 
 ## Environment Variables
 
-| Variable                      | Default                             | Description                                                    |
-| ----------------------------- | ----------------------------------- | -------------------------------------------------------------- |
-| `ADMIN_USERNAME`              | `admin`                             | Super-administrator account name created at startup            |
-| `SECRET_KEY`                  | _(change this)_                     | JWT signing key — **must be changed in production**            |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `480`                               | Token validity duration (minutes)                              |
-| `PDNS_AUTH_API_URL`           | `http://pdns:8081`                  | PowerDNS REST API URL                                          |
-| `PDNS_AUTH_API_KEY`           | `change-this-api-key-in-production` | PowerDNS API key (`api-key` in pdns.conf)                      |
-| `DATABASE_URL`                | `sqlite+aiosqlite:///…/database.db` | Database URL                                                   |
-| `DATA_DIR`                    | `/var/lib/powerdns-ui`              | Data directory (SQLite)                                        |
-| `LOG_LEVEL`                   | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                |
-| `SWAGGER_ENABLED`             | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema         |
-| `APP_VERSION`                 | `1.0.0`                             | Application version (injected via `--build-arg VERSION=x.y.z`) |
+| Variable                          | Default                             | Description                                                        |
+| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------ |
+| `ADMIN_USERNAME`                  | `admin`                             | Super-administrator account name created at startup                |
+| `SECRET_KEY`                      | _(change this)_                     | JWT signing key — **must be changed in production**                |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`     | `480`                               | Token validity duration (minutes)                                  |
+| `PDNS_AUTH_API_URL`               | `http://pdns:8081`                  | PowerDNS REST API URL                                              |
+| `PDNS_AUTH_API_KEY`               | `change-this-api-key-in-production` | PowerDNS API key (`api-key` in pdns.conf)                          |
+| `DATABASE_URL`                    | `sqlite+aiosqlite:///…/database.db` | Database URL                                                       |
+| `DATA_DIR`                        | `/var/lib/powerdns-ui`              | Data directory (SQLite)                                            |
+| `LOG_LEVEL`                       | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                    |
+| `SWAGGER_ENABLED`                 | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema             |
+| `APP_VERSION`                     | `1.0.0`                             | Application version (injected via `--build-arg VERSION=x.y.z`)     |
+| `TRUSTED_PROXIES`                 | _(empty)_                           | Comma-separated proxy IPs/CIDRs whose `X-Forwarded-For` is trusted |
+| `RATE_LIMIT_ENABLED`              | `true`                              | Enable the in-memory per-IP rate limiter on `/api/*` routes        |
+| `RATE_LIMIT_MAX_REQUESTS`         | `300`                               | Max requests per IP within the global window                       |
+| `RATE_LIMIT_WINDOW_SECONDS`       | `60`                                | Global sliding-window duration (seconds)                           |
+| `RATE_LIMIT_LOGIN_MAX_ATTEMPTS`   | `10`                                | Max login attempts per IP within the login window                  |
+| `RATE_LIMIT_LOGIN_WINDOW_SECONDS` | `300`                               | Login sliding-window duration (seconds)                            |
+| `RATE_LIMIT_LOGIN_PATH`           | `/api/auth/login`                   | Path the stricter login budget applies to                          |
+
+## Rate Limiting & Reverse Proxy
+
+The backend applies an **in-memory sliding-window rate limiter** to every `/api/*` route (the health probe `/api/health` is exempt so container orchestration is never blocked). Two independent budgets are enforced per client IP:
+
+- a **global** budget (`RATE_LIMIT_MAX_REQUESTS` per `RATE_LIMIT_WINDOW_SECONDS`), and
+- a stricter **login** budget on `RATE_LIMIT_LOGIN_PATH` (`RATE_LIMIT_LOGIN_MAX_ATTEMPTS` per `RATE_LIMIT_LOGIN_WINDOW_SECONDS`) to slow credential brute-forcing.
+
+Throttled requests receive a `429 Too Many Requests` with a `Retry-After` header before reaching any route. Idle IP buckets are swept periodically so memory stays bounded.
+
+> **State is per-process** and not shared across workers or replicas — adequate for the single-container deployment. Front with a shared store (e.g. Redis) for multi-worker setups.
+
+**Behind a reverse proxy**, set `TRUSTED_PROXIES` to the proxy IPs/CIDRs (e.g. `10.0.0.0/8,172.16.0.0/12`). `X-Forwarded-For` is honoured **only** when the direct peer matches one of these ranges; otherwise it is ignored to prevent IP spoofing. When left empty, all clients behind the proxy share the proxy's IP as the rate-limit key.
 
 ## MariaDB Backend (gmysql)
 
