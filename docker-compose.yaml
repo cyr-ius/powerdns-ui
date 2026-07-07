@@ -34,10 +34,9 @@ services:
       - pdns
     environment:
       - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      # Leave empty to auto-generate: a one-time random admin password is
-      # printed in the logs on first start, and a random SECRET_KEY is
+      # The admin password is always auto-generated: a one-time random password
+      # is printed in the logs on first start, and a random SECRET_KEY is
       # generated and persisted under DATA_DIR.
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - SECRET_KEY=${SECRET_KEY:-}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}

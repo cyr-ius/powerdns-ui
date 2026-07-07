@@ -109,9 +109,9 @@ services:
     restart: unless-stopped
     depends_on: [pdns]
     environment:
-      # Leave ADMIN_PASSWORD/SECRET_KEY unset to auto-generate secure values:
-      # a one-time admin password is printed in the logs on first start, and a
-      # random SECRET_KEY is generated and persisted under DATA_DIR.
+      # The admin password is always auto-generated: a one-time password is
+      # printed in the logs on first start. Leave SECRET_KEY unset to
+      # auto-generate and persist a random key under DATA_DIR.
       - PDNS_AUTH_API_URL=http://pdns:8081
       - PDNS_AUTH_API_KEY=change-this-api-key-in-production
       # Set to false to disable the Swagger UI and OpenAPI schema in production.
@@ -133,7 +133,7 @@ volumes:
 docker compose up -d
 ```
 
-Access: http://localhost:8080 — default credentials: `admin` / `changeme`
+Access: http://localhost:8080 — log in as `admin` with the one-time password printed in the container logs on first start, then change it immediately.
 
 ### Build from Source
 
@@ -171,7 +171,6 @@ views=yes
 | Variable                      | Default                             | Description                                                    |
 | ----------------------------- | ----------------------------------- | -------------------------------------------------------------- |
 | `ADMIN_USERNAME`              | `admin`                             | Super-administrator account name created at startup            |
-| `ADMIN_PASSWORD`              | `changeme`                          | Initial admin password                                         |
 | `SECRET_KEY`                  | _(change this)_                     | JWT signing key — **must be changed in production**            |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `480`                               | Token validity duration (minutes)                              |
 | `PDNS_AUTH_API_URL`           | `http://pdns:8081`                  | PowerDNS REST API URL                                          |
