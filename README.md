@@ -114,6 +114,8 @@ services:
       # random SECRET_KEY is generated and persisted under DATA_DIR.
       - PDNS_AUTH_API_URL=http://pdns:8081
       - PDNS_AUTH_API_KEY=change-this-api-key-in-production
+      # Set to false to disable the Swagger UI and OpenAPI schema in production.
+      - SWAGGER_ENABLED=true
     volumes:
       - powerdns-ui_data:/var/lib/powerdns-ui
     ports:
@@ -177,6 +179,7 @@ views=yes
 | `DATABASE_URL`                | `sqlite+aiosqlite:///…/database.db` | Database URL                                                   |
 | `DATA_DIR`                    | `/var/lib/powerdns-ui`              | Data directory (SQLite)                                        |
 | `LOG_LEVEL`                   | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                |
+| `SWAGGER_ENABLED`             | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema         |
 | `APP_VERSION`                 | `1.0.0`                             | Application version (injected via `--build-arg VERSION=x.y.z`) |
 
 ## MariaDB Backend (gmysql)
