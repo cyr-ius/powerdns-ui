@@ -7,7 +7,7 @@ from app.client_ip import get_client_ip
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.services import acme_service, admin_service, auth_service
+from app.services import acme_service, auth_service
 from app.services.audit_service import AuditLogger
 
 bearer_scheme = HTTPBearer(
@@ -81,19 +81,4 @@ def get_audit_logger(
 ) -> AuditLogger:
     return AuditLogger(
         db, current_user.username, current_user.id, get_client_ip(request)
-    )
-
-
-async def get_acme_creator(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """Allow super admins and account-level admins to create ACME keys."""
-    if current_user.is_admin:
-        return current_user
-    if await admin_service.user_is_account_admin(db, current_user.id):  # type: ignore[arg-type]
-        return current_user
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Account admin or super admin required to create ACME keys",
     )

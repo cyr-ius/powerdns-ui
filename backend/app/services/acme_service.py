@@ -122,19 +122,6 @@ async def get_zone_key(
     return result.first()
 
 
-async def update_zones(
-    db: AsyncSession, key_id: int, user_id: int, zones: list[str]
-) -> AcmeApiKey | None:
-    key = await get_key(db, key_id, user_id)
-    if key is None:
-        return None
-    key.zones = json.dumps(zones)
-    db.add(key)
-    await db.commit()
-    await db.refresh(key)
-    return key
-
-
 async def update_key(
     db: AsyncSession, key_id: int, user_id: int, comment: str | None
 ) -> AcmeApiKey | None:

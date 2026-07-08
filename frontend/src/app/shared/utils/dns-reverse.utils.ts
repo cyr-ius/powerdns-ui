@@ -85,7 +85,3 @@ export function findBestReverseZone(ip: string, zones: Zone[]): Zone | null {
   }
   return best;
 }
-
-export function isReverseZone(name: string): boolean {
-  return name.endsWith(".in-addr.arpa.") || name.endsWith(".ip6.arpa.");
-}
