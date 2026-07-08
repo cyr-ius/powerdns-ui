@@ -12,7 +12,7 @@ export interface UserBasic {
   username: string;
 }
 
-export interface DnsRecord {
+interface DnsRecord {
   content: string;
   disabled: boolean;
 }
@@ -57,7 +57,7 @@ export interface ZoneUpdate {
   masters?: string[];
 }
 
-export interface RRsetChange {
+interface RRsetChange {
   changetype: "REPLACE" | "DELETE";
   name: string;
   type: string;

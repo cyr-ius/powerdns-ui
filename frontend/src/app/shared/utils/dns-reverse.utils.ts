@@ -1,6 +1,6 @@
 import { Zone } from "../models/pdns.model";
 
-export function expandIPv6(ip: string): string {
+function expandIPv6(ip: string): string {
   const halves = ip.split("::");
   if (halves.length === 2) {
     const left = halves[0] ? halves[0].split(":") : [];
@@ -14,11 +14,11 @@ export function expandIPv6(ip: string): string {
     .join(":");
 }
 
-export function ipv4ToArpaName(ip: string): string {
+function ipv4ToArpaName(ip: string): string {
   return ip.split(".").reverse().join(".") + ".in-addr.arpa.";
 }
 
-export function ipv6ToArpaName(ip: string): string {
+function ipv6ToArpaName(ip: string): string {
   const nibbles = expandIPv6(ip).replace(/:/g, "").split("").reverse();
   return nibbles.join(".") + ".ip6.arpa.";
 }
