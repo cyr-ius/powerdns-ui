@@ -307,7 +307,7 @@ export class PdnsService {
   }
 }
 
-export interface SoaNsResult {
+interface SoaNsResult {
   ns: string;
   ip: string | null;
   serial: number | null;
@@ -321,22 +321,22 @@ export interface SoaCheckResult {
   nameservers: SoaNsResult[];
 }
 
-export type EmailCheckStatus = "ok" | "warning" | "error" | "missing" | "revoked" | "invalid";
+type EmailCheckStatus = "ok" | "warning" | "error" | "missing" | "revoked" | "invalid";
 
-export interface SpfResult {
+interface SpfResult {
   status: EmailCheckStatus;
   record: string | null;
   details: string;
 }
 
-export interface DmarcResult {
+interface DmarcResult {
   status: EmailCheckStatus;
   record: string | null;
   policy: "none" | "quarantine" | "reject" | null;
   details: string;
 }
 
-export interface DkimSelectorResult {
+interface DkimSelectorResult {
   selector: string;
   status: EmailCheckStatus;
   record: string;
