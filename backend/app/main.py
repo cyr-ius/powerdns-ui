@@ -127,7 +127,7 @@ async def swagger_ui():
         raise HTTPException(status_code=404, detail="Not Found")
     return get_swagger_ui_html(
         openapi_url="/api/openapi.json",
-        title="Portalcrane API",
+        title="Powerdns UI API",
         swagger_js_url="/api/static/swagger/swagger-ui-bundle.js",
         swagger_css_url="/api/static/swagger/swagger-ui.css",
         swagger_favicon_url="/favicon.ico",

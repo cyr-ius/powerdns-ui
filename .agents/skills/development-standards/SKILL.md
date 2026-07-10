@@ -3,7 +3,7 @@ name: development-standards
 description: Normes de code (Angular 22 + FastAPI). À utiliser quand on écrit/refactore du code frontend Angular ou backend FastAPI de ce dépôt, ou avant un commit. Charge les détails depuis references/ uniquement au besoin.
 ---
 
-# 🎓 Portalcrane — Normes de développement
+# 🎓 Normes de développement
 
 Index des **règles propres à ce dépôt**. Les détails sont dans `references/` — n'y aller que si la tâche concerne la partie correspondante.
 
