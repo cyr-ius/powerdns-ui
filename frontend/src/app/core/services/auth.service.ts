@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable, computed, inject, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
-import { OidcConfig, TokenResponse, User } from "../../shared/models/auth.model";
+import { OidcConfig, User } from "../../shared/models/auth.model";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
@@ -32,7 +32,7 @@ export class AuthService {
 
   async login(username: string, password: string): Promise<void> {
     // The backend sets the auth cookie on this response; we only fetch the user.
-    await firstValueFrom(this.http.post<TokenResponse>("/api/auth/login", { username, password }));
+    await firstValueFrom(this.http.post<void>("/api/auth/login", { username, password }));
     await this.fetchCurrentUser();
   }
 

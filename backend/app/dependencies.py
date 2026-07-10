@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, Request, Security, status
-from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import APIKeyHeader
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,9 +10,6 @@ from app.models.user import User
 from app.services import acme_service, auth_service
 from app.services.audit_service import AuditLogger
 
-bearer_scheme = HTTPBearer(
-    auto_error=False, description="JWT Bearer token in Authorization header"
-)
 api_key_header = APIKeyHeader(
     name="X-API-Key",
     auto_error=False,
@@ -22,23 +19,17 @@ api_key_header = APIKeyHeader(
 
 async def get_current_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     x_api_key: str | None = Security(api_key_header),
     db: AsyncSession = Depends(get_db),
 ) -> User:
     exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
-        headers={"WWW-Authenticate": "Bearer"},
     )
 
-    # Accept the JWT from the Authorization header (API clients) or from the
-    # HttpOnly auth cookie (browser sessions, set at login).
-    token = (
-        credentials.credentials
-        if credentials
-        else request.cookies.get(settings.auth_cookie_name)
-    )
+    # Browser sessions carry the JWT in the HttpOnly auth cookie set at login.
+    # It is never exposed to JavaScript, so there is no header-based variant.
+    token = request.cookies.get(settings.auth_cookie_name)
     if token:
         try:
             payload = jwt.decode(

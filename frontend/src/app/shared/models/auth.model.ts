@@ -8,11 +8,6 @@ export interface User {
   is_account_admin: boolean;
 }
 
-export interface TokenResponse {
-  access_token: string;
-  token_type: string;
-}
-
 export interface OidcConfig {
   enabled: boolean;
   client_id: string | null;

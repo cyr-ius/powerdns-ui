@@ -13,7 +13,6 @@ from app.schemas.auth import (
     LoginRequest,
     OidcConfig,
     OidcLoginResponse,
-    TokenResponse,
     UserResponse,
 )
 from app.services import admin_service, auth_service
@@ -50,13 +49,13 @@ async def get_auth_config(db: AsyncSession = Depends(get_db)) -> OidcConfig:
     return OidcConfig(enabled=False, client_id=None, local_login_disabled=False)
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post("/login", status_code=status.HTTP_204_NO_CONTENT)
 async def login(
     payload: LoginRequest,
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
-) -> TokenResponse:
+) -> None:
     db_cfg = await admin_service.get_oidc_settings(db)
     local_disabled = db_cfg.local_login_disabled if db_cfg else False
     audit = AuditLogger(db, payload.username, ip=get_client_ip(request))
@@ -80,7 +79,6 @@ async def login(
     await audit.success("login", "auth")
     token = auth_service.create_access_token({"sub": user.username})
     set_auth_cookie(response, request, token)
-    return TokenResponse(access_token=token)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
