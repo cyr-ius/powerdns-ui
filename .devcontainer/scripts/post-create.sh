@@ -18,6 +18,9 @@ if [ -d "${WORKSPACE}/.data_env" ]; then
 fi
 
 # ── 1. Python dependencies ─────────────────────────────────────────────────────
+if [ ! -f "$BACKEND_DIR/pyproject.toml" ]; then
+  cp "$WORKSPACE/.devcontainer/pyproject.toml" "$BACKEND_DIR"
+fi
 if [ -f "$BACKEND_DIR/pyproject.toml" ]; then
   echo ""
   echo "📦  Installing Python dependencies..."
@@ -75,6 +78,18 @@ if [ -f "$BACKEND_DIR/alembic.ini" ]; then
       sleep 3
     }
   done
+fi
+
+# ── 6. Skills installation ─────────────────────────────────────────────────────
+if [ -d "$WORKSPACE/.agents" ]; then
+  echo ""
+  echo "🧠  Skill — installation des dépendances..."
+  cd "$WORKSPACE"
+  npx --yes skills add https://github.com/fastapi/fastapi --skill fastapi  --agent claude-code -p -y
+  npx --yes skills add https://github.com/bilalmk/todo_correct --skill sqlmodel-expert  --agent claude-code -p -y
+  npx --yes skills add https://github.com/angular/angular --skill angular-developer  --agent claude-code -p -y
+  npx --yes skills add https://github.com/cyr-ius/angular-fastapi-scaffold --skill development-standards  --agent claude-code -p -y
+  echo "  ✅  Skills installed"
 fi
 
 echo ""
