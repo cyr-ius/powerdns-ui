@@ -12,7 +12,7 @@ Index des **règles propres à ce dépôt**. Les détails sont dans `references/
 | Couche      | Techno                      | Version                                          |
 | ----------- | --------------------------- | ------------------------------------------------ |
 | Frontend    | Angular                     | 22 (Signals, Signal Forms, Zoneless, Standalone) |
-| Backend     | FastAPI                     | 0.135.1 (async, Pydantic v2)                     |
+| Backend     | FastAPI                     | 0.139.0 (async, Pydantic v2)                     |
 | UI          | Bootstrap / Bootstrap Icons | 5.3.8 / 1.13.1                                   |
 | Runtimes    | Python / Node.js            | 3.14 / 18+                                       |
 | Déploiement | Docker                      | multi-stage, conteneur unique SPA                |
@@ -37,10 +37,8 @@ Index des **règles propres à ce dépôt**. Les détails sont dans `references/
 
 ### Pre-commit, conventions & checklist → détails : [references/precommit-linting.md](references/precommit-linting.md)
 
-- Le message d'un commit doit être écrit en **anglais**, avec un **verbe à l'infinitif** et un **objet clair**.
 - Python : `ruff check --fix` + `ruff format` (line-length 100). Frontend : `prettier`.
 - Tout doit passer `pre-commit run --all-files` avant commit ; fichiers finissant par un saut de ligne.
-- **Commit sûr** : lancer `prek run --files <fichiers>` **avant** `git commit` puis re-stager, pour que la passe au commit ne modifie rien. Attention au **staging partiel** (stash de `prek` → conflit → commit avorté).
 - Conventions de nommage fichiers/symboles et checklist commit dans le fichier de référence.
 
 ## Quand utiliser ce skill
