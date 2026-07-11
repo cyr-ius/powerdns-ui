@@ -53,14 +53,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             # always generate a one-time random secret and surface it in the
             # logs so the operator can log in and change it after first login.
             password = secrets.token_urlsafe(16)
+            banner = "=" * 72
             logger.warning(
                 "\n%s\n"
                 " Powerdns UI — initial admin account created (first launch)\n"
                 "   username : %s\n"
                 "   password : %s\n"
-                " This password is shown only once. Store it now.\n",
+                " This password is shown only once. Store it now.\n"
+                "%s",
+                banner,
                 settings.admin_username,
                 password,
+                banner,
             )
             await create_user(
                 db,
@@ -68,7 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 password=password,
                 is_admin=True,
             )
-            logger.info("Utilisateur admin créé : %s", settings.admin_username)
+            logger.info("Administration account created : %s", settings.admin_username)
         elif not admin_user.is_admin:
             admin_user.is_admin = True
             db.add(admin_user)
