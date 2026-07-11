@@ -3,7 +3,7 @@
   "compounds": [
     {
       "name": "Full Stack",
-      "configurations": ["Angular", "FastAPI"]
+      "configurations": ["FastAPI", "Angular"]
     }
   ],
   "configurations": [
