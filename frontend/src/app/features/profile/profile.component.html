@@ -29,14 +29,16 @@
       </button>
     </li>
   }
-  <li class="nav-item">
-    <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
-      <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
-      @if (keys().length > 0) {
-        <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
-      }
-    </button>
-  </li>
+  @if (appInfoSvc.apiKeysEnabled()) {
+    <li class="nav-item">
+      <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
+        <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
+        @if (keys().length > 0) {
+          <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
+        }
+      </button>
+    </li>
+  }
 </ul>
 
 <!-- ══ Tab: Information & About ════════════════════════════════════════════ -->
@@ -317,13 +319,15 @@
 }
 
 <!-- ══ Tab: API Keys (REST) ══════════════════════════════════════════════ -->
-@if (activeTab() === "apikeys") {
+@if (activeTab() === "apikeys" && appInfoSvc.apiKeysEnabled()) {
   <div class="d-flex align-items-center justify-content-between mb-3">
     <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE_API" | translate }}</p>
     <div class="d-flex gap-2">
-      <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
-      </a>
+      @if (appInfoSvc.swaggerEnabled()) {
+        <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-file-earmark-code me-1"></i>Swagger UI
+        </a>
+      }
       <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
         <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
       </button>
@@ -512,6 +516,7 @@
           </div>
           <div class="form-text mt-2">{{ "APIKEYS.API_CREDENTIALS_HINT" | translate }}</div>
           <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
+curl -H "Authorization: Bearer {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones
 curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones</pre
           >
         </div>

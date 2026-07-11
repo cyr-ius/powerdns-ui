@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AdminService } from "../../../core/services/admin.service";
 import { OidcSettings } from "../../../shared/models/admin.model";
@@ -27,6 +27,10 @@ export class AdminOidcComponent implements OnInit {
   };
 
   readonly oidcConfig = signal(this.defaultCfg);
+
+  /** Fields pinned by environment variables; the backend ignores changes to them. */
+  readonly envLocked = computed(() => this.oidcConfig().env_locked ?? []);
+
   readonly oidcForm = form(this.oidcConfig, (p) => {
     required(p.client_id, { message: "The client_id is required" });
     required(p.client_secret, { message: "The client_secret is required" });

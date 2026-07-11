@@ -50,7 +50,12 @@
     "LOGOUT": "Cerrar sesión",
     "THEME": "Tema : {{ label }}",
     "SEARCH_PLACEHOLDER": "Buscar… (*, ?)",
-    "UPDATE_AVAILABLE": "Nueva versión disponible: {{ version }}"
+    "UPDATE_AVAILABLE": "Nueva versión disponible: {{ version }}",
+    "HOME": "Inicio",
+    "ABOUT": "Acerca de",
+    "HELP": "Ayuda",
+    "COLLAPSE_MENU": "Contraer el menú",
+    "EXPAND_MENU": "Expandir el menú"
   },
   "SESSION": {
     "EXPIRED_TITLE": "Sesión expirada",
@@ -361,7 +366,12 @@
     "HOST_REQUIRED": "El servidor SMTP es obligatorio",
     "PORT_REQUIRED": "El puerto es obligatorio",
     "RECIPIENT_EMAIL_HELP": "Dirección que recibirá los emails de eventos de auditoría",
-    "RECIPIENT_EMAIL_REQUIRED": "La dirección del destinatario es obligatoria"
+    "RECIPIENT_EMAIL_REQUIRED": "La dirección del destinatario es obligatoria",
+    "TEST": "Enviar un correo de prueba",
+    "TEST_HELP": "Envía un mensaje con los parámetros mostrados, sin guardarlos",
+    "TEST_SENT": "Correo de prueba enviado a {{ recipient }}.",
+    "TEST_ERROR": "No se ha podido enviar el correo de prueba.",
+    "ENV_LOCKED": "Impuesto por variables de entorno (solo lectura): {{ fields }}"
   },
   "OIDC": {
     "TITLE": "Configuración OIDC/SSO",
@@ -378,7 +388,8 @@
     "REDIRECT_URI": "URI de redirección *",
     "REDIRECT_URI_HELP": "Debe estar registrado en su proveedor OIDC",
     "SCOPES": "Scopes *",
-    "SCOPES_HELP": "Separados por espacios"
+    "SCOPES_HELP": "Separados por espacios",
+    "ENV_LOCKED": "Impuesto por variables de entorno (solo lectura): {{ fields }}"
   },
   "RECORD_TYPES": {
     "TITLE": "Tipos de registros DNS",
@@ -668,5 +679,42 @@
     "ZONE_NAME": "Nombre de la zona",
     "DELETE_VIEW": "Eliminar vista",
     "REMOVE_FROM_VIEW": "Eliminar de la vista"
+  },
+  "HOME": {
+    "TITLE": "Panel de control",
+    "WELCOME": "Bienvenido, {{ username }}",
+    "ZONES": "Zonas DNS",
+    "PRIMARY_ZONES": "Zonas primarias",
+    "SECONDARY_ZONES": "Zonas secundarias",
+    "DNSSEC_ZONES": "Zonas DNSSEC",
+    "STATUS_TITLE": "Estado del servicio",
+    "API_STATUS": "API",
+    "PDNS_VERSION": "Versión de PowerDNS",
+    "APP_VERSION": "Versión de la aplicación",
+    "RECENT_ACTIVITY": "Actividad reciente",
+    "VIEW_ALL": "Ver todo",
+    "NO_ACTIVITY": "No hay actividad registrada.",
+    "ACTIVITY_ADMIN_ONLY": "El registro de auditoría está reservado a los administradores."
+  },
+  "ABOUT": {
+    "TITLE": "Acerca de",
+    "SUBTITLE": "Versión, estado del servicio y recursos del proyecto",
+    "VERSION_TITLE": "Versión",
+    "APPLICATION": "Aplicación",
+    "VERSION": "Versión",
+    "UPDATE": "Actualización",
+    "CHECKING": "Comprobando…",
+    "NOT_AVAILABLE": "No disponible",
+    "UPDATE_AVAILABLE": "{{ version }} disponible",
+    "UP_TO_DATE": "Actualizado",
+    "HEALTH_TITLE": "Estado del servicio",
+    "HEALTH_OK": "Operativo",
+    "HEALTH_KO": "No disponible",
+    "HEALTH_OPEN": "Abrir el endpoint health",
+    "LINKS_TITLE": "Recursos",
+    "REPOSITORY": "Repositorio",
+    "OPEN_ISSUE": "Abrir una incidencia",
+    "SWAGGER": "Swagger UI",
+    "SWAGGER_DISABLED": "Swagger está desactivado en esta instancia"
   }
 }

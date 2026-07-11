@@ -226,6 +226,7 @@
 }
 
 .pdns-sidenav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.625rem;
@@ -258,6 +259,50 @@
   color: var(--pdns-orange);
 }
 
+.pdns-update-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--bs-warning, #ffc107);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ── Collapsed sidebar (icon rail) ───────────────────────────────────────── */
+.pdns-sidebar {
+  transition: width 0.18s ease;
+}
+
+.pdns-sidebar.collapsed {
+  width: 60px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.pdns-sidebar.collapsed .pdns-sidenav-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+/* Link captions disappear; the icons stay, which is what identifies each entry
+   once the rail is collapsed (the title attribute provides the tooltip). */
+.pdns-sidebar.collapsed .pdns-sidenav-link span:not(.pdns-update-dot) {
+  display: none;
+}
+.pdns-sidebar.collapsed .pdns-update-dot {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  margin-left: 0;
+}
+/* Group captions become plain separators so the sections stay legible. */
+.pdns-sidebar.collapsed .pdns-sidenav-label {
+  height: 1px;
+  margin: 0.5rem 0.25rem;
+  background: var(--pdns-border);
+  overflow: hidden;
+  text-indent: -999px;
+}
+
 /* ── Main content ────────────────────────────────────────────────────────── */
 .pdns-main {
   flex: 1;
@@ -276,6 +321,34 @@
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 767.98px) {
+  /* The drawer replaces the rail on mobile: it always shows the full labels. */
+  .pdns-collapse-toggle {
+    display: none;
+  }
+
+  .pdns-sidebar.collapsed {
+    width: 220px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  .pdns-sidebar.collapsed .pdns-sidenav-link {
+    justify-content: flex-start;
+    padding: 0.5rem 0.75rem;
+  }
+  .pdns-sidebar.collapsed .pdns-sidenav-link span:not(.pdns-update-dot) {
+    display: inline;
+  }
+  .pdns-sidebar.collapsed .pdns-update-dot {
+    position: static;
+    margin-left: auto;
+  }
+  .pdns-sidebar.collapsed .pdns-sidenav-label {
+    height: auto;
+    margin: 0 0 0.25rem 0.5rem;
+    background: none;
+    text-indent: 0;
+  }
+
   .pdns-sidebar {
     position: fixed;
     top: 56px;

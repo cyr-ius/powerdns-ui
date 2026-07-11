@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { firstValueFrom } from "rxjs";
-import { AuditLog, PdnsLogEntry, SmtpSettings, SyslogSettings } from "../../shared/models/audit.model";
+import { AuditLog, PdnsLogEntry, SmtpSettings, SmtpTestResult, SyslogSettings } from "../../shared/models/audit.model";
 
 export interface AuditLogFilters {
   skip?: number;
@@ -56,5 +56,10 @@ export class AuditService {
 
   updateSmtpSettings(data: SmtpSettings): Promise<SmtpSettings> {
     return firstValueFrom(this.http.put<SmtpSettings>("/api/admin/audit/smtp", data));
+  }
+
+  /** Send a probe e-mail with the settings as displayed, without saving them. */
+  testSmtpSettings(data: SmtpSettings): Promise<SmtpTestResult> {
+    return firstValueFrom(this.http.post<SmtpTestResult>("/api/admin/audit/smtp/test", data));
   }
 }

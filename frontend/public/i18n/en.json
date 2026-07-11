@@ -50,7 +50,12 @@
     "LOGOUT": "Logout",
     "THEME": "Theme : {{ label }}",
     "SEARCH_PLACEHOLDER": "Search… (*, ?)",
-    "UPDATE_AVAILABLE": "New version available: {{ version }}"
+    "UPDATE_AVAILABLE": "New version available: {{ version }}",
+    "HOME": "Home",
+    "ABOUT": "About",
+    "HELP": "Help",
+    "COLLAPSE_MENU": "Collapse menu",
+    "EXPAND_MENU": "Expand menu"
   },
   "SESSION": {
     "EXPIRED_TITLE": "Session expired",
@@ -361,7 +366,12 @@
     "HOST_REQUIRED": "SMTP host is required",
     "PORT_REQUIRED": "Port is required",
     "RECIPIENT_EMAIL_HELP": "Address that will receive audit event emails",
-    "RECIPIENT_EMAIL_REQUIRED": "Recipient address is required"
+    "RECIPIENT_EMAIL_REQUIRED": "Recipient address is required",
+    "TEST": "Send a test e-mail",
+    "TEST_HELP": "Sends a message using the settings shown, without saving them",
+    "TEST_SENT": "Test e-mail sent to {{ recipient }}.",
+    "TEST_ERROR": "The test e-mail could not be sent.",
+    "ENV_LOCKED": "Pinned by environment variables (read-only): {{ fields }}"
   },
   "OIDC": {
     "TITLE": "OIDC/SSO configuration",
@@ -378,7 +388,8 @@
     "REDIRECT_URI": "Redirect URI *",
     "REDIRECT_URI_HELP": "Must be registered in your OIDC provider",
     "SCOPES": "Scopes *",
-    "SCOPES_HELP": "Separated by spaces"
+    "SCOPES_HELP": "Separated by spaces",
+    "ENV_LOCKED": "Pinned by environment variables (read-only): {{ fields }}"
   },
   "RECORD_TYPES": {
     "TITLE": "DNS Record Types",
@@ -668,5 +679,42 @@
     "ZONE_NAME": "Zone name",
     "DELETE_VIEW": "Supprimer la vue",
     "REMOVE_FROM_VIEW": "Retirer de la vue"
+  },
+  "HOME": {
+    "TITLE": "Dashboard",
+    "WELCOME": "Welcome, {{ username }}",
+    "ZONES": "DNS zones",
+    "PRIMARY_ZONES": "Primary zones",
+    "SECONDARY_ZONES": "Secondary zones",
+    "DNSSEC_ZONES": "DNSSEC zones",
+    "STATUS_TITLE": "Service status",
+    "API_STATUS": "API",
+    "PDNS_VERSION": "PowerDNS version",
+    "APP_VERSION": "Application version",
+    "RECENT_ACTIVITY": "Recent activity",
+    "VIEW_ALL": "View all",
+    "NO_ACTIVITY": "No recorded activity.",
+    "ACTIVITY_ADMIN_ONLY": "The audit journal is reserved for administrators."
+  },
+  "ABOUT": {
+    "TITLE": "About",
+    "SUBTITLE": "Version, service status and project resources",
+    "VERSION_TITLE": "Version",
+    "APPLICATION": "Application",
+    "VERSION": "Version",
+    "UPDATE": "Update",
+    "CHECKING": "Checking…",
+    "NOT_AVAILABLE": "Not available",
+    "UPDATE_AVAILABLE": "{{ version }} available",
+    "UP_TO_DATE": "Up to date",
+    "HEALTH_TITLE": "Service status",
+    "HEALTH_OK": "Healthy",
+    "HEALTH_KO": "Unavailable",
+    "HEALTH_OPEN": "Open the health endpoint",
+    "LINKS_TITLE": "Resources",
+    "REPOSITORY": "Repository",
+    "OPEN_ISSUE": "Open an issue",
+    "SWAGGER": "Swagger UI",
+    "SWAGGER_DISABLED": "Swagger is disabled on this instance"
   }
 }

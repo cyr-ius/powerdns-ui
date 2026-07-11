@@ -23,13 +23,35 @@
           <span>{{ error()! | translate }}</span>
         </div>
       }
+      @if (testSuccess()) {
+        <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-send-check"></i>
+          <span>{{ "MAIL.TEST_SENT" | translate: { recipient: testSuccess()! } }}</span>
+        </div>
+      }
+      @if (testError()) {
+        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <span>{{ testError()! }}</span>
+        </div>
+      }
+      @if (envLocked().length > 0) {
+        <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-lock-fill"></i>
+          <span>{{ "MAIL.ENV_LOCKED" | translate: { fields: envLocked().join(", ") } }}</span>
+        </div>
+      }
 
       <form (submit)="onSave(); $event.preventDefault()">
         <!-- Enable audit email toggle -->
         <div class="d-flex align-items-center justify-content-between p-3 rounded border mb-4">
           <div>
-            <div class="fw-semibold">{{ "MAIL.ACTIVATE_AUDIT_EMAIL" | translate }}</div>
-            <div class="text-muted small">{{ "MAIL.ACTIVATE_AUDIT_EMAIL_HELP" | translate }}</div>
+            <div class="fw-semibold">
+              {{ "MAIL.ACTIVATE_AUDIT_EMAIL" | translate }}
+            </div>
+            <div class="text-muted small">
+              {{ "MAIL.ACTIVATE_AUDIT_EMAIL_HELP" | translate }}
+            </div>
           </div>
           <div class="form-check form-switch mb-0 ms-3">
             <input
@@ -58,7 +80,9 @@
                 autocomplete="off"
               />
               @if (smtpForm.host().touched() && smtpForm.host().errors().length) {
-                <div class="invalid-feedback">{{ smtpForm.host().errors()[0].message | translate }}</div>
+                <div class="invalid-feedback">
+                  {{ smtpForm.host().errors()[0].message | translate }}
+                </div>
               }
             </div>
             <div class="col-4">
@@ -68,7 +92,9 @@
               </label>
               <input type="number" class="form-control" [formField]="smtpForm.port" />
               @if (smtpForm.port().touched() && smtpForm.port().errors().length) {
-                <div class="invalid-feedback">{{ smtpForm.port().errors()[0].message | translate }}</div>
+                <div class="invalid-feedback">
+                  {{ smtpForm.port().errors()[0].message | translate }}
+                </div>
               }
             </div>
           </div>
@@ -139,7 +165,9 @@
               [formField]="smtpForm.from_email"
               placeholder="pdns-ui@example.com"
             />
-            <div class="form-text">{{ "MAIL.FROM_EMAIL_HELP" | translate }}</div>
+            <div class="form-text">
+              {{ "MAIL.FROM_EMAIL_HELP" | translate }}
+            </div>
           </div>
 
           <!-- Recipient email -->
@@ -155,19 +183,38 @@
               placeholder="admin@example.com"
             />
             @if (smtpForm.recipient_email().touched() && smtpForm.recipient_email().errors().length) {
-              <div class="invalid-feedback">{{ smtpForm.recipient_email().errors()[0].message | translate }}</div>
+              <div class="invalid-feedback">
+                {{ smtpForm.recipient_email().errors()[0].message | translate }}
+              </div>
             } @else {
-              <div class="form-text">{{ "MAIL.RECIPIENT_EMAIL_HELP" | translate }}</div>
+              <div class="form-text">
+                {{ "MAIL.RECIPIENT_EMAIL_HELP" | translate }}
+              </div>
             }
           </div>
         </fieldset>
 
-        <button type="submit" class="btn btn-primary" [disabled]="smtpForm().pending() || smtpForm().invalid()">
-          @if (smtpForm().submitting()) {
-            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-          }
-          <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
-        </button>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" [disabled]="smtpForm().pending() || smtpForm().invalid()">
+            @if (smtpForm().submitting()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            [disabled]="isTesting() || !smtpModel().enabled || smtpForm().invalid()"
+            [title]="'MAIL.TEST_HELP' | translate"
+            (click)="onTest()"
+          >
+            @if (isTesting()) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            }
+            <i class="bi bi-send me-1"></i>{{ "MAIL.TEST" | translate }}
+          </button>
+        </div>
       </form>
     </div>
   </div>

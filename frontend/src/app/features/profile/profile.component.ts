@@ -76,9 +76,7 @@ export class ProfileComponent implements OnInit {
       this.passwordError.set(null);
       this.passwordSuccess.set(false);
       try {
-        await firstValueFrom(
-          this.http.put("/api/auth/change-password", { current_password, new_password }),
-        );
+        await firstValueFrom(this.http.put("/api/auth/change-password", { current_password, new_password }));
         this.passwordSuccess.set(true);
         this.passwordModel.set({ current_password: "", new_password: "", confirm_password: "" });
       } catch (err: unknown) {
@@ -147,7 +145,12 @@ export class ProfileComponent implements OnInit {
       this.createError.set(null);
       try {
         const { name, secret, comment } = this.createModel();
-        const created = await this.acmeKeysSvc.createKey(name, "api", secret.trim() || undefined, comment.trim() || undefined);
+        const created = await this.acmeKeysSvc.createKey(
+          name,
+          "api",
+          secret.trim() || undefined,
+          comment.trim() || undefined,
+        );
         this.showCreateModal.set(false);
         this.keys.update((list) => [...list, created]);
         this.createdKey.set(created.key);
@@ -211,8 +214,14 @@ export class ProfileComponent implements OnInit {
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
-  ngOnInit(): void {
-    void this.appInfoSvc.load();
-    void this.loadApiKeys();
+  async ngOnInit(): Promise<void> {
+    await this.appInfoSvc.load();
+    // Personal access tokens are hidden entirely when API_KEYS_ENABLED is off:
+    // the endpoints are refused, so neither the tab nor its data make sense.
+    if (this.appInfoSvc.apiKeysEnabled()) {
+      void this.loadApiKeys();
+    } else if (this.activeTab() === "apikeys") {
+      this.activeTab.set("info");
+    }
   }
 }

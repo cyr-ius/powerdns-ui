@@ -4,7 +4,15 @@
     <button class="pdns-icon-btn pdns-sidebar-toggle" type="button" (click)="toggleSidebar()" title="Menu">
       <i class="bi bi-list"></i>
     </button>
-    <a class="pdns-brand" routerLink="/zones">
+    <button
+      class="pdns-icon-btn pdns-collapse-toggle"
+      type="button"
+      [title]="(sidebarCollapsed() ? 'NAV.EXPAND_MENU' : 'NAV.COLLAPSE_MENU') | translate"
+      (click)="toggleCollapsed()"
+    >
+      <i class="bi" [class]="sidebarCollapsed() ? 'bi-chevron-double-right' : 'bi-chevron-double-left'"></i>
+    </button>
+    <a class="pdns-brand" routerLink="/">
       <i class="bi bi-hdd-network"></i>
       <span>PowerDNS <strong>UI</strong></span>
     </a>
@@ -24,7 +32,7 @@
   <div class="pdns-topbar-end">
     @if (appInfo.updateAvailable()) {
       <a
-        routerLink="/profile"
+        routerLink="/about"
         class="link-warning link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover"
         [title]="'NAV.UPDATE_AVAILABLE' | translate: { version: appInfo.latestRelease()!.tag_name }"
       >
@@ -65,27 +73,52 @@
   }
 
   <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
-  <aside class="pdns-sidebar" [class.open]="sidebarOpen()">
+  <aside class="pdns-sidebar" [class.open]="sidebarOpen()" [class.collapsed]="sidebarCollapsed()">
     <nav class="pdns-sidenav">
       <p class="pdns-sidenav-label">{{ "NAV.DNS_ZONES" | translate }}</p>
+
+      <a
+        class="pdns-sidenav-link"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [title]="'NAV.HOME' | translate"
+        (click)="closeSidebar()"
+      >
+        <i class="bi bi-house"></i>
+        <span>{{ "NAV.HOME" | translate }}</span>
+      </a>
 
       <a
         class="pdns-sidenav-link"
         routerLink="/zones"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: false }"
+        [title]="'NAV.DNS_ZONES' | translate"
         (click)="closeSidebar()"
       >
         <i class="bi bi-globe2"></i>
         <span>{{ "NAV.DNS_ZONES" | translate }}</span>
       </a>
 
-      <a class="pdns-sidenav-link" routerLink="/catalogues" routerLinkActive="active" (click)="closeSidebar()">
+      <a
+        class="pdns-sidenav-link"
+        routerLink="/catalogues"
+        routerLinkActive="active"
+        [title]="'NAV.CATALOGUES' | translate"
+        (click)="closeSidebar()"
+      >
         <i class="bi bi-collection"></i>
         <span>{{ "NAV.CATALOGUES" | translate }}</span>
       </a>
 
-      <a class="pdns-sidenav-link" routerLink="/statistics" routerLinkActive="active" (click)="closeSidebar()">
+      <a
+        class="pdns-sidenav-link"
+        routerLink="/statistics"
+        routerLinkActive="active"
+        [title]="'NAV.STATISTICS' | translate"
+        (click)="closeSidebar()"
+      >
         <i class="bi bi-bar-chart-line"></i>
         <span>{{ "NAV.STATISTICS" | translate }}</span>
       </a>
@@ -93,46 +126,96 @@
       @if (auth.isAdmin()) {
         <p class="pdns-sidenav-label mt-3">{{ "NAV.SERVER" | translate }}</p>
 
-        <a class="pdns-sidenav-link" routerLink="/tsigkeys" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/tsigkeys"
+          routerLinkActive="active"
+          [title]="'NAV.TSIG_KEYS' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-key"></i>
           <span>{{ "NAV.TSIG_KEYS" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/server-config" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/server-config"
+          routerLinkActive="active"
+          [title]="'NAV.CONFIGURATION' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-sliders"></i>
           <span>{{ "NAV.CONFIGURATION" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/autoprimaries" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/autoprimaries"
+          routerLinkActive="active"
+          [title]="'NAV.AUTOPRIMARIES' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-hdd-rack"></i>
           <span>{{ "NAV.AUTOPRIMARIES" | translate }}</span>
         </a>
 
         @if (server.supportsViewsAndNetworks()) {
-          <a class="pdns-sidenav-link" routerLink="/views" routerLinkActive="active" (click)="closeSidebar()">
+          <a
+            class="pdns-sidenav-link"
+            routerLink="/views"
+            routerLinkActive="active"
+            [title]="'NAV.VIEWS' | translate"
+            (click)="closeSidebar()"
+          >
             <i class="bi bi-eye"></i>
             <span>{{ "NAV.VIEWS" | translate }}</span>
           </a>
 
-          <a class="pdns-sidenav-link" routerLink="/networks" routerLinkActive="active" (click)="closeSidebar()">
+          <a
+            class="pdns-sidenav-link"
+            routerLink="/networks"
+            routerLinkActive="active"
+            [title]="'NAV.NETWORKS' | translate"
+            (click)="closeSidebar()"
+          >
             <i class="bi bi-diagram-3"></i>
             <span>{{ "NAV.NETWORKS" | translate }}</span>
           </a>
         }
 
-        <p class="pdns-sidenav-label mt-3">{{ "NAV.ADMINISTRATION" | translate }}</p>
+        <p class="pdns-sidenav-label mt-3">
+          {{ "NAV.ADMINISTRATION" | translate }}
+        </p>
 
-        <a class="pdns-sidenav-link" routerLink="/admin/users" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/users"
+          routerLinkActive="active"
+          [title]="'NAV.USERS' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-people"></i>
           <span>{{ "NAV.USERS" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/admin/accounts" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/accounts"
+          routerLinkActive="active"
+          [title]="'NAV.ACCOUNTS' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-folder2-open"></i>
           <span>{{ "NAV.ACCOUNTS" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/admin/oidc" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/oidc"
+          routerLinkActive="active"
+          [title]="'NAV.OIDC' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-shield-check"></i>
           <span>{{ "NAV.OIDC" | translate }}</span>
         </a>
@@ -141,27 +224,64 @@
           class="pdns-sidenav-link"
           routerLink="/admin/record-types"
           routerLinkActive="active"
+          [title]="'NAV.DNS_TYPES' | translate"
           (click)="closeSidebar()"
         >
           <i class="bi bi-card-list"></i>
           <span>{{ "NAV.DNS_TYPES" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/admin/mail" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/mail"
+          routerLinkActive="active"
+          [title]="'NAV.MAIL' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-envelope"></i>
           <span>{{ "NAV.MAIL" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/admin/audit" routerLinkActive="active" (click)="closeSidebar()">
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/admin/audit"
+          routerLinkActive="active"
+          [title]="'NAV.AUDIT_JOURNAL' | translate"
+          (click)="closeSidebar()"
+        >
           <i class="bi bi-journal-text"></i>
           <span>{{ "NAV.AUDIT_JOURNAL" | translate }}</span>
         </a>
 
-        <a class="pdns-sidenav-link" routerLink="/acme-keys" routerLinkActive="active" (click)="closeSidebar()">
-          <i class="bi bi-key"></i>
-          <span>{{ "NAV.API_KEYS" | translate }}</span>
-        </a>
+        @if (appInfo.apiKeysEnabled()) {
+          <a
+            class="pdns-sidenav-link"
+            routerLink="/acme-keys"
+            routerLinkActive="active"
+            [title]="'NAV.API_KEYS' | translate"
+            (click)="closeSidebar()"
+          >
+            <i class="bi bi-key"></i>
+            <span>{{ "NAV.API_KEYS" | translate }}</span>
+          </a>
+        }
       }
+
+      <p class="pdns-sidenav-label mt-3">{{ "NAV.HELP" | translate }}</p>
+
+      <a
+        class="pdns-sidenav-link"
+        routerLink="/about"
+        routerLinkActive="active"
+        [title]="'NAV.ABOUT' | translate"
+        (click)="closeSidebar()"
+      >
+        <i class="bi bi-info-circle"></i>
+        <span>{{ "NAV.ABOUT" | translate }}</span>
+        @if (appInfo.updateAvailable()) {
+          <span class="pdns-update-dot"></span>
+        }
+      </a>
     </nav>
   </aside>
 
@@ -185,7 +305,9 @@
           </h5>
         </div>
         <div class="modal-body">
-          <p class="mb-0 text-muted">{{ "SESSION.EXPIRED_BODY" | translate }}</p>
+          <p class="mb-0 text-muted">
+            {{ "SESSION.EXPIRED_BODY" | translate }}
+          </p>
         </div>
         <div class="modal-footer border-0 pt-0">
           <button class="btn btn-primary" (click)="logout()">

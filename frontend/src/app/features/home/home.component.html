@@ -1,0 +1,155 @@
+<div class="mb-4">
+  <h2 class="h4 mb-0 fw-bold"><i class="bi bi-speedometer2 me-2 text-primary"></i>{{ "HOME.TITLE" | translate }}</h2>
+  <p class="text-muted small mb-0">
+    {{ "HOME.WELCOME" | translate: { username: auth.currentUser()?.username ?? "" } }}
+  </p>
+</div>
+
+@if (isLoading()) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" role="status"></div>
+  </div>
+} @else {
+  <!-- ── Summary tiles ─────────────────────────────────────────────────────── -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <a routerLink="/zones" class="card shadow-sm h-100 text-decoration-none">
+        <div class="card-body">
+          <p class="text-muted small mb-1">{{ "HOME.ZONES" | translate }}</p>
+          <p class="h3 fw-bold mb-0">{{ zoneCount() }}</p>
+        </div>
+      </a>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">
+            {{ "HOME.PRIMARY_ZONES" | translate }}
+          </p>
+          <p class="h3 fw-bold mb-0">{{ primaryCount() }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">
+            {{ "HOME.SECONDARY_ZONES" | translate }}
+          </p>
+          <p class="h3 fw-bold mb-0">{{ secondaryCount() }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-1">
+            {{ "HOME.DNSSEC_ZONES" | translate }}
+          </p>
+          <p class="h3 fw-bold mb-0">{{ dnssecCount() }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- ── Service status ──────────────────────────────────────────────────── -->
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm h-100">
+        <div class="card-header py-3">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-activity me-2 text-primary"></i>{{ "HOME.STATUS_TITLE" | translate }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-6 text-muted fw-normal">
+              {{ "HOME.API_STATUS" | translate }}
+            </dt>
+            <dd class="col-6">
+              @if (appInfoSvc.healthy()) {
+                <span class="badge bg-success-subtle text-success-emphasis">
+                  <i class="bi bi-check-circle-fill me-1"></i>{{ "ABOUT.HEALTH_OK" | translate }}
+                </span>
+              } @else {
+                <span class="badge bg-danger-subtle text-danger-emphasis">
+                  <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ "ABOUT.HEALTH_KO" | translate }}
+                </span>
+              }
+            </dd>
+
+            <dt class="col-6 text-muted fw-normal">
+              {{ "HOME.PDNS_VERSION" | translate }}
+            </dt>
+            <dd class="col-6 font-monospace small">
+              {{ serverInfo()?.version ?? "—" }}
+            </dd>
+
+            <dt class="col-6 text-muted fw-normal">
+              {{ "HOME.APP_VERSION" | translate }}
+            </dt>
+            <dd class="col-6 mb-0">
+              <a routerLink="/about" class="text-decoration-none font-monospace small">
+                v{{ appInfoSvc.appInfo()?.version ?? "—" }}
+                @if (appInfoSvc.updateAvailable()) {
+                  <i class="bi bi-arrow-up-circle-fill text-warning ms-1"></i>
+                }
+              </a>
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Recent audit activity (admins only) ─────────────────────────────── -->
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm h-100">
+        <div class="card-header py-3 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0 fw-semibold">
+            <i class="bi bi-journal-text me-2 text-primary"></i>{{ "HOME.RECENT_ACTIVITY" | translate }}
+          </h5>
+          @if (auth.isAdmin()) {
+            <a routerLink="/admin/audit" class="btn btn-sm btn-outline-secondary">
+              {{ "HOME.VIEW_ALL" | translate }}
+            </a>
+          }
+        </div>
+        <div class="card-body p-0">
+          @if (!auth.isAdmin()) {
+            <p class="text-muted small m-3 mb-3">
+              {{ "HOME.ACTIVITY_ADMIN_ONLY" | translate }}
+            </p>
+          } @else if (recentLogs().length === 0) {
+            <p class="text-muted small m-3 mb-3">
+              {{ "HOME.NO_ACTIVITY" | translate }}
+            </p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-sm table-hover align-middle mb-0">
+                <tbody>
+                  @for (log of recentLogs(); track log.id) {
+                    <tr>
+                      <td class="small text-muted">
+                        {{ log.created_at | date: "dd/MM HH:mm" }}
+                      </td>
+                      <td class="small fw-medium">{{ log.username }}</td>
+                      <td class="small">{{ log.action }}</td>
+                      <td class="small text-muted">{{ log.resource_type }}</td>
+                      <td class="small text-end">
+                        @if (log.status === "success") {
+                          <span class="badge bg-success-subtle text-success-emphasis">{{ log.status }}</span>
+                        } @else {
+                          <span class="badge bg-danger-subtle text-danger-emphasis">{{ log.status }}</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

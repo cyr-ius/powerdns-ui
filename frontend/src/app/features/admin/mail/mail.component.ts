@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AuditService } from "../../../core/services/audit.service";
 import { SmtpSettings } from "../../../shared/models/audit.model";
@@ -16,6 +16,14 @@ export class AdminMailComponent implements OnInit {
   readonly success = signal(false);
   readonly error = signal<string | null>(null);
   readonly showPassword = signal(false);
+
+  readonly isTesting = signal(false);
+  /** Recipient of the last successful probe, null when none was sent. */
+  readonly testSuccess = signal<string | null>(null);
+  readonly testError = signal<string | null>(null);
+
+  /** Fields pinned by environment variables; the backend ignores changes to them. */
+  readonly envLocked = computed(() => this.smtpModel().env_locked ?? []);
 
   readonly smtpModel = signal<SmtpSettings>({
     enabled: false,
@@ -65,10 +73,30 @@ export class AdminMailComponent implements OnInit {
     });
   }
 
+  /** Probe the relay with the form as displayed, without saving it first. */
+  async onTest(): Promise<void> {
+    this.isTesting.set(true);
+    this.testSuccess.set(null);
+    this.testError.set(null);
+    try {
+      const result = await this.auditService.testSmtpSettings(this.smtpModel());
+      this.testSuccess.set(result.recipient);
+    } catch (err) {
+      const detail = (err as { error?: { detail?: string } }).error?.detail;
+      this.testError.set(detail ?? "MAIL.TEST_ERROR");
+    } finally {
+      this.isTesting.set(false);
+    }
+  }
+
   onTlsChange(): void {
     this.smtpModel.update((v) => {
       if (v.use_tls) {
-        return { ...v, use_starttls: false, port: v.port === 587 ? 465 : v.port };
+        return {
+          ...v,
+          use_starttls: false,
+          port: v.port === 587 ? 465 : v.port,
+        };
       }
       return { ...v, port: v.port === 465 ? 587 : v.port };
     });

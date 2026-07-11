@@ -23,13 +23,21 @@
           <span>{{ error() }}</span>
         </div>
       }
+      @if (envLocked().length > 0) {
+        <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-4">
+          <i class="bi bi-lock-fill"></i>
+          <span>{{ "OIDC.ENV_LOCKED" | translate: { fields: envLocked().join(", ") } }}</span>
+        </div>
+      }
 
       <form (submit)="onSave(); $event.preventDefault()">
         <!-- Enable toggle -->
         <div class="d-flex align-items-center justify-content-between p-3 rounded border mb-3">
           <div>
             <div class="fw-semibold">{{ "OIDC.ACTIVATE_SSO" | translate }}</div>
-            <div class="text-muted small">{{ "OIDC.ACTIVATE_SSO_HELP" | translate }}</div>
+            <div class="text-muted small">
+              {{ "OIDC.ACTIVATE_SSO_HELP" | translate }}
+            </div>
           </div>
           <div class="form-check form-switch mb-0 ms-3">
             <input
@@ -48,8 +56,12 @@
           [class.opacity-80]="!oidcConfig().enabled"
         >
           <div>
-            <div class="fw-semibold">{{ "OIDC.DISABLE_LOCAL" | translate }}</div>
-            <div class="text-muted small">{{ "OIDC.DISABLE_LOCAL_HELP" | translate }}</div>
+            <div class="fw-semibold">
+              {{ "OIDC.DISABLE_LOCAL" | translate }}
+            </div>
+            <div class="text-muted small">
+              {{ "OIDC.DISABLE_LOCAL_HELP" | translate }}
+            </div>
           </div>
           <div class="form-check form-switch mb-0 ms-3">
             <input
@@ -73,7 +85,9 @@
               autocomplete="off"
             />
             @if (oidcForm.client_id().touched() && oidcForm.client_id().errors().length) {
-              <div class="invalid-feedback">{{ oidcForm.client_id().errors()[0].message }}</div>
+              <div class="invalid-feedback">
+                {{ oidcForm.client_id().errors()[0].message }}
+              </div>
             }
           </div>
 
@@ -86,7 +100,9 @@
               autocomplete="new-password"
             />
             @if (oidcForm.client_secret().touched() && oidcForm.client_secret().errors().length) {
-              <div class="invalid-feedback">{{ oidcForm.client_secret().errors()[0].message }}</div>
+              <div class="invalid-feedback">
+                {{ oidcForm.client_secret().errors()[0].message }}
+              </div>
             }
           </div>
 
@@ -98,9 +114,13 @@
               [formField]="oidcForm.discovery_url"
               placeholder="https://sso.example.com/.well-known/openid-configuration"
             />
-            <div class="form-text">{{ "OIDC.DISCOVERY_URL_HELP" | translate }}</div>
+            <div class="form-text">
+              {{ "OIDC.DISCOVERY_URL_HELP" | translate }}
+            </div>
             @if (oidcForm.discovery_url().touched() && oidcForm.discovery_url().errors().length) {
-              <div class="invalid-feedback">{{ oidcForm.discovery_url().errors()[0].message }}</div>
+              <div class="invalid-feedback">
+                {{ oidcForm.discovery_url().errors()[0].message }}
+              </div>
             }
           </div>
 
@@ -112,9 +132,13 @@
               [formField]="oidcForm.redirect_uri"
               placeholder="https://pdns-ui.example.com/api/auth/oidc/callback"
             />
-            <div class="form-text">{{ "OIDC.REDIRECT_URI_HELP" | translate }}</div>
+            <div class="form-text">
+              {{ "OIDC.REDIRECT_URI_HELP" | translate }}
+            </div>
             @if (oidcForm.redirect_uri().touched() && oidcForm.redirect_uri().errors().length) {
-              <div class="invalid-feedback">{{ oidcForm.redirect_uri().errors()[0].message }}</div>
+              <div class="invalid-feedback">
+                {{ oidcForm.redirect_uri().errors()[0].message }}
+              </div>
             }
           </div>
 

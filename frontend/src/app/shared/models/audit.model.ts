@@ -38,4 +38,11 @@ export interface SmtpSettings {
   alert_actions: string[];
   alert_resources: string[];
   alert_statuses: string[];
+  /** Fields pinned by environment variables — rendered read-only. */
+  env_locked?: string[];
+}
+
+export interface SmtpTestResult {
+  sent: boolean;
+  recipient: string;
 }

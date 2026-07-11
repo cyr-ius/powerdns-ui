@@ -1,0 +1,147 @@
+<div class="d-flex align-items-center mb-4">
+  <a routerLink="/" class="btn btn-sm btn-outline-secondary me-3">
+    <i class="bi bi-arrow-left me-1"></i>{{ "COMMON.BACK" | translate }}
+  </a>
+  <div>
+    <h2 class="h4 mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>{{ "ABOUT.TITLE" | translate }}</h2>
+    <p class="text-muted small mb-0">{{ "ABOUT.SUBTITLE" | translate }}</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- ── Version & updates ─────────────────────────────────────────────────── -->
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-box-seam me-2 text-primary"></i>{{ "ABOUT.VERSION_TITLE" | translate }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-5 text-muted fw-normal">
+            {{ "ABOUT.APPLICATION" | translate }}
+          </dt>
+          <dd class="col-7 fw-semibold">PowerDNS UI</dd>
+
+          <dt class="col-5 text-muted fw-normal">
+            {{ "ABOUT.VERSION" | translate }}
+          </dt>
+          <dd class="col-7">
+            @if (appInfoSvc.appInfo(); as info) {
+              <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">v{{ info.version }}</span>
+            } @else {
+              <span class="text-muted small">—</span>
+            }
+          </dd>
+
+          <dt class="col-5 text-muted fw-normal">
+            {{ "ABOUT.UPDATE" | translate }}
+          </dt>
+          <dd class="col-7 mb-0">
+            @if (!appInfoSvc.releaseCheckDone()) {
+              <span class="text-muted small">
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                {{ "ABOUT.CHECKING" | translate }}
+              </span>
+            } @else if (!appInfoSvc.latestRelease()) {
+              <span class="text-muted small">
+                <i class="bi bi-dash me-1"></i>{{ "ABOUT.NOT_AVAILABLE" | translate }}
+              </span>
+            } @else if (appInfoSvc.updateAvailable()) {
+              <a
+                [href]="appInfoSvc.latestRelease()!.html_url"
+                target="_blank"
+                rel="noopener"
+                class="badge bg-warning-subtle text-warning-emphasis text-decoration-none"
+              >
+                <i class="bi bi-arrow-up-circle-fill me-1"></i>
+                {{ "ABOUT.UPDATE_AVAILABLE" | translate: { version: appInfoSvc.latestRelease()!.tag_name } }}
+              </a>
+            } @else {
+              <span class="badge bg-success-subtle text-success-emphasis">
+                <i class="bi bi-check-circle-fill me-1"></i>{{ "ABOUT.UP_TO_DATE" | translate }}
+              </span>
+            }
+          </dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Service status ────────────────────────────────────────────────────── -->
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-header py-3 d-flex align-items-center justify-content-between">
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-activity me-2 text-primary"></i>{{ "ABOUT.HEALTH_TITLE" | translate }}
+        </h5>
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          (click)="refreshHealth()"
+          [disabled]="appInfoSvc.healthChecking()"
+          [title]="'COMMON.REFRESH' | translate"
+        >
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          @if (appInfoSvc.healthChecking()) {
+            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+            <span class="text-muted small">{{ "ABOUT.CHECKING" | translate }}</span>
+          } @else if (appInfoSvc.healthy()) {
+            <span class="badge bg-success-subtle text-success-emphasis fs-6">
+              <i class="bi bi-check-circle-fill me-1"></i>{{ "ABOUT.HEALTH_OK" | translate }}
+            </span>
+          } @else {
+            <span class="badge bg-danger-subtle text-danger-emphasis fs-6">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ "ABOUT.HEALTH_KO" | translate }}
+            </span>
+          }
+        </div>
+        <a
+          [href]="appInfoSvc.appInfo()?.health_url ?? '/api/health'"
+          target="_blank"
+          rel="noopener"
+          class="btn btn-sm btn-outline-primary"
+        >
+          <i class="bi bi-box-arrow-up-right me-1"></i>{{ "ABOUT.HEALTH_OPEN" | translate }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Resources ─────────────────────────────────────────────────────────── -->
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header py-3">
+        <h5 class="mb-0 fw-semibold">
+          <i class="bi bi-link-45deg me-2 text-primary"></i>{{ "ABOUT.LINKS_TITLE" | translate }}
+        </h5>
+      </div>
+      <div class="card-body d-flex flex-wrap gap-2">
+        @if (appInfoSvc.appInfo(); as info) {
+          <a [href]="info.github" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-github me-1"></i>{{ "ABOUT.REPOSITORY" | translate }}
+          </a>
+          <a [href]="info.issues_url" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-bug me-1"></i>{{ "ABOUT.OPEN_ISSUE" | translate }}
+          </a>
+          @if (info.swagger_enabled && info.docs_url) {
+            <a [href]="info.docs_url" target="_blank" rel="noopener" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-file-earmark-code me-1"></i>{{ "ABOUT.SWAGGER" | translate }}
+            </a>
+          } @else {
+            <span class="btn btn-outline-secondary btn-sm disabled" [title]="'ABOUT.SWAGGER_DISABLED' | translate">
+              <i class="bi bi-file-earmark-code me-1"></i>{{ "ABOUT.SWAGGER" | translate }}
+              <i class="bi bi-slash-circle ms-1"></i>
+            </span>
+          }
+        } @else {
+          <span class="text-muted small">—</span>
+        }
+      </div>
+    </div>
+  </div>
+</div>
