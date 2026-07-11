@@ -45,6 +45,36 @@ class Settings(BaseSettings):
 
     swagger_enabled: bool = True
 
+    # When disabled, personal access tokens are refused by the API and the
+    # frontend hides the whole key-management surface.
+    api_keys_enabled: bool = True
+
+    # OIDC / SMTP connectors are configured from the settings screens and stored
+    # in the database. Any field supplied here (environment or .env) overrides
+    # the stored value and is exposed as read-only in the UI, so an operator can
+    # pin all or part of the configuration from the deployment manifest.
+    oidc_enabled: bool = False
+    oidc_client_id: str = ""
+    oidc_client_secret: str = ""
+    oidc_discovery_url: str = ""
+    oidc_redirect_uri: str = ""
+    oidc_scopes: str = "openid email profile"
+    oidc_local_login_disabled: bool = False
+
+    smtp_enabled: bool = False
+    smtp_host: str = "localhost"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_recipient_email: str = ""
+    smtp_use_tls: bool = False
+    smtp_use_starttls: bool = True
+    # Comma-separated filters, e.g. SMTP_ALERT_ACTIONS="login,logout,delete".
+    smtp_alert_actions: str = ""
+    smtp_alert_resources: str = ""
+    smtp_alert_statuses: str = ""
+
     # Reverse proxy: comma-separated trusted proxy IPs/CIDRs (e.g.
     # "10.0.0.0/8,172.16.0.0/12"). X-Forwarded-For is honoured only when the
     # direct peer matches one of these; otherwise it is ignored to prevent
@@ -108,3 +138,18 @@ def get_settings() -> Settings:
 
 
 settings = get_settings()
+
+
+def env_overrides(prefix: str) -> dict[str, object]:
+    """Return the ``prefix``-scoped settings explicitly supplied by the operator.
+
+    ``model_fields_set`` only holds fields fed by the environment or ``.env``,
+    never the class defaults — so an untouched connector yields ``{}`` and keeps
+    its database-backed configuration. Keys are returned without the prefix, i.e.
+    ready to be applied onto the matching ``OidcSettings``/``SmtpSettings`` row.
+    """
+    return {
+        name[len(prefix) :]: getattr(settings, name)
+        for name in settings.model_fields_set
+        if name.startswith(prefix)
+    }

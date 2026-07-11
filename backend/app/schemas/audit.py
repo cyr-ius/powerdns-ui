@@ -54,6 +54,13 @@ class SmtpSettingsResponse(BaseModel):
     alert_actions: list[str] = []
     alert_resources: list[str] = []
     alert_statuses: list[str] = []
+    # Fields pinned by environment variables: read-only in the settings screen.
+    env_locked: list[str] = []
+
+
+class SmtpTestResult(BaseModel):
+    sent: bool
+    recipient: str
 
 
 class SmtpSettingsUpdate(BaseModel):

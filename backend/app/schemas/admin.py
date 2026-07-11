@@ -81,6 +81,8 @@ class OidcSettingsResponse(BaseModel):
     redirect_uri: str
     scopes: str
     local_login_disabled: bool = False
+    # Fields pinned by environment variables: read-only in the settings screen.
+    env_locked: list[str] = []
 
 
 class OidcSettingsUpdate(BaseModel):

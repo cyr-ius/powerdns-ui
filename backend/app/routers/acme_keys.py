@@ -2,7 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_audit_logger, get_current_admin, get_current_user
+from app.dependencies import (
+    get_audit_logger,
+    get_current_admin,
+    get_current_user,
+    require_api_keys_enabled,
+)
 from app.models.user import User
 from app.schemas.acme import (
     AcmeApiKeyAdminResponse,
@@ -14,7 +19,10 @@ from app.schemas.acme import (
 from app.services import acme_service
 from app.services.audit_service import AuditLogger
 
-router = APIRouter(prefix="/api/acme-keys", dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix="/api/acme-keys",
+    dependencies=[Depends(get_current_user), Depends(require_api_keys_enabled)],
+)
 
 
 @router.get("", response_model=list[AcmeApiKeyResponse])

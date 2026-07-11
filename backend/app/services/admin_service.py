@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.config import env_overrides
 from app.models.account import Account, UserAccount, ZoneRole
 from app.models.acme_key import AcmeApiKey
 from app.models.oidc_settings import OidcSettings
@@ -316,20 +317,48 @@ async def remove_account_member(
 # ── OIDC Settings ─────────────────────────────────────────────────────────────
 
 
-async def get_oidc_settings(db: AsyncSession) -> OidcSettings | None:
+def oidc_env_locked_fields() -> list[str]:
+    """OIDC fields pinned by the environment: the UI renders them read-only."""
+    return sorted(env_overrides("oidc_"))
+
+
+async def _load_oidc_row(db: AsyncSession) -> OidcSettings | None:
     result = await db.exec(select(OidcSettings).where(OidcSettings.id == 1))  # type: ignore[call-overload]
     return result.first()
 
 
+async def get_oidc_settings(db: AsyncSession) -> OidcSettings | None:
+    """Stored OIDC configuration with the environment applied on top.
+
+    The merge happens on a detached copy so that environment-provided values are
+    never written back to the database: unsetting the variable must restore the
+    stored configuration.
+    """
+    row = await _load_oidc_row(db)
+    overrides = env_overrides("oidc_")
+    if row is None and not overrides:
+        return None
+    merged = OidcSettings(**row.model_dump()) if row else OidcSettings(id=1)
+    for key, value in overrides.items():
+        setattr(merged, key, value)
+    return merged
+
+
 async def upsert_oidc_settings(db: AsyncSession, data: dict) -> OidcSettings:
-    existing = await get_oidc_settings(db)
+    # Environment-pinned fields are authoritative; ignore whatever the client
+    # submitted for them rather than persisting a value that would be shadowed.
+    locked = env_overrides("oidc_")
+    existing = await _load_oidc_row(db)
     if existing:
         for key, value in data.items():
-            setattr(existing, key, value)
+            if key not in locked:
+                setattr(existing, key, value)
         db.add(existing)
     else:
-        existing = OidcSettings(id=1, **data)
+        existing = OidcSettings(
+            id=1, **{k: v for k, v in data.items() if k not in locked}
+        )
         db.add(existing)
     await db.commit()
     await db.refresh(existing)
-    return existing
+    return await get_oidc_settings(db)  # type: ignore[return-value]

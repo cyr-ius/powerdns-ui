@@ -3,20 +3,24 @@ from datetime import datetime
 from typing import Annotated
 
 import httpx
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_admin
+from app.dependencies import get_audit_logger, get_current_admin
+from app.models.smtp_settings import SmtpSettings
 from app.schemas.audit import (
     AuditLogResponse,
     PdnsLogEntry,
     SmtpSettingsResponse,
     SmtpSettingsUpdate,
+    SmtpTestResult,
     SyslogSettingsResponse,
     SyslogSettingsUpdate,
 )
 from app.services import audit_service
+from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request
 
 router = APIRouter(prefix="/api/admin/audit", dependencies=[Depends(get_current_admin)])
@@ -142,51 +146,7 @@ def _parse_filter_list(raw: str) -> list[str]:
         return []
 
 
-_SMTP_DEFAULTS = SmtpSettingsResponse(
-    enabled=False,
-    host="localhost",
-    port=587,
-    username="",
-    password="",
-    from_email="",
-    recipient_email="",
-    use_tls=False,
-    use_starttls=True,
-    alert_actions=[],
-    alert_resources=[],
-    alert_statuses=[],
-)
-
-
-@router.get("/smtp", response_model=SmtpSettingsResponse)
-async def get_smtp_settings(
-    db: AsyncSession = Depends(get_db),
-) -> SmtpSettingsResponse:
-    cfg = await audit_service.get_smtp_settings(db)
-    if cfg:
-        return SmtpSettingsResponse(
-            enabled=cfg.enabled,
-            host=cfg.host,
-            port=cfg.port,
-            username=cfg.username,
-            password=cfg.password,
-            from_email=cfg.from_email,
-            recipient_email=cfg.recipient_email,
-            use_tls=cfg.use_tls,
-            use_starttls=cfg.use_starttls,
-            alert_actions=_parse_filter_list(cfg.alert_actions),
-            alert_resources=_parse_filter_list(cfg.alert_resources),
-            alert_statuses=_parse_filter_list(cfg.alert_statuses),
-        )
-    return _SMTP_DEFAULTS
-
-
-@router.put("/smtp", response_model=SmtpSettingsResponse)
-async def update_smtp_settings(
-    payload: SmtpSettingsUpdate,
-    db: AsyncSession = Depends(get_db),
-) -> SmtpSettingsResponse:
-    cfg = await audit_service.upsert_smtp_settings(db, payload.model_dump())
+def _smtp_response(cfg: SmtpSettings) -> SmtpSettingsResponse:
     return SmtpSettingsResponse(
         enabled=cfg.enabled,
         host=cfg.host,
@@ -200,4 +160,49 @@ async def update_smtp_settings(
         alert_actions=_parse_filter_list(cfg.alert_actions),
         alert_resources=_parse_filter_list(cfg.alert_resources),
         alert_statuses=_parse_filter_list(cfg.alert_statuses),
+        env_locked=audit_service.smtp_env_locked_fields(),
     )
+
+
+@router.get("/smtp", response_model=SmtpSettingsResponse)
+async def get_smtp_settings(
+    db: AsyncSession = Depends(get_db),
+) -> SmtpSettingsResponse:
+    cfg = await audit_service.get_smtp_settings(db)
+    return _smtp_response(cfg or SmtpSettings(id=1))
+
+
+@router.put("/smtp", response_model=SmtpSettingsResponse)
+async def update_smtp_settings(
+    payload: SmtpSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
+) -> SmtpSettingsResponse:
+    cfg = await audit_service.upsert_smtp_settings(db, payload.model_dump())
+    await audit.success("update", "smtp_settings")
+    return _smtp_response(cfg)
+
+
+@router.post("/smtp/test", response_model=SmtpTestResult)
+async def test_smtp_settings(
+    payload: SmtpSettingsUpdate,
+    db: AsyncSession = Depends(get_db),
+    audit: AuditLogger = Depends(get_audit_logger),
+) -> SmtpTestResult:
+    """Send a probe e-mail using the submitted settings.
+
+    The form is tested as displayed — the settings need not be saved first —
+    except for fields pinned by the environment, which always win.
+    """
+    cfg = audit_service.build_smtp_config(payload.model_dump())
+    try:
+        await run_in_threadpool(audit_service.send_test_email, cfg)
+    except Exception as exc:
+        await audit.failure("test", "smtp_settings", details={"detail": str(exc)})
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"SMTP test failed: {exc}",
+        ) from exc
+
+    await audit.success("test", "smtp_settings", cfg.recipient_email)
+    return SmtpTestResult(sent=True, recipient=cfg.recipient_email)

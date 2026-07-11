@@ -5,6 +5,7 @@ from sqlmodel import select
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
 from app.models.account import UserAccount
+from app.models.oidc_settings import OidcSettings
 from app.models.record_type import RecordType
 from app.models.user import User
 from app.schemas.admin import (
@@ -304,19 +305,20 @@ async def delete_account(
 # ── OIDC Settings ─────────────────────────────────────────────────────────────
 
 
+def _oidc_response(cfg: OidcSettings) -> OidcSettingsResponse:
+    return OidcSettingsResponse(
+        **cfg.model_dump(exclude={"id"}),
+        env_locked=admin_service.oidc_env_locked_fields(),
+    )
+
+
 @router.get("/oidc", response_model=OidcSettingsResponse)
 async def get_oidc_settings(db: AsyncSession = Depends(get_db)) -> OidcSettingsResponse:
     db_cfg = await admin_service.get_oidc_settings(db)
     if db_cfg:
-        return OidcSettingsResponse(**db_cfg.model_dump(exclude={"id"}))
-    return OidcSettingsResponse(
-        enabled=False,
-        client_id="",
-        client_secret="",
-        discovery_url="",
-        redirect_uri="http://localhost:8080/api/auth/oidc/callback",
-        scopes="openid email profile",
-        local_login_disabled=False,
+        return _oidc_response(db_cfg)
+    return _oidc_response(
+        OidcSettings(redirect_uri="http://localhost:8080/api/auth/oidc/callback")
     )
 
 
@@ -340,7 +342,7 @@ async def update_oidc_settings(
     clear_oidc_cache()
     cfg = await admin_service.upsert_oidc_settings(db, payload.model_dump())
     await audit.success("update", "oidc_settings")
-    return OidcSettingsResponse(**cfg.model_dump(exclude={"id"}))
+    return _oidc_response(cfg)
 
 
 # ── Record Types ──────────────────────────────────────────────────────────────

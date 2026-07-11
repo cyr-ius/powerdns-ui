@@ -9,11 +9,15 @@ from email.mime.text import MIMEText
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
+from app.config import env_overrides
 from app.models.audit_log import AuditLog
 from app.models.smtp_settings import SmtpSettings
 from app.models.syslog_settings import SyslogSettings
 
 logger = logging.getLogger(__name__)
+
+# Keep a failing relay from stalling the request that triggered the alert.
+_SMTP_TIMEOUT = 10
 
 _FACILITIES = {
     "kern": 0,
@@ -177,16 +181,53 @@ def _matches_alert_filters(cfg: SmtpSettings, entry: AuditLog) -> bool:
     return True
 
 
-async def get_smtp_settings(db: AsyncSession) -> SmtpSettings | None:
+_SMTP_LIST_FIELDS = ("alert_actions", "alert_resources", "alert_statuses")
+
+
+def smtp_env_locked_fields() -> list[str]:
+    """SMTP fields pinned by the environment: the UI renders them read-only."""
+    return sorted(env_overrides("smtp_"))
+
+
+def _normalize_smtp_override(field: str, value: object) -> object:
+    # The alert filters are stored as JSON arrays but are supplied as a
+    # comma-separated list in the environment (SMTP_ALERT_ACTIONS="login,logout").
+    if field in _SMTP_LIST_FIELDS and isinstance(value, str):
+        return json.dumps([item.strip() for item in value.split(",") if item.strip()])
+    return value
+
+
+async def _load_smtp_row(db: AsyncSession) -> SmtpSettings | None:
     result = await db.exec(select(SmtpSettings).where(SmtpSettings.id == 1))  # type: ignore[call-overload]
     return result.first()
 
 
+async def get_smtp_settings(db: AsyncSession) -> SmtpSettings | None:
+    """Stored SMTP configuration with the environment applied on top.
+
+    The merge happens on a detached copy so that environment-provided values are
+    never written back to the database: unsetting the variable must restore the
+    stored configuration.
+    """
+    row = await _load_smtp_row(db)
+    overrides = env_overrides("smtp_")
+    if row is None and not overrides:
+        return None
+    merged = SmtpSettings(**row.model_dump()) if row else SmtpSettings(id=1)
+    for key, value in overrides.items():
+        setattr(merged, key, _normalize_smtp_override(key, value))
+    return merged
+
+
 async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
-    for key in ("alert_actions", "alert_resources", "alert_statuses"):
+    for key in _SMTP_LIST_FIELDS:
         if key in data and isinstance(data[key], list):
             data[key] = json.dumps(data[key])
-    existing = await get_smtp_settings(db)
+    # Environment-pinned fields are authoritative; ignore whatever the client
+    # submitted for them rather than persisting a value that would be shadowed.
+    locked = env_overrides("smtp_")
+    data = {k: v for k, v in data.items() if k not in locked}
+    existing = await _load_smtp_row(db)
     if existing:
         for key, value in data.items():
             setattr(existing, key, value)
@@ -196,13 +237,64 @@ async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
         db.add(existing)
     await db.commit()
     await db.refresh(existing)
-    return existing
+    return await get_smtp_settings(db)  # type: ignore[return-value]
+
+
+def build_smtp_config(data: dict) -> SmtpSettings:
+    """Turn a submitted SMTP form into a transient config, environment applied.
+
+    Used to probe settings that have not been saved yet; the environment-pinned
+    fields still win, exactly as they would once stored.
+    """
+    values = dict(data)
+    for key in _SMTP_LIST_FIELDS:
+        if isinstance(values.get(key), list):
+            values[key] = json.dumps(values[key])
+    for key, value in env_overrides("smtp_").items():
+        values[key] = _normalize_smtp_override(key, value)
+    return SmtpSettings(id=1, **values)
+
+
+def _send_email(cfg: SmtpSettings, subject: str, body: str) -> None:
+    """Deliver a message through the configured relay. Raises on failure."""
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = cfg.from_email or "pdns-ui@localhost"
+    msg["To"] = cfg.recipient_email
+    if cfg.use_tls:
+        with smtplib.SMTP_SSL(cfg.host, cfg.port, timeout=_SMTP_TIMEOUT) as smtp:
+            if cfg.username:
+                smtp.login(cfg.username, cfg.password)
+            smtp.send_message(msg)
+    else:
+        with smtplib.SMTP(cfg.host, cfg.port, timeout=_SMTP_TIMEOUT) as smtp:
+            if cfg.use_starttls:
+                smtp.starttls()
+            if cfg.username:
+                smtp.login(cfg.username, cfg.password)
+            smtp.send_message(msg)
+
+
+def send_test_email(cfg: SmtpSettings) -> None:
+    """Send a probe message so an operator can validate the relay settings.
+
+    Unlike audit alerts, failures are propagated: the caller reports them back to
+    the settings screen.
+    """
+    if not cfg.host or not cfg.recipient_email:
+        raise ValueError("SMTP host and recipient e-mail are required")
+    _send_email(
+        cfg,
+        "[pdns-ui] Test message",
+        "This is a test message sent from PowerDNS UI.\n"
+        "If you received it, the SMTP connector is configured correctly.\n"
+        f"Date: {datetime.now()}",
+    )
 
 
 def _send_audit_email(cfg: SmtpSettings, entry: AuditLog) -> None:
     if not cfg.recipient_email or not cfg.host:
         return
-    subject = f"[pdns-ui] Audit: {entry.action} on {entry.resource_type}"
     body_lines = [
         f"User      : {entry.username}",
         f"Action    : {entry.action}",
@@ -216,23 +308,12 @@ def _send_audit_email(cfg: SmtpSettings, entry: AuditLog) -> None:
     if entry.details:
         body_lines.append(f"Details   : {entry.details}")
     body_lines.append(f"Date      : {entry.created_at}")
-    msg = MIMEText("\n".join(body_lines))
-    msg["Subject"] = subject
-    msg["From"] = cfg.from_email or "pdns-ui@localhost"
-    msg["To"] = cfg.recipient_email
     try:
-        if cfg.use_tls:
-            with smtplib.SMTP_SSL(cfg.host, cfg.port) as smtp:
-                if cfg.username:
-                    smtp.login(cfg.username, cfg.password)
-                smtp.send_message(msg)
-        else:
-            with smtplib.SMTP(cfg.host, cfg.port) as smtp:
-                if cfg.use_starttls:
-                    smtp.starttls()
-                if cfg.username:
-                    smtp.login(cfg.username, cfg.password)
-                smtp.send_message(msg)
+        _send_email(
+            cfg,
+            f"[pdns-ui] Audit: {entry.action} on {entry.resource_type}",
+            "\n".join(body_lines),
+        )
     except Exception as exc:
         logger.warning("Impossible d'envoyer l'email d'audit : %s", exc)
 
