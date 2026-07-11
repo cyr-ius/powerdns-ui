@@ -13,13 +13,13 @@ FastAPI **0.139.0 ou supérieur** · Python **3.14 ou supérieur** · Pydantic *
 ### 1. Architecture des dossiers
 
 backend/app
-├── statics # héberge les assets statiques
-├── routers # héberge les routers ou endpoints
-├── services # les services mis à dispositions des différents routers
-├── config.py # ensemble des variables et contstantes (voir chapitre 4)
-├── main.py # fichier principale
+├── statics     # héberge les assets statiques
+├── routers     # héberge les routers ou endpoints
+├── services    # les services mis à dispositions des différents routers
+├── config.py   # ensemble des variables et contstantes (voir chapitre 4)
+├── main.py     # fichier principale
 ├── security.py # héberge les middlewares de sécurité ratelimiting, csrf, security policies , etc...
-├── depends.py # héberge les dépendances de Fastapi Depend() ou Security()
+├── depends.py  # héberge les dépendances de Fastapi Depend() ou Security()
 
 ### 2. Aucune fuite d'information vers le client
 

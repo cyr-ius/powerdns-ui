@@ -1,6 +1,6 @@
 ---
 name: development-standards
-description: Normes de code (Angular 22 + FastAPI). À utiliser quand on écrit/refactore du code frontend Angular ou backend FastAPI de ce dépôt, ou avant un commit. Charge les détails depuis references/ uniquement au besoin.
+description: Normes de code (Angular + FastAPI). À utiliser quand on écrit/refactore du code frontend Angular ou backend FastAPI de ce dépôt, ou avant un commit. Charge les détails depuis references/ uniquement au besoin.
 ---
 
 # 🎓 Normes de développement
@@ -9,17 +9,17 @@ Index des **règles propres à ce dépôt**. Les détails sont dans `references/
 
 > **Best practices génériques des frameworks** : utiliser les skills dédiés plutôt que dupliquer ici — `angular-developer` (Angular), `fastapi` (FastAPI), `sqlmodel` (couche base de données / ORM).
 
-| Couche      | Techno                      | Version                                          |
-| ----------- | --------------------------- | ------------------------------------------------ |
-| Frontend    | Angular                     | 22 (Signals, Signal Forms, Zoneless, Standalone) |
-| Backend     | FastAPI                     | 0.139.0 (async, Pydantic v2)                     |
-| UI          | Bootstrap / Bootstrap Icons | 5.3.8 / 1.13.1                                   |
-| Runtimes    | Python / Node.js            | 3.14 / 18+                                       |
-| Déploiement | Docker                      | multi-stage, conteneur unique SPA                |
+| Couche      | Techno                      | Version                                           |
+| ----------- | --------------------------- | ------------------------------------------------- |
+| Frontend    | Angular                     | 22+ (Signals, Signal Forms, Zoneless, Standalone) |
+| Backend     | FastAPI                     | 0.139.0+ (async, Pydantic v2)                     |
+| UI          | Bootstrap / Bootstrap Icons | 5.3.8+ / 1.13.1+                                  |
+| Runtimes    | Python / Node.js            | 3.14+ / 22+                                       |
+| Déploiement | Docker                      | multi-stage, conteneur unique SPA                 |
 
 ## Règles essentielles
 
-### Angular 22 → détails : [references/angular.md](references/angular.md)
+### Angular → détails : [references/angular.md](references/angular.md)
 
 - Composants **standalone**, fichiers `.ts` / `.html` / `.css` **séparés** (pas d'inline massif).
 - Control flow `@if` / `@for (… track …)` / `@switch` — **jamais** `*ngIf` / `*ngFor` / `*ngSwitch`.
