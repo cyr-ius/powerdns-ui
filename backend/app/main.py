@@ -54,8 +54,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             # logs so the operator can log in and change it after first login.
             password = secrets.token_urlsafe(16)
             logger.warning(
-                "Generated a one-time random password for the initial '%s' "
-                "account: %s — change it after first login.",
+                "\n%s\n"
+                " Powerdns UI — initial admin account created (first launch)\n"
+                "   username : %s\n"
+                "   password : %s\n"
+                " This password is shown only once. Store it now.\n",
                 settings.admin_username,
                 password,
             )
