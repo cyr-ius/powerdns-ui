@@ -86,7 +86,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(
     title="PowerDNS UI",
-    description="REST API for PowerDNS management",
+    description="API for PowerDNS management",
     lifespan=lifespan,
     version=settings.app_version,
     openapi_url="/api/openapi.json" if settings.swagger_enabled else None,
@@ -134,7 +134,7 @@ async def swagger_ui():
         raise HTTPException(status_code=404, detail="Not Found")
     return get_swagger_ui_html(
         openapi_url="/api/openapi.json",
-        title="Powerdns UI API",
+        title=f"{app.title} - Swagger UI",
         swagger_js_url="/api/static/swagger/swagger-ui-bundle.js",
         swagger_css_url="/api/static/swagger/swagger-ui.css",
         swagger_favicon_url="/favicon.ico",
@@ -143,7 +143,7 @@ async def swagger_ui():
 
 @app.get("/api/health")
 async def health() -> dict:
-    return {"status": "healthy", "app": "Powerdns UI", "version": settings.app_version}
+    return {"status": "healthy", "app": app.title, "version": app.version}
 
 
 # ── Serve Angular SPA (must be last) ─────────────────────────────────────────
