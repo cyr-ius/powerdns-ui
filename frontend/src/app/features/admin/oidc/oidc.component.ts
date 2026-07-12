@@ -24,7 +24,6 @@ export class AdminOidcComponent implements OnInit {
     redirect_uri: "",
     scopes: "openid email profile",
     local_login_disabled: false,
-    logout_enabled: false,
     post_logout_redirect_uri: "",
   };
 
@@ -39,7 +38,6 @@ export class AdminOidcComponent implements OnInit {
     required(p.discovery_url, { message: "The discovery URL is required" });
     required(p.redirect_uri, { message: "The redirect URI is required" });
     disabled(p.local_login_disabled, ({ valueOf }) => valueOf(p.enabled) !== true);
-    disabled(p.logout_enabled, ({ valueOf }) => valueOf(p.enabled) !== true);
   });
 
   async ngOnInit(): Promise<void> {

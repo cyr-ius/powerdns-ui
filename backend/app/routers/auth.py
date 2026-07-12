@@ -45,7 +45,6 @@ async def _get_oidc_cfg(db: AsyncSession) -> dict | None:
             "discovery_url": db_cfg.discovery_url,
             "redirect_uri": db_cfg.redirect_uri,
             "scopes": db_cfg.scopes,
-            "logout_enabled": db_cfg.logout_enabled,
             "post_logout_redirect_uri": db_cfg.post_logout_redirect_uri,
         }
     return None
@@ -110,7 +109,7 @@ async def logout(
 
     logout_url: str | None = None
     cfg = await _get_oidc_cfg(db)
-    if cfg and cfg["logout_enabled"] and (user is None or user.is_oidc):
+    if cfg and cfg["post_logout_redirect_uri"] and (user is None or user.is_oidc):
         id_token = request.cookies.get(settings.id_token_cookie_name)
         try:
             logout_url = await auth_service.build_oidc_logout_url(id_token, cfg)

@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     oidc_redirect_uri: str = ""
     oidc_scopes: str = "openid email profile"
     oidc_local_login_disabled: bool = False
-    # RP-initiated logout: when enabled the browser is sent to the provider's
-    # end_session_endpoint so the SSO session is terminated too, not just ours.
-    oidc_logout_enabled: bool = False
+    # RP-initiated logout: when set, the browser is sent to the provider's
+    # end_session_endpoint on logout so the SSO session is terminated too, not
+    # just ours. Leave empty to only perform the local logout.
     oidc_post_logout_redirect_uri: str = ""
 
     smtp_enabled: bool = False

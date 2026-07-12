@@ -12,5 +12,4 @@ class OidcSettings(SQLModel, table=True):
     redirect_uri: str = Field(default="")
     scopes: str = Field(default="openid email profile")
     local_login_disabled: bool = Field(default=False)
-    logout_enabled: bool = Field(default=False)
     post_logout_redirect_uri: str = Field(default="")

@@ -29,7 +29,6 @@ export interface OidcSettings {
   redirect_uri: string;
   scopes: string;
   local_login_disabled: boolean;
-  logout_enabled: boolean;
   post_logout_redirect_uri: string;
   /** Fields pinned by environment variables — rendered read-only. */
   env_locked?: string[];
