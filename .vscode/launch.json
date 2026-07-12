@@ -18,12 +18,11 @@
     },
     {
       "name": "Angular",
-      "type": "firefox",
+      "type": "chrome",
       "request": "launch",
       "preLaunchTask": "npm: start - frontend",
       "url": "http://localhost:4200/",
-      "webRoot": "${workspaceFolder}/frontend",
-      "tmpDir": "${workspaceFolder}/tmp"
+      "webRoot": "${workspaceFolder}/frontend"
     }
   ]
 }
