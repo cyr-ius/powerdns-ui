@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable, computed, inject, signal } from "@angular/core";
 import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
-import { OidcConfig, User } from "../../shared/models/auth.model";
+import { LogoutResponse, OidcConfig, User } from "../../shared/models/auth.model";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
@@ -57,12 +57,19 @@ export class AuthService {
 
   async logout(): Promise<void> {
     this.sessionExpired.set(false);
+    let logoutUrl: string | null = null;
     try {
-      await firstValueFrom(this.http.post("/api/auth/logout", {}));
+      const resp = await firstValueFrom(this.http.post<LogoutResponse>("/api/auth/logout", {}));
+      logoutUrl = resp?.logout_url ?? null;
     } catch {
       // Ignore network errors: clearing local state is enough to log out.
     }
     this._user.set(null);
+    if (logoutUrl) {
+      // RP-initiated logout: the provider ends the SSO session, then redirects back.
+      window.location.href = logoutUrl;
+      return;
+    }
     await this.router.navigate(["/login"]);
   }
 }

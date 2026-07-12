@@ -4,7 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.cookies import clear_auth_cookie, set_auth_cookie
+from app.config import settings
+from app.cookies import (
+    clear_auth_cookie,
+    clear_id_token_cookie,
+    set_auth_cookie,
+    set_id_token_cookie,
+)
 from app.database import get_db
 from app.dependencies import (
     get_audit_logger,
@@ -16,6 +22,7 @@ from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     LoginRequest,
+    LogoutResponse,
     OidcConfig,
     OidcLoginResponse,
     UserResponse,
@@ -38,6 +45,8 @@ async def _get_oidc_cfg(db: AsyncSession) -> dict | None:
             "discovery_url": db_cfg.discovery_url,
             "redirect_uri": db_cfg.redirect_uri,
             "scopes": db_cfg.scopes,
+            "logout_enabled": db_cfg.logout_enabled,
+            "post_logout_redirect_uri": db_cfg.post_logout_redirect_uri,
         }
     return None
 
@@ -86,19 +95,32 @@ async def login(
     set_auth_cookie(response, request, token)
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/logout", response_model=LogoutResponse)
 async def logout(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db),
-) -> None:
+) -> LogoutResponse:
     # Logging out must always clear the cookie, even when the session has already
     # expired — hence the identity is resolved best-effort rather than required.
     user = await user_from_session_cookie(db, request)
     if user is not None:
         audit = AuditLogger(db, user.username, user.id, get_client_ip(request))
         await audit.success("logout", "auth")
+
+    logout_url: str | None = None
+    cfg = await _get_oidc_cfg(db)
+    if cfg and cfg["logout_enabled"] and (user is None or user.is_oidc):
+        id_token = request.cookies.get(settings.id_token_cookie_name)
+        try:
+            logout_url = await auth_service.build_oidc_logout_url(id_token, cfg)
+        except Exception as exc:  # noqa: BLE001
+            # A provider hiccup must never block the local logout.
+            _log_oidc_error("logout url build", exc)
+
     clear_auth_cookie(response)
+    clear_id_token_cookie(response)
+    return LogoutResponse(logout_url=logout_url)
 
 
 @router.get("/me", response_model=UserResponse)
@@ -226,6 +248,8 @@ async def oidc_callback(
         jwt_token = auth_service.create_access_token({"sub": user.username})
         redirect = RedirectResponse(url="/")
         set_auth_cookie(redirect, request, jwt_token)
+        if tokens.get("id_token"):
+            set_id_token_cookie(redirect, request, tokens["id_token"])
         return redirect
     except Exception as exc:
         _log_oidc_error("user provisioning", exc)

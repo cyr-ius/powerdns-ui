@@ -20,6 +20,12 @@ class OidcLoginResponse(BaseModel):
     authorization_url: str
 
 
+class LogoutResponse(BaseModel):
+    # Set when the provider supports RP-initiated logout: the browser must be
+    # sent there to terminate the SSO session as well.
+    logout_url: str | None = None
+
+
 class OidcConfig(BaseModel):
     enabled: bool
     client_id: str | None = None

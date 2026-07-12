@@ -147,6 +147,31 @@ async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
     return f"{auth_endpoint}?{urlencode(params)}"
 
 
+async def build_oidc_logout_url(
+    id_token: str | None, cfg_override: dict | None = None
+) -> str | None:
+    """Return the provider's RP-initiated logout URL, or None if unavailable.
+
+    The ``id_token_hint`` lets the provider know which session to terminate;
+    without it (cookie lost/expired) most providers reject the request, so we
+    only build the URL when we still hold the token.
+    """
+    cfg = _oidc_cfg(cfg_override)
+    if not id_token:
+        return None
+    try:
+        discovery = await _get_oidc_discovery(cfg)
+    except httpx.HTTPError:
+        return None
+    end_session_endpoint = discovery.get("end_session_endpoint")
+    if not end_session_endpoint:
+        return None
+    params = {"id_token_hint": id_token, "client_id": cfg["client_id"]}
+    if cfg.get("post_logout_redirect_uri"):
+        params["post_logout_redirect_uri"] = cfg["post_logout_redirect_uri"]
+    return f"{end_session_endpoint}?{urlencode(params)}"
+
+
 async def exchange_oidc_code(code: str, cfg_override: dict | None = None) -> dict:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)

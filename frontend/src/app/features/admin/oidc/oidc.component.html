@@ -74,6 +74,30 @@
           </div>
         </div>
 
+        <!-- RP-initiated logout toggle -->
+        <div
+          class="d-flex align-items-center justify-content-between p-3 rounded border mb-4"
+          [class.opacity-80]="!oidcConfig().enabled"
+        >
+          <div>
+            <div class="fw-semibold">
+              {{ "OIDC.LOGOUT" | translate }}
+            </div>
+            <div class="text-muted small">
+              {{ "OIDC.LOGOUT_HELP" | translate }}
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0 ms-3">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              role="switch"
+              id="oidcLogoutEnabled"
+              [formField]="oidcForm.logout_enabled"
+            />
+          </div>
+        </div>
+
         <fieldset [disabled]="!oidcConfig().enabled">
           <div class="mb-3">
             <label class="form-label fw-medium">{{ "OIDC.CLIENT_ID" | translate }}</label>
@@ -140,6 +164,19 @@
                 {{ oidcForm.redirect_uri().errors()[0].message }}
               </div>
             }
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ "OIDC.POST_LOGOUT_REDIRECT_URI" | translate }}</label>
+            <input
+              type="url"
+              class="form-control font-monospace"
+              [formField]="oidcForm.post_logout_redirect_uri"
+              placeholder="https://pdns-ui.example.com/login"
+            />
+            <div class="form-text">
+              {{ "OIDC.POST_LOGOUT_REDIRECT_URI_HELP" | translate }}
+            </div>
           </div>
 
           <div class="mb-4">

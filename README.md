@@ -172,7 +172,7 @@ views=yes
 | Variable                          | Default                             | Description                                                                                       |
 | --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `ADMIN_USERNAME`                  | `admin`                             | Super-administrator account name created at startup                                               |
-| `SECRET_KEY`                      | _(change this)_                     | JWT signing key — **must be changed in production**                                               |
+| `SECRET_KEY`                      | _(empty)_                           | JWT signing key — when unset, a random key is generated and persisted under `DATA_DIR`            |
 | `ACCESS_TOKEN_EXPIRE_MINUTES`     | `480`                               | Token validity duration (minutes)                                                                 |
 | `PDNS_AUTH_API_URL`               | `http://pdns:8081`                  | PowerDNS REST API URL                                                                             |
 | `PDNS_AUTH_API_KEY`               | `change-this-api-key-in-production` | PowerDNS API key (`api-key` in pdns.conf)                                                         |
@@ -194,29 +194,33 @@ views=yes
 
 Both connectors are configured from the settings screens and stored in the database. Any variable below **overrides** the stored value and is shown read-only in the interface, so all or part of the configuration can be pinned from the deployment manifest.
 
-| Variable                    | Default                | Description                                                                   |
-| --------------------------- | ---------------------- | ----------------------------------------------------------------------------- |
-| `OIDC_ENABLED`              | `false`                | Enable OIDC single sign-on                                                    |
-| `OIDC_CLIENT_ID`            | _(empty)_              | OIDC client identifier                                                        |
-| `OIDC_CLIENT_SECRET`        | _(empty)_              | OIDC client secret                                                            |
-| `OIDC_DISCOVERY_URL`        | _(empty)_              | Provider discovery document (`…/.well-known/openid-configuration`)            |
-| `OIDC_REDIRECT_URI`         | _(empty)_              | Callback URL (`https://<host>/api/auth/oidc/callback`)                        |
-| `OIDC_SCOPES`               | `openid email profile` | Requested scopes                                                              |
-| `OIDC_LOCAL_LOGIN_DISABLED` | `false`                | Refuse local accounts; sign-in through OIDC only                              |
-| `SMTP_ENABLED`              | `false`                | Enable e-mail notifications                                                   |
-| `SMTP_HOST`                 | `localhost`            | SMTP relay host                                                               |
-| `SMTP_PORT`                 | `587`                  | SMTP relay port                                                               |
-| `SMTP_USERNAME`             | _(empty)_              | SMTP username (empty = no authentication)                                     |
-| `SMTP_PASSWORD`             | _(empty)_              | SMTP password                                                                 |
-| `SMTP_FROM_EMAIL`           | _(empty)_              | Sender address                                                                |
-| `SMTP_RECIPIENT_EMAIL`      | _(empty)_              | Recipient of the notifications                                                |
-| `SMTP_USE_TLS`              | `false`                | Implicit TLS (SMTPS, usually port 465)                                        |
-| `SMTP_USE_STARTTLS`         | `true`                 | STARTTLS upgrade (usually port 587)                                           |
-| `SMTP_ALERT_ACTIONS`        | _(empty)_              | Comma-separated actions to alert on, e.g. `login,logout,delete` (empty = all) |
-| `SMTP_ALERT_RESOURCES`      | _(empty)_              | Comma-separated resource types to alert on (empty = all)                      |
-| `SMTP_ALERT_STATUSES`       | _(empty)_              | Comma-separated statuses to alert on, e.g. `failure` (empty = all)            |
+| Variable                        | Default                | Description                                                                   |
+| ------------------------------- | ---------------------- | ----------------------------------------------------------------------------- |
+| `OIDC_ENABLED`                  | `false`                | Enable OIDC single sign-on                                                    |
+| `OIDC_CLIENT_ID`                | _(empty)_              | OIDC client identifier                                                        |
+| `OIDC_CLIENT_SECRET`            | _(empty)_              | OIDC client secret                                                            |
+| `OIDC_DISCOVERY_URL`            | _(empty)_              | Provider discovery document (`…/.well-known/openid-configuration`)            |
+| `OIDC_REDIRECT_URI`             | _(empty)_              | Callback URL (`https://<host>/api/auth/oidc/callback`)                        |
+| `OIDC_SCOPES`                   | `openid email profile` | Requested scopes                                                              |
+| `OIDC_LOCAL_LOGIN_DISABLED`     | `false`                | Refuse local accounts; sign-in through OIDC only                              |
+| `OIDC_LOGOUT_ENABLED`           | `false`                | RP-initiated logout: also end the session at the provider on sign-out         |
+| `OIDC_POST_LOGOUT_REDIRECT_URI` | _(empty)_              | Page the provider redirects to after logout (e.g. `https://<host>/login`)     |
+| `SMTP_ENABLED`                  | `false`                | Enable e-mail notifications                                                   |
+| `SMTP_HOST`                     | `localhost`            | SMTP relay host                                                               |
+| `SMTP_PORT`                     | `587`                  | SMTP relay port                                                               |
+| `SMTP_USERNAME`                 | _(empty)_              | SMTP username (empty = no authentication)                                     |
+| `SMTP_PASSWORD`                 | _(empty)_              | SMTP password                                                                 |
+| `SMTP_FROM_EMAIL`               | _(empty)_              | Sender address                                                                |
+| `SMTP_RECIPIENT_EMAIL`          | _(empty)_              | Recipient of the notifications                                                |
+| `SMTP_USE_TLS`                  | `false`                | Implicit TLS (SMTPS, usually port 465)                                        |
+| `SMTP_USE_STARTTLS`             | `true`                 | STARTTLS upgrade (usually port 587)                                           |
+| `SMTP_ALERT_ACTIONS`            | _(empty)_              | Comma-separated actions to alert on, e.g. `login,logout,delete` (empty = all) |
+| `SMTP_ALERT_RESOURCES`          | _(empty)_              | Comma-separated resource types to alert on (empty = all)                      |
+| `SMTP_ALERT_STATUSES`           | _(empty)_              | Comma-separated statuses to alert on, e.g. `failure` (empty = all)            |
 
 > `OIDC_LOCAL_LOGIN_DISABLED` is only honoured while at least one **active OIDC administrator** exists — the application refuses any change that would lock everyone out. An OIDC identity can never take over an existing local account.
+
+> `OIDC_LOGOUT_ENABLED` requires the provider to advertise an `end_session_endpoint` in its discovery document. The `id_token` received at sign-in is kept in an HttpOnly cookie and replayed as `id_token_hint`; `OIDC_POST_LOGOUT_REDIRECT_URI` must be registered with the provider.
 
 The Mail settings screen offers a **Send a test e-mail** button that probes the relay with the settings as displayed, without saving them first.
 

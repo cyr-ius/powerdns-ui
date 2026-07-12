@@ -81,6 +81,8 @@ class OidcSettingsResponse(BaseModel):
     redirect_uri: str
     scopes: str
     local_login_disabled: bool = False
+    logout_enabled: bool = False
+    post_logout_redirect_uri: str = ""
     # Fields pinned by environment variables: read-only in the settings screen.
     env_locked: list[str] = []
 
@@ -93,6 +95,8 @@ class OidcSettingsUpdate(BaseModel):
     redirect_uri: str = ""
     scopes: str = "openid email profile"
     local_login_disabled: bool = False
+    logout_enabled: bool = False
+    post_logout_redirect_uri: str = ""
 
 
 # ── Record Types ──────────────────────────────────────────────────────────────

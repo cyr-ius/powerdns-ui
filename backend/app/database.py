@@ -61,6 +61,18 @@ async def init_db() -> None:
                     "ALTER TABLE oidcsettings ADD COLUMN local_login_disabled BOOLEAN NOT NULL DEFAULT 0"
                 )
             )
+        if "logout_enabled" not in oidc_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE oidcsettings ADD COLUMN logout_enabled BOOLEAN NOT NULL DEFAULT 0"
+                )
+            )
+        if "post_logout_redirect_uri" not in oidc_columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE oidcsettings ADD COLUMN post_logout_redirect_uri VARCHAR NOT NULL DEFAULT ''"
+                )
+            )
         result = await conn.execute(text("PRAGMA table_info(useraccount)"))
         ua_columns = {row[1] for row in result.fetchall()}
         if "role" not in ua_columns:

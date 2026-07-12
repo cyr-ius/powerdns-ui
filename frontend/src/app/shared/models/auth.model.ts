@@ -13,3 +13,8 @@ export interface OidcConfig {
   client_id: string | null;
   local_login_disabled: boolean;
 }
+
+export interface LogoutResponse {
+  /** Provider end_session URL when RP-initiated logout applies. */
+  logout_url: string | null;
+}
