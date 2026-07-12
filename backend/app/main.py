@@ -28,6 +28,7 @@ from app.routers import (
     networks,
     pdns,
     server,
+    tokens,
     tsigkeys,
     views,
 )
@@ -111,6 +112,7 @@ if settings.rate_limit_enabled:
 app.include_router(acme.router)
 app.include_router(acme_api_router)
 app.include_router(acme_keys.router)
+app.include_router(tokens.router)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)

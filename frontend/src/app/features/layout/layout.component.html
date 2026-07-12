@@ -253,18 +253,16 @@
           <span>{{ "NAV.AUDIT_JOURNAL" | translate }}</span>
         </a>
 
-        @if (appInfo.apiKeysEnabled()) {
-          <a
-            class="pdns-sidenav-link"
-            routerLink="/acme-keys"
-            routerLinkActive="active"
-            [title]="'NAV.API_KEYS' | translate"
-            (click)="closeSidebar()"
-          >
-            <i class="bi bi-key"></i>
-            <span>{{ "NAV.API_KEYS" | translate }}</span>
-          </a>
-        }
+        <a
+          class="pdns-sidenav-link"
+          routerLink="/acme-keys"
+          routerLinkActive="active"
+          [title]="'NAV.ACME_KEYS' | translate"
+          (click)="closeSidebar()"
+        >
+          <i class="bi bi-key"></i>
+          <span>{{ "NAV.ACME_KEYS" | translate }}</span>
+        </a>
       }
 
       <p class="pdns-sidenav-label mt-3">{{ "NAV.HELP" | translate }}</p>

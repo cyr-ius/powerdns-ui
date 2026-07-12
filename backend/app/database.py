@@ -20,6 +20,7 @@ from app.models import (  # noqa: F401, E402
     record_type,
     smtp_settings,
     syslog_settings,
+    token,
     user,
     zone_record_type,
 )
@@ -59,12 +60,6 @@ async def init_db() -> None:
             await conn.execute(
                 text(
                     "ALTER TABLE oidcsettings ADD COLUMN local_login_disabled BOOLEAN NOT NULL DEFAULT 0"
-                )
-            )
-        if "logout_enabled" not in oidc_columns:
-            await conn.execute(
-                text(
-                    "ALTER TABLE oidcsettings ADD COLUMN logout_enabled BOOLEAN NOT NULL DEFAULT 0"
                 )
             )
         if "post_logout_redirect_uri" not in oidc_columns:
@@ -158,6 +153,45 @@ async def init_db() -> None:
                     "ON acmeapikey (key_hash)"
                 )
             )
+
+        # Personal access tokens used to live in acmeapikey (key_type='api').
+        # Move any such row into the dedicated personalaccesstoken table so
+        # existing tokens keep working, then drop them from acmeapikey.
+        legacy_pat_rows = (
+            await conn.execute(
+                text(
+                    "SELECT id, user_id, name, key_prefix, key_hash, comment, "
+                    "created_at FROM acmeapikey WHERE key_type = 'api' "
+                    "AND user_id IS NOT NULL"
+                )
+            )
+        ).fetchall()
+        for (
+            row_id,
+            user_id,
+            name,
+            key_prefix,
+            key_hash,
+            comment,
+            created_at,
+        ) in legacy_pat_rows:
+            await conn.execute(
+                text(
+                    "INSERT INTO personalaccesstoken (user_id, name, token_prefix, "
+                    "token_hash, comment, created_at) VALUES (:user_id, :name, "
+                    ":token_prefix, :token_hash, :comment, :created_at)"
+                ),
+                {
+                    "user_id": user_id,
+                    "name": name,
+                    "token_prefix": key_prefix,
+                    "token_hash": key_hash,
+                    "comment": comment,
+                    "created_at": created_at,
+                },
+            )
+        if legacy_pat_rows:
+            await conn.execute(text("DELETE FROM acmeapikey WHERE key_type = 'api'"))
 
         result = await conn.execute(text("PRAGMA table_info(smtpsettings)"))
         smtp_columns = {row[1] for row in result.fetchall()}

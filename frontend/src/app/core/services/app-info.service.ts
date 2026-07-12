@@ -48,11 +48,16 @@ export class AppInfoService {
     return latest.tag_name.replace(/^v/, "") !== info.version;
   });
 
-  private loaded = false;
+  private inFlight: Promise<void> | null = null;
 
+  /** Fetch the metadata once; a failed attempt is retried by the next caller. */
   async load(): Promise<void> {
-    if (this.loaded) return;
-    this.loaded = true;
+    if (this.appInfo()) return;
+    this.inFlight ??= this.fetch().finally(() => (this.inFlight = null));
+    await this.inFlight;
+  }
+
+  private async fetch(): Promise<void> {
     try {
       const info = await firstValueFrom(this.http.get<AppInfo>("/api/info"));
       this.appInfo.set(info);
@@ -67,7 +72,7 @@ export class AppInfoService {
         // GitHub rate limit or no release
       }
     } catch {
-      // backend unavailable
+      // backend unavailable — appInfo stays null so a later view retries
     } finally {
       this.releaseCheckDone.set(true);
     }

@@ -8,7 +8,6 @@ export interface AcmeApiKey {
   key_prefix: string;
   zones: string[];
   zone_name: string | null;
-  key_type: "acme" | "api";
   comment: string | null;
   created_at: string;
   username?: string;
@@ -23,36 +22,12 @@ export interface AcmeApiKeyCreated extends AcmeApiKey {
 export class AcmeKeysService {
   private readonly http = inject(HttpClient);
 
-  /** Liste les clés API (key_type=api) de l'utilisateur courant. */
-  listKeys(): Promise<AcmeApiKey[]> {
-    return firstValueFrom(this.http.get<AcmeApiKey[]>("/api/acme-keys"));
-  }
-
-  /** Liste toutes les clés (admin uniquement). */
+  /** Liste toutes les clés ACME, tous utilisateurs/zones confondus (admin uniquement). */
   listAllKeys(): Promise<AcmeApiKey[]> {
     return firstValueFrom(this.http.get<AcmeApiKey[]>("/api/acme-keys/all"));
   }
 
-  /** Crée une clé API (key_type=api) pour l'utilisateur courant. */
-  createKey(name: string, keyType: "acme" | "api", key?: string, comment?: string): Promise<AcmeApiKeyCreated> {
-    return firstValueFrom(
-      this.http.post<AcmeApiKeyCreated>("/api/acme-keys", {
-        name,
-        key_type: keyType,
-        key: key || undefined,
-        comment: comment || undefined,
-      }),
-    );
-  }
-
-  updateKey(keyId: number, comment: string | null): Promise<AcmeApiKey> {
-    return firstValueFrom(this.http.patch<AcmeApiKey>(`/api/acme-keys/${keyId}`, { comment }));
-  }
-
-  updateZones(keyId: number, zones: string[]): Promise<AcmeApiKey> {
-    return firstValueFrom(this.http.put<AcmeApiKey>(`/api/acme-keys/${keyId}/zones`, { zones }));
-  }
-
+  /** Supprime une clé ACME, quel qu'en soit le propriétaire (admin uniquement). */
   deleteKey(keyId: number): Promise<unknown> {
     return firstValueFrom(this.http.delete(`/api/acme-keys/${keyId}`));
   }

@@ -6,7 +6,7 @@ import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 import { AppInfoService } from "../../core/services/app-info.service";
 import { AuthService } from "../../core/services/auth.service";
-import { AcmeApiKey, AcmeKeysService } from "../../core/services/acme-keys.service";
+import { PersonalAccessToken, TokensService } from "../../core/services/tokens.service";
 import { Theme, ThemeService } from "../../core/services/theme.service";
 import { TranslatePipe, TranslateService } from "@ngx-translate/core";
 
@@ -24,7 +24,7 @@ export class ProfileComponent implements OnInit {
   readonly appInfoSvc = inject(AppInfoService);
   private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
-  private readonly acmeKeysSvc = inject(AcmeKeysService);
+  private readonly tokensSvc = inject(TokensService);
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
   readonly activeTab = signal<Tab>("info");
@@ -88,8 +88,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  // ── API Keys (REST) ───────────────────────────────────────────────────────
-  readonly keys = signal<AcmeApiKey[]>([]);
+  // ── Personal Access Tokens (PAT) ──────────────────────────────────────────
+  readonly keys = signal<PersonalAccessToken[]>([]);
   readonly isLoadingKeys = signal(false);
   readonly keysError = signal<string | null>(null);
 
@@ -102,11 +102,11 @@ export class ProfileComponent implements OnInit {
 
   readonly createModel = signal({ name: "", secret: "", comment: "" });
   readonly createForm = form(this.createModel, (s) => {
-    required(s.name, { message: "APIKEYS.NAME_REQUIRED" });
+    required(s.name, { message: "TOKENS.NAME_REQUIRED" });
   });
 
   // ── Edit modal ────────────────────────────────────────────────────────────
-  readonly editingKeyData = signal<AcmeApiKey | null>(null);
+  readonly editingKeyData = signal<PersonalAccessToken | null>(null);
   readonly isEditing = signal(false);
   readonly editError = signal<string | null>(null);
   readonly editModel = signal({ comment: "" });
@@ -116,9 +116,9 @@ export class ProfileComponent implements OnInit {
     this.isLoadingKeys.set(true);
     this.keysError.set(null);
     try {
-      this.keys.set(await this.acmeKeysSvc.listKeys());
+      this.keys.set(await this.tokensSvc.listTokens());
     } catch {
-      this.keysError.set("APIKEYS.LOAD_ERROR");
+      this.keysError.set("TOKENS.LOAD_ERROR");
     } finally {
       this.isLoadingKeys.set(false);
     }
@@ -145,17 +145,16 @@ export class ProfileComponent implements OnInit {
       this.createError.set(null);
       try {
         const { name, secret, comment } = this.createModel();
-        const created = await this.acmeKeysSvc.createKey(
+        const created = await this.tokensSvc.createToken(
           name,
-          "api",
           secret.trim() || undefined,
           comment.trim() || undefined,
         );
         this.showCreateModal.set(false);
         this.keys.update((list) => [...list, created]);
-        this.createdKey.set(created.key);
+        this.createdKey.set(created.token);
       } catch {
-        this.createError.set("APIKEYS.CREATE_ERROR");
+        this.createError.set("TOKENS.CREATE_ERROR");
       } finally {
         this.isCreating.set(false);
       }
@@ -170,7 +169,7 @@ export class ProfileComponent implements OnInit {
     setTimeout(() => this.copied.set(false), 2000);
   }
 
-  openEditModal(key: AcmeApiKey): void {
+  openEditModal(key: PersonalAccessToken): void {
     this.editingKeyData.set(key);
     this.editModel.set({ comment: key.comment ?? "" });
     this.editError.set(null);
@@ -188,28 +187,28 @@ export class ProfileComponent implements OnInit {
       this.editError.set(null);
       try {
         const { comment } = this.editModel();
-        const updated = await this.acmeKeysSvc.updateKey(key.id, comment.trim() || null);
+        const updated = await this.tokensSvc.updateToken(key.id, comment.trim() || null);
         this.keys.update((list) => list.map((k) => (k.id === updated.id ? updated : k)));
         this.editingKeyData.set(null);
       } catch {
-        this.editError.set("APIKEYS.EDIT_ERROR");
+        this.editError.set("TOKENS.EDIT_ERROR");
       } finally {
         this.isEditing.set(false);
       }
     });
   }
 
-  async deleteKey(key: AcmeApiKey): Promise<void> {
-    if (!confirm(`Supprimer la clé "${key.name}" ?`)) return;
+  async deleteKey(key: PersonalAccessToken): Promise<void> {
+    if (!confirm(`Supprimer le jeton "${key.name}" ?`)) return;
     try {
-      await this.acmeKeysSvc.deleteKey(key.id);
+      await this.tokensSvc.deleteToken(key.id);
       this.keys.update((list) => list.filter((k) => k.id !== key.id));
     } catch {
-      this.keysError.set("APIKEYS.DELETE_ERROR");
+      this.keysError.set("TOKENS.DELETE_ERROR");
     }
   }
 
-  trackById(_: number, key: AcmeApiKey): number {
+  trackById(_: number, key: PersonalAccessToken): number {
     return key.id;
   }
 

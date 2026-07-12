@@ -35,7 +35,12 @@ from app.services.pdns_service import pdns_request, pdns_request_root
 router = APIRouter(prefix="/api/v1", tags=["acme-pdns-compat"])
 router_api = APIRouter(prefix="/api", tags=["acme-pdns-compat"])
 
-_API_KEY_HEADER = APIKeyHeader(name="X-API-Key", auto_error=True)
+_API_KEY_HEADER = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=True,
+    scheme_name="AcmeApiKey",
+    description="ACME/certbot-dns-pdns API key sent as 'X-API-Key: <key>'",
+)
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.debug("ACME PDNS compatibility router initialized")
 

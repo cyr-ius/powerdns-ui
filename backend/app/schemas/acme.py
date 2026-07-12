@@ -1,14 +1,6 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel
-
-
-class AcmeApiKeyCreate(BaseModel):
-    name: str
-    key: str | None = None
-    key_type: Literal["acme", "api"] = "acme"
-    comment: str | None = None
 
 
 class AcmeApiKeyZoneCreate(BaseModel):
@@ -27,7 +19,6 @@ class AcmeApiKeyResponse(BaseModel):
     key_prefix: str
     zones: list[str]
     zone_name: str | None
-    key_type: str
     comment: str | None
     created_at: datetime
 

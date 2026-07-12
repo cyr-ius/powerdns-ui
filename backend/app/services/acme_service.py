@@ -24,31 +24,6 @@ def _decode_zones(key: AcmeApiKey) -> list[str]:
         return []
 
 
-async def create_key(
-    db: AsyncSession,
-    user_id: int,
-    name: str,
-    raw: str | None = None,
-    key_type: str = "acme",
-    comment: str | None = None,
-) -> tuple[AcmeApiKey, str]:
-    if not raw:
-        prefix = "apk_" if key_type == "api" else "ak_"
-        raw = prefix + secrets.token_urlsafe(32)
-    key = AcmeApiKey(
-        user_id=user_id,
-        name=name,
-        key_prefix=raw[:11],
-        key_hash=_hash(raw),
-        key_type=key_type,
-        comment=comment,
-    )
-    db.add(key)
-    await db.commit()
-    await db.refresh(key)
-    return key, raw
-
-
 async def create_zone_key(
     db: AsyncSession,
     zone_name: str,
@@ -77,17 +52,6 @@ async def create_zone_key(
     return key, raw
 
 
-async def list_keys(db: AsyncSession, user_id: int) -> list[AcmeApiKey]:
-    """Liste les clés API (key_type=api) de l'utilisateur. Les clés ACME appartiennent aux zones."""
-    result = await db.exec(  # type: ignore[attr-defined]
-        select(AcmeApiKey).where(
-            AcmeApiKey.user_id == user_id,
-            AcmeApiKey.key_type == "api",
-        )
-    )
-    return list(result.all())
-
-
 async def list_zone_keys(db: AsyncSession, zone_name: str) -> list[AcmeApiKey]:
     """Liste les clés ACME d'une zone spécifique."""
     normalized = zone_name.rstrip(".") + "."
@@ -98,13 +62,6 @@ async def list_zone_keys(db: AsyncSession, zone_name: str) -> list[AcmeApiKey]:
         )
     )
     return list(result.all())
-
-
-async def get_key(db: AsyncSession, key_id: int, user_id: int) -> AcmeApiKey | None:
-    result = await db.exec(  # type: ignore[attr-defined]
-        select(AcmeApiKey).where(AcmeApiKey.id == key_id, AcmeApiKey.user_id == user_id)
-    )
-    return result.first()
 
 
 async def get_zone_key(
@@ -122,19 +79,6 @@ async def get_zone_key(
     return result.first()
 
 
-async def update_key(
-    db: AsyncSession, key_id: int, user_id: int, comment: str | None
-) -> AcmeApiKey | None:
-    key = await get_key(db, key_id, user_id)
-    if key is None:
-        return None
-    key.comment = comment
-    db.add(key)
-    await db.commit()
-    await db.refresh(key)
-    return key
-
-
 async def update_zone_key(
     db: AsyncSession, key_id: int, zone_name: str, comment: str | None
 ) -> AcmeApiKey | None:
@@ -147,15 +91,6 @@ async def update_zone_key(
     await db.commit()
     await db.refresh(key)
     return key
-
-
-async def delete_key(db: AsyncSession, key_id: int, user_id: int) -> bool:
-    key = await get_key(db, key_id, user_id)
-    if key is None:
-        return False
-    await db.delete(key)
-    await db.commit()
-    return True
 
 
 async def delete_zone_key(db: AsyncSession, key_id: int, zone_name: str) -> bool:
@@ -204,7 +139,6 @@ def key_to_response(key: AcmeApiKey) -> dict:
         "key_prefix": key.key_prefix,
         "zones": _decode_zones(key),
         "zone_name": key.zone_name,
-        "key_type": key.key_type,
         "comment": key.comment,
         "created_at": key.created_at,
     }

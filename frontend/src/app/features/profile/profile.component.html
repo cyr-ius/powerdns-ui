@@ -32,7 +32,7 @@
   @if (appInfoSvc.apiKeysEnabled()) {
     <li class="nav-item">
       <button class="nav-link" [class.active]="activeTab() === 'apikeys'" (click)="activeTab.set('apikeys')">
-        <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_API_KEYS" | translate }}
+        <i class="bi bi-key me-1"></i>{{ "PROFILE.TAB_TOKENS" | translate }}
         @if (keys().length > 0) {
           <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
         }
@@ -318,10 +318,10 @@
   </div>
 }
 
-<!-- ══ Tab: API Keys (REST) ══════════════════════════════════════════════ -->
+<!-- ══ Tab: Personal Access Tokens (PAT) ═══════════════════════════════════ -->
 @if (activeTab() === "apikeys" && appInfoSvc.apiKeysEnabled()) {
   <div class="d-flex align-items-center justify-content-between mb-3">
-    <p class="text-muted small mb-0">{{ "APIKEYS.SUBTITLE_API" | translate }}</p>
+    <p class="text-muted small mb-0">{{ "TOKENS.SUBTITLE" | translate }}</p>
     <div class="d-flex gap-2">
       @if (appInfoSvc.swaggerEnabled()) {
         <a href="/api/docs" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
@@ -329,7 +329,7 @@
         </a>
       }
       <button class="btn btn-primary btn-sm" (click)="openCreateModal()">
-        <i class="bi bi-plus-lg me-1"></i>{{ "APIKEYS.NEW_KEY" | translate }}
+        <i class="bi bi-plus-lg me-1"></i>{{ "TOKENS.NEW_TOKEN" | translate }}
       </button>
     </div>
   </div>
@@ -349,22 +349,22 @@
       @if (isLoadingKeys()) {
         <div class="text-center py-4">
           <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.LOADING" | translate }}</p>
+          <p class="text-muted mt-2 mb-0 small">{{ "TOKENS.LOADING" | translate }}</p>
         </div>
       } @else if (keys().length === 0) {
         <div class="text-center py-4">
           <i class="bi bi-key text-muted" style="font-size: 2rem"></i>
-          <p class="text-muted mt-2 mb-0 small">{{ "APIKEYS.NO_API_KEYS" | translate }}</p>
-          <p class="text-muted small">{{ "APIKEYS.NO_API_KEYS_HELP" | translate }}</p>
+          <p class="text-muted mt-2 mb-0 small">{{ "TOKENS.NO_TOKENS" | translate }}</p>
+          <p class="text-muted small">{{ "TOKENS.NO_TOKENS_HELP" | translate }}</p>
         </div>
       } @else {
         <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>{{ "COMMON.NAME" | translate }}</th>
-              <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
-              <th>{{ "APIKEYS.COMMENT" | translate }}</th>
-              <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+              <th>{{ "TOKENS.COL_PREFIX" | translate }}</th>
+              <th>{{ "TOKENS.COMMENT" | translate }}</th>
+              <th>{{ "TOKENS.COL_CREATED" | translate }}</th>
               <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
             </tr>
           </thead>
@@ -372,7 +372,7 @@
             @for (key of keys(); track trackById($index, key)) {
               <tr>
                 <td class="fw-medium">{{ key.name }}</td>
-                <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
+                <td class="font-monospace small text-muted">{{ key.token_prefix }}…</td>
                 <td class="small text-muted">
                   @if (key.comment) {
                     <span [title]="key.comment">{{ key.comment }}</span>
@@ -386,7 +386,7 @@
                     <button
                       class="btn btn-sm btn-outline-secondary"
                       (click)="openEditModal(key)"
-                      [title]="'APIKEYS.EDIT_TITLE' | translate"
+                      [title]="'TOKENS.EDIT_TITLE' | translate"
                     >
                       <i class="bi bi-pencil"></i>
                     </button>
@@ -416,7 +416,7 @@
       <div class="modal-content shadow">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-key me-2 text-primary"></i>{{ "APIKEYS.CREATE_TITLE" | translate }}
+            <i class="bi bi-key me-2 text-primary"></i>{{ "TOKENS.CREATE_TITLE" | translate }}
           </h5>
           <button type="button" class="btn-close" (click)="closeCreateModal()"></button>
         </div>
@@ -441,33 +441,33 @@
               @if (createForm.name().touched() && createForm.name().errors().length) {
                 <div class="invalid-feedback">{{ createForm.name().errors()[0].message | translate }}</div>
               }
-              <div class="form-text">{{ "APIKEYS.NAME_HELP" | translate }}</div>
+              <div class="form-text">{{ "TOKENS.NAME_HELP" | translate }}</div>
             </div>
             <div class="mb-3">
               <label class="form-label fw-medium">
-                {{ "APIKEYS.SECRET" | translate }}
-                <span class="text-muted small">{{ "APIKEYS.SECRET_OPTIONAL" | translate }}</span>
+                {{ "TOKENS.SECRET" | translate }}
+                <span class="text-muted small">{{ "TOKENS.SECRET_OPTIONAL" | translate }}</span>
               </label>
               <input
                 type="text"
                 class="form-control font-monospace"
-                [placeholder]="'APIKEYS.SECRET_PLACEHOLDER' | translate"
+                [placeholder]="'TOKENS.SECRET_PLACEHOLDER' | translate"
                 [formField]="createForm.secret"
               />
-              <div class="form-text">{{ "APIKEYS.SECRET_HELP" | translate }}</div>
+              <div class="form-text">{{ "TOKENS.SECRET_HELP" | translate }}</div>
             </div>
             <div class="mb-0">
               <label class="form-label fw-medium">
-                {{ "APIKEYS.COMMENT" | translate }}
-                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span>
+                {{ "TOKENS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "TOKENS.COMMENT_OPTIONAL" | translate }}</span>
               </label>
               <textarea
                 class="form-control"
                 rows="2"
-                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [placeholder]="'TOKENS.COMMENT_PLACEHOLDER' | translate"
                 [formField]="createForm.comment"
               ></textarea>
-              <div class="form-text">{{ "APIKEYS.COMMENT_HELP" | translate }}</div>
+              <div class="form-text">{{ "TOKENS.COMMENT_HELP" | translate }}</div>
             </div>
           </div>
           <div class="modal-footer">
@@ -500,25 +500,23 @@
       <div class="modal-content shadow">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-key me-2 text-success"></i>{{ "APIKEYS.KEY_CREATED_TITLE" | translate }}
+            <i class="bi bi-key me-2 text-success"></i>{{ "TOKENS.TOKEN_CREATED_TITLE" | translate }}
           </h5>
         </div>
         <div class="modal-body">
           <div class="alert alert-warning py-2 small">
-            <i class="bi bi-exclamation-triangle me-1"></i>{{ "APIKEYS.KEY_ONCE_WARNING" | translate }}
+            <i class="bi bi-exclamation-triangle me-1"></i>{{ "TOKENS.TOKEN_ONCE_WARNING" | translate }}
           </div>
-          <label class="form-label fw-medium">{{ "APIKEYS.YOUR_KEY" | translate }}</label>
+          <label class="form-label fw-medium">{{ "TOKENS.YOUR_TOKEN" | translate }}</label>
           <div class="input-group">
             <input type="text" class="form-control font-monospace" [value]="createdKey()" readonly />
             <button class="btn btn-outline-secondary" type="button" (click)="copyKey()">
               <i class="bi" [class]="copied() ? 'bi-check-lg text-success' : 'bi-clipboard'"></i>
             </button>
           </div>
-          <div class="form-text mt-2">{{ "APIKEYS.API_CREDENTIALS_HINT" | translate }}</div>
+          <div class="form-text mt-2">{{ "TOKENS.API_CREDENTIALS_HINT" | translate }}</div>
           <pre class="mt-2 p-2 rounded bg-body-secondary small font-monospace">
-curl -H "Authorization: Bearer {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones
-curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones</pre
-          >
+curl -H "Authorization: Bearer {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api/zones</pre>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" (click)="closeCreatedKeyModal()">
@@ -538,7 +536,7 @@ curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api
       <div class="modal-content shadow">
         <div class="modal-header">
           <h5 class="modal-title">
-            <i class="bi bi-pencil me-2 text-primary"></i>{{ "APIKEYS.EDIT_TITLE" | translate }}
+            <i class="bi bi-pencil me-2 text-primary"></i>{{ "TOKENS.EDIT_TITLE" | translate }}
           </h5>
           <button type="button" class="btn-close" (click)="closeEditModal()"></button>
         </div>
@@ -550,16 +548,16 @@ curl -H "X-API-Key: {{ createdKey() }}" https://&lt;your-powerdns-ui-url&gt;/api
             }
             <div class="mb-1">
               <label class="form-label fw-medium">
-                {{ "APIKEYS.COMMENT" | translate }}
-                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span>
+                {{ "TOKENS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "TOKENS.COMMENT_OPTIONAL" | translate }}</span>
               </label>
               <textarea
                 class="form-control"
                 rows="3"
-                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [placeholder]="'TOKENS.COMMENT_PLACEHOLDER' | translate"
                 [formField]="editForm.comment"
               ></textarea>
-              <div class="form-text">{{ "APIKEYS.COMMENT_HELP" | translate }}</div>
+              <div class="form-text">{{ "TOKENS.COMMENT_HELP" | translate }}</div>
             </div>
           </div>
           <div class="modal-footer">

@@ -127,7 +127,6 @@ services:
 volumes:
   powerdns_data:
   powerdns-ui_data:
-
 ```
 
 ```bash
@@ -226,14 +225,15 @@ The Mail settings screen offers a **Send a test e-mail** button that probes the 
 
 ## Personal Access Tokens (PAT)
 
-Users create personal access tokens from their profile. A token authenticates REST calls in two ways:
+Users create personal access tokens from their profile (`/api/tokens`). A token authenticates REST calls as an HTTP Bearer credential:
 
 ```bash
-curl -H "Authorization: Bearer <token>" https://<host>/api/zones   # HTTP Bearer
-curl -H "X-API-Key: <token>"            https://<host>/api/zones   # legacy header
+curl -H "Authorization: Bearer <token>" https://<host>/api/zones
 ```
 
-Both schemes are declared in the OpenAPI document, so the Swagger UI (`/api/docs`) can authorise its requests with a token. Setting `API_KEYS_ENABLED=false` refuses tokens on every endpoint and hides token management from the interface.
+This scheme is declared in the OpenAPI document, so the Swagger UI (`/api/docs`) can authorise its requests with a token. Setting `API_KEYS_ENABLED=false` refuses tokens on every endpoint and hides token management from the interface.
+
+ACME keys (for the certbot-dns-pdns compatibility layer used in DNS-01 challenges) are a separate mechanism: they are scoped to a zone, created from that zone's page, and still authenticate via the `X-API-Key` header — that header is not used anywhere else in the API.
 
 ## Rate Limiting & Reverse Proxy
 

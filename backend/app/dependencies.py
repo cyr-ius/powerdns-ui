@@ -1,5 +1,5 @@
 from fastapi import Depends, HTTPException, Request, Security, status
-from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,14 +7,8 @@ from app.client_ip import get_client_ip
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.services import acme_service, auth_service
+from app.services import auth_service, token_service
 from app.services.audit_service import AuditLogger
-
-api_key_header = APIKeyHeader(
-    name="X-API-Key",
-    auto_error=False,
-    description="Personal access token (PAT) issued from the user profile",
-)
 
 bearer_scheme = HTTPBearer(
     auto_error=False,
@@ -23,15 +17,15 @@ bearer_scheme = HTTPBearer(
 )
 
 
-async def _user_from_pat(db: AsyncSession, token: str) -> User | None:
-    key = await acme_service.verify_key(db, token)
-    if key is None or key.key_type != "api":
+async def _user_from_pat(db: AsyncSession, raw_token: str) -> User | None:
+    token = await token_service.verify_token(db, raw_token)
+    if token is None:
         return None
-    user = await db.get(User, key.user_id)
+    user = await db.get(User, token.user_id)
     return user if user is not None and user.is_active else None
 
 
-def require_api_keys_enabled() -> None:
+def require_tokens_enabled() -> None:
     """Guard for the PAT management endpoints when API_KEYS_ENABLED=false."""
     if not settings.api_keys_enabled:
         raise HTTPException(
@@ -66,7 +60,6 @@ async def user_from_session_cookie(db: AsyncSession, request: Request) -> User |
 
 async def get_current_user(
     request: Request,
-    x_api_key: str | None = Security(api_key_header),
     credentials: HTTPAuthorizationCredentials | None = Security(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
@@ -79,18 +72,11 @@ async def get_current_user(
     if user is not None:
         return user
 
-    # Fall back to a personal access token, accepted either as an
-    # "Authorization: Bearer <token>" header or the legacy X-API-Key header.
-    if settings.api_keys_enabled:
-        for token in (
-            credentials.credentials if credentials else None,
-            x_api_key,
-        ):
-            if not token:
-                continue
-            user = await _user_from_pat(db, token)
-            if user is not None:
-                return user
+    # Fall back to a personal access token sent as "Authorization: Bearer <token>".
+    if settings.api_keys_enabled and credentials is not None:
+        user = await _user_from_pat(db, credentials.credentials)
+        if user is not None:
+            return user
 
     raise exc
 

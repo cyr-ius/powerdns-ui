@@ -31,7 +31,6 @@
           <tr>
             <th>{{ "APIKEYS.COL_OWNER" | translate }}</th>
             <th>{{ "COMMON.NAME" | translate }}</th>
-            <th>{{ "APIKEYS.COL_TYPE" | translate }}</th>
             <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
             <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
             <th>{{ "APIKEYS.COMMENT" | translate }}</th>
@@ -52,27 +51,16 @@
                 }
               </td>
               <td class="fw-medium">{{ key.name }}</td>
-              <td>
-                @if (key.key_type === "acme") {
-                  <span class="badge bg-primary-subtle text-primary-emphasis">ACME</span>
-                } @else {
-                  <span class="badge bg-success-subtle text-success-emphasis">API</span>
-                }
-              </td>
               <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
               <td>
-                @if (key.key_type === "acme") {
-                  @if (key.zones.length === 0) {
-                    <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
-                  } @else {
-                    <div class="d-flex flex-wrap gap-1">
-                      @for (z of key.zones; track z) {
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
-                      }
-                    </div>
-                  }
+                @if (key.zones.length === 0) {
+                  <span class="text-muted small fst-italic">{{ "APIKEYS.NO_ZONES" | translate }}</span>
                 } @else {
-                  <span class="text-muted small">—</span>
+                  <div class="d-flex flex-wrap gap-1">
+                    @for (z of key.zones; track z) {
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ z }}</span>
+                    }
+                  </div>
                 }
               </td>
               <td class="small text-muted">
