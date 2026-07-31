@@ -35,6 +35,7 @@
             <th>{{ "APIKEYS.COL_ZONES" | translate }}</th>
             <th>{{ "APIKEYS.COMMENT" | translate }}</th>
             <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+            <th>{{ "APIKEYS.COL_LAST_USED" | translate }}</th>
             <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
           </tr>
         </thead>
@@ -71,6 +72,13 @@
                 }
               </td>
               <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
+              <td class="small text-muted">
+                @if (key.last_used_at) {
+                  {{ key.last_used_at | date: "dd/MM/yyyy HH:mm" }}
+                } @else {
+                  <span class="fst-italic">{{ "APIKEYS.NEVER_USED" | translate }}</span>
+                }
+              </td>
               <td class="text-end">
                 <button
                   class="btn btn-sm btn-outline-danger"

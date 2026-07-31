@@ -22,6 +22,7 @@ class AcmeApiKeyResponse(BaseModel):
     zone_name: str | None
     comment: str | None
     created_at: datetime
+    last_used_at: datetime | None = None
 
 
 class AcmeApiKeyCreated(AcmeApiKeyResponse):

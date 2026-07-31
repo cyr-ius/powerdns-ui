@@ -16,3 +16,4 @@ class AcmeApiKey(SQLModel, table=True):
     key_type: str = Field(default="acme", max_length=10)
     comment: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_used_at: datetime | None = Field(default=None)

@@ -1762,6 +1762,7 @@
                 <th>{{ "APIKEYS.COL_PREFIX" | translate }}</th>
                 <th>{{ "APIKEYS.COMMENT" | translate }}</th>
                 <th>{{ "APIKEYS.COL_CREATED" | translate }}</th>
+                <th>{{ "APIKEYS.COL_LAST_USED" | translate }}</th>
                 <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
               </tr>
             </thead>
@@ -1772,6 +1773,13 @@
                   <td class="font-monospace small text-muted">{{ key.key_prefix }}…</td>
                   <td class="text-muted small">{{ key.comment || "—" }}</td>
                   <td class="text-muted small">{{ key.created_at | date: "dd/MM/yyyy" }}</td>
+                  <td class="text-muted small">
+                    @if (key.last_used_at) {
+                      {{ key.last_used_at | date: "dd/MM/yyyy HH:mm" }}
+                    } @else {
+                      <span class="fst-italic">{{ "APIKEYS.NEVER_USED" | translate }}</span>
+                    }
+                  </td>
                   <td class="text-end text-nowrap">
                     <div class="d-flex gap-1 justify-content-end">
                       <button

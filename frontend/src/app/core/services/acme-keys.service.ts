@@ -10,6 +10,7 @@ export interface AcmeApiKey {
   zone_name: string | null;
   comment: string | null;
   created_at: string;
+  last_used_at: string | null;
   username?: string;
   user_id?: number;
 }

@@ -1,6 +1,7 @@
 import hashlib
 import json
 import secrets
+from datetime import UTC, datetime
 
 from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -131,11 +132,17 @@ async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
 
 
 async def verify_key(db: AsyncSession, raw_key: str) -> AcmeApiKey | None:
-    """Recherche une clé par son hash SHA-256."""
+    """Recherche une clé par son hash SHA-256 et trace sa dernière utilisation."""
     result = await db.exec(  # type: ignore[attr-defined]
         select(AcmeApiKey).where(AcmeApiKey.key_hash == _hash(raw_key))
     )
-    return result.first()
+    key = result.first()
+    if key is not None:
+        key.last_used_at = datetime.now(UTC)
+        db.add(key)
+        await db.commit()
+        await db.refresh(key)
+    return key
 
 
 def key_to_response(key: AcmeApiKey) -> dict:
@@ -147,4 +154,5 @@ def key_to_response(key: AcmeApiKey) -> dict:
         "zone_name": key.zone_name,
         "comment": key.comment,
         "created_at": key.created_at,
+        "last_used_at": key.last_used_at,
     }

@@ -590,6 +590,8 @@
     "COL_PREFIX": "Prefijo",
     "COL_ZONES": "Zonas permitidas",
     "COL_CREATED": "Creada",
+    "COL_LAST_USED": "Último uso",
+    "NEVER_USED": "Nunca utilizada",
     "NO_ZONES": "Sin zonas",
     "COMMENT": "Descripción",
     "COMMENT_OPTIONAL": "— opcional",

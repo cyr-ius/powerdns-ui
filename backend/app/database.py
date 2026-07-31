@@ -86,6 +86,10 @@ async def init_db() -> None:
             )
         if "comment" not in acme_columns:
             await conn.execute(text("ALTER TABLE acmeapikey ADD COLUMN comment TEXT"))
+        if "last_used_at" not in acme_columns:
+            await conn.execute(
+                text("ALTER TABLE acmeapikey ADD COLUMN last_used_at DATETIME")
+            )
         if "zone_name" not in acme_columns:
             await conn.execute(
                 text("ALTER TABLE acmeapikey ADD COLUMN zone_name VARCHAR(255)")
@@ -130,6 +134,7 @@ async def init_db() -> None:
                         key_type VARCHAR(10) NOT NULL DEFAULT 'acme',
                         comment TEXT,
                         created_at DATETIME NOT NULL,
+                        last_used_at DATETIME,
                         FOREIGN KEY(user_id) REFERENCES user (id)
                     )
                     """
@@ -138,9 +143,11 @@ async def init_db() -> None:
             await conn.execute(
                 text(
                     "INSERT INTO acmeapikey (id, user_id, zone_name, name, "
-                    "key_prefix, key_hash, zones, key_type, comment, created_at) "
+                    "key_prefix, key_hash, zones, key_type, comment, created_at, "
+                    "last_used_at) "
                     "SELECT id, user_id, zone_name, name, key_prefix, key_hash, "
-                    "zones, key_type, comment, created_at FROM acmeapikey_old"
+                    "zones, key_type, comment, created_at, last_used_at "
+                    "FROM acmeapikey_old"
                 )
             )
             await conn.execute(text("DROP TABLE acmeapikey_old"))
