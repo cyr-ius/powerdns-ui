@@ -1091,7 +1091,7 @@ async def email_security_check(
     }
 
 
-# ── ACME Keys (appartenant à la zone) ─────────────────────────────────────────
+# ── ACME Keys (belonging to the zone) ─────────────────────────────────────────
 
 
 @router.get("/{zone_id}/acme-keys", response_model=list[AcmeApiKeyResponse])

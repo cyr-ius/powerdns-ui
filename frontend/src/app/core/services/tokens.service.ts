@@ -22,17 +22,17 @@ export interface PersonalAccessTokenCreated extends PersonalAccessToken {
 export class TokensService {
   private readonly http = inject(HttpClient);
 
-  /** Liste les jetons d'accès personnels de l'utilisateur courant. */
+  /** Lists the current user's personal access tokens. */
   listTokens(): Promise<PersonalAccessToken[]> {
     return firstValueFrom(this.http.get<PersonalAccessToken[]>("/api/tokens"));
   }
 
-  /** Liste tous les jetons, tous utilisateurs confondus (admin uniquement). */
+  /** Lists all tokens, across all users (admin only). */
   listAllTokens(): Promise<PersonalAccessToken[]> {
     return firstValueFrom(this.http.get<PersonalAccessToken[]>("/api/tokens/all"));
   }
 
-  /** Crée un jeton d'accès personnel pour l'utilisateur courant. */
+  /** Creates a personal access token for the current user. */
   createToken(
     name: string,
     token?: string,

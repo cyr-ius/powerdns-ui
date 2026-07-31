@@ -30,7 +30,7 @@ async def pdns_request_text(method: str, path: str, **kwargs: Any) -> str:
 
 
 async def pdns_request_root(path: str) -> Any:
-    """Requête vers pdns sans le préfixe /v1 (ex: /api)."""
+    """Request to pdns without the /v1 prefix (e.g. /api)."""
     async with httpx.AsyncClient(
         base_url=settings.pdns_auth_api_url,
         headers={"X-API-Key": settings.pdns_auth_api_key},

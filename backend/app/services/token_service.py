@@ -72,7 +72,7 @@ async def list_tokens(db: AsyncSession, user_id: int) -> list[PersonalAccessToke
 async def list_all_tokens(
     db: AsyncSession,
 ) -> list[tuple[PersonalAccessToken, str, int]]:
-    """Retourne tous les jetons avec leur propriétaire (usage admin)."""
+    """Return all tokens with their owner (admin use)."""
     rows = await db.execute(
         sa_select(PersonalAccessToken, User.username, User.id)  # type: ignore[call-overload]
         .join(User, PersonalAccessToken.user_id == User.id)
@@ -116,7 +116,7 @@ async def delete_token(db: AsyncSession, token_id: int, user_id: int) -> bool:
 
 
 async def delete_token_any(db: AsyncSession, token_id: int) -> bool:
-    """Supprime n'importe quel jeton par ID (usage admin)."""
+    """Delete any token by ID (admin use)."""
     result = await db.exec(
         select(PersonalAccessToken).where(PersonalAccessToken.id == token_id)
     )
@@ -129,7 +129,7 @@ async def delete_token_any(db: AsyncSession, token_id: int) -> bool:
 
 
 async def delete_user_tokens(db: AsyncSession, user_id: int) -> None:
-    """Supprime tous les jetons d'un utilisateur (appelé à sa suppression)."""
+    """Delete all tokens of a user (called on user deletion)."""
     result = await db.exec(
         select(PersonalAccessToken).where(PersonalAccessToken.user_id == user_id)
     )
@@ -138,7 +138,7 @@ async def delete_user_tokens(db: AsyncSession, user_id: int) -> None:
 
 
 async def verify_token(db: AsyncSession, raw_token: str) -> PersonalAccessToken | None:
-    """Recherche un jeton par son hash SHA-256 et rejette les jetons expirés."""
+    """Look up a token by its SHA-256 hash and reject expired tokens."""
     result = await db.exec(
         select(PersonalAccessToken).where(
             PersonalAccessToken.token_hash == _hash(raw_token)

@@ -100,7 +100,7 @@ export class ProfileComponent implements OnInit {
   readonly createdKey = signal<string | null>(null);
   readonly copied = signal(false);
 
-  /** Durées proposées à la création (jours) ; "" = illimité. */
+  /** Durations offered at creation (days); "" = unlimited. */
   readonly durationOptions: { value: string; label: string }[] = [
     { value: "7", label: "TOKENS.DURATION_7D" },
     { value: "30", label: "TOKENS.DURATION_30D" },
@@ -115,7 +115,7 @@ export class ProfileComponent implements OnInit {
     required(s.name, { message: "TOKENS.NAME_REQUIRED" });
   });
 
-  /** Nombre de jetons expirés parmi ceux de l'utilisateur courant. */
+  /** Number of expired tokens among the current user's tokens. */
   readonly expiredKeysCount = computed(() => this.keys().filter((k) => k.is_expired).length);
 
   // ── Edit modal ────────────────────────────────────────────────────────────

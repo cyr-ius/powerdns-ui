@@ -159,7 +159,7 @@ export class ZoneDetailComponent implements OnInit {
   readonly copiedText = signal<string | null>(null);
   readonly cryptoAlgorithms = CRYPTO_ALGORITHMS;
 
-  // bits: 0 = utiliser le défaut de l'algorithme
+  // bits: 0 = use the algorithm's default
   readonly keyModel = signal({
     keytype: "ksk",
     algorithm: "ECDSAP256SHA256",
@@ -246,13 +246,13 @@ export class ZoneDetailComponent implements OnInit {
     }),
   );
 
-  // ── ACME Keys (appartenant à la zone) ────────────────────────────────────
+  // ── ACME Keys (belonging to the zone) ────────────────────────────────────
   readonly zoneAcmeKeys = signal<AcmeApiKey[]>([]);
   readonly isLoadingAcmeKeys = signal(false);
   readonly acmeKeysError = signal<string | null>(null);
   private acmeKeysLoaded = false;
 
-  // ── Création clé ACME ─────────────────────────────────────────────────────
+  // ── ACME key creation ─────────────────────────────────────────────────────
   readonly showAcmeCreateModal = signal(false);
   readonly isCreatingAcmeKey = signal(false);
   readonly acmeCreateError = signal<string | null>(null);
@@ -265,7 +265,7 @@ export class ZoneDetailComponent implements OnInit {
     required(s.name);
   });
 
-  // ── Édition clé ACME ────────────────────────────────────────────────────────
+  // ── ACME key editing ────────────────────────────────────────────────────────
   readonly editingAcmeKey = signal<AcmeApiKey | null>(null);
   readonly isEditingAcmeKey = signal(false);
   readonly acmeEditError = signal<string | null>(null);

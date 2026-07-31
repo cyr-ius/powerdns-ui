@@ -20,7 +20,7 @@ router = APIRouter(
 async def list_all_acme_keys(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
-    """Vue d'ensemble (admin) de toutes les clés ACME, tous utilisateurs/zones confondus."""
+    """Admin overview of all ACME keys, across all users/zones."""
     rows = await acme_service.list_all_keys(db)
     return [
         {**acme_service.key_to_response(key), "username": username, "user_id": uid}

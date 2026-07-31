@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 
 class TokenDurationDays(IntEnum):
-    """Durées proposées à la création d'un jeton (jours). Absente => illimité."""
+    """Durations offered when creating a token (days). Absent => unlimited."""
 
     SEVEN = 7
     THIRTY = 30

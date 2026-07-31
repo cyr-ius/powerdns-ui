@@ -76,7 +76,7 @@ async def log_action(
 
 
 class AuditLogger:
-    """Contexte d'audit pré-rempli avec les infos de l'utilisateur et l'IP."""
+    """Audit context pre-filled with the user's info and IP."""
 
     def __init__(
         self,

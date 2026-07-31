@@ -33,7 +33,7 @@ async def list_tokens(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict[str, Any]]:
-    """Liste les jetons d'accès personnels de l'utilisateur courant."""
+    """List the current user's personal access tokens."""
     tokens = await token_service.list_tokens(db, current_user.id)  # type: ignore[arg-type]
     return [token_service.token_to_response(t) for t in tokens]
 
@@ -58,9 +58,9 @@ async def create_token(
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> dict[str, Any]:
-    """Crée un jeton d'accès personnel pour l'utilisateur courant.
+    """Create a personal access token for the current user.
 
-    Le secret n'est renvoyé qu'ici : seul son hash est conservé.
+    The secret is only returned here: only its hash is kept.
     """
     token, raw = await token_service.create_token(
         db,

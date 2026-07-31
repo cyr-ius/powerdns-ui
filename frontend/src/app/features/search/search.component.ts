@@ -35,7 +35,7 @@ export class SearchComponent implements OnInit {
   readonly records = computed(() => this.results().filter((r) => r.object_type === "record"));
   readonly comments = computed(() => this.results().filter((r) => r.object_type === "comment"));
 
-  // skip(1) évite une double recherche lors du chargement initial avec param URL
+  // skip(1) avoids a double search on initial load with a URL param
   private readonly searchChanges$ = toObservable(this.searchModel).pipe(
     map((m) => m.search),
     skip(1),
