@@ -21,6 +21,28 @@
       },
       "label": "npm: start - frontend",
       "detail": "ng serve"
+    },
+    {
+      "type": "shell",
+      "command": "docker compose up -d pdns",
+      "label": "docker: start pdns",
+      "detail": "Démarre le container powerdns/pdns-auth-50 (et sa base pdns-db)",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "type": "shell",
+      "command": "docker compose stop pdns",
+      "label": "docker: stop pdns",
+      "detail": "Arrête le container powerdns/pdns-auth-50",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }
