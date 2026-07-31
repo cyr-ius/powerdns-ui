@@ -161,6 +161,13 @@ async def init_db() -> None:
                 )
             )
 
+        result = await conn.execute(text("PRAGMA table_info(personalaccesstoken)"))
+        pat_columns = {row[1] for row in result.fetchall()}
+        if "expires_at" not in pat_columns:
+            await conn.execute(
+                text("ALTER TABLE personalaccesstoken ADD COLUMN expires_at DATETIME")
+            )
+
         # Personal access tokens used to live in acmeapikey (key_type='api').
         # Move any such row into the dedicated personalaccesstoken table so
         # existing tokens keep working, then drop them from acmeapikey.

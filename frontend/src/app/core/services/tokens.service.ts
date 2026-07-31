@@ -8,6 +8,8 @@ export interface PersonalAccessToken {
   token_prefix: string;
   comment: string | null;
   created_at: string;
+  expires_at: string | null;
+  is_expired: boolean;
   username?: string;
   user_id?: number;
 }
@@ -31,12 +33,18 @@ export class TokensService {
   }
 
   /** Crée un jeton d'accès personnel pour l'utilisateur courant. */
-  createToken(name: string, token?: string, comment?: string): Promise<PersonalAccessTokenCreated> {
+  createToken(
+    name: string,
+    token?: string,
+    comment?: string,
+    durationDays?: number | null,
+  ): Promise<PersonalAccessTokenCreated> {
     return firstValueFrom(
       this.http.post<PersonalAccessTokenCreated>("/api/tokens", {
         name,
         token: token || undefined,
         comment: comment || undefined,
+        duration_days: durationDays ?? null,
       }),
     );
   }

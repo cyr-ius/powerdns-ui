@@ -1,6 +1,6 @@
 import { DatePipe } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
-import { Component, inject, OnInit, signal } from "@angular/core";
+import { Component, computed, inject, OnInit, signal } from "@angular/core";
 import { form, FormField, required, submit } from "@angular/forms/signals";
 import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
@@ -100,10 +100,23 @@ export class ProfileComponent implements OnInit {
   readonly createdKey = signal<string | null>(null);
   readonly copied = signal(false);
 
-  readonly createModel = signal({ name: "", secret: "", comment: "" });
+  /** Durées proposées à la création (jours) ; "" = illimité. */
+  readonly durationOptions: { value: string; label: string }[] = [
+    { value: "7", label: "TOKENS.DURATION_7D" },
+    { value: "30", label: "TOKENS.DURATION_30D" },
+    { value: "90", label: "TOKENS.DURATION_90D" },
+    { value: "180", label: "TOKENS.DURATION_180D" },
+    { value: "365", label: "TOKENS.DURATION_365D" },
+    { value: "", label: "TOKENS.DURATION_UNLIMITED" },
+  ];
+
+  readonly createModel = signal({ name: "", secret: "", comment: "", duration: "90" });
   readonly createForm = form(this.createModel, (s) => {
     required(s.name, { message: "TOKENS.NAME_REQUIRED" });
   });
+
+  /** Nombre de jetons expirés parmi ceux de l'utilisateur courant. */
+  readonly expiredKeysCount = computed(() => this.keys().filter((k) => k.is_expired).length);
 
   // ── Edit modal ────────────────────────────────────────────────────────────
   readonly editingKeyData = signal<PersonalAccessToken | null>(null);
@@ -125,7 +138,7 @@ export class ProfileComponent implements OnInit {
   }
 
   openCreateModal(): void {
-    this.createModel.set({ name: "", secret: "", comment: "" });
+    this.createModel.set({ name: "", secret: "", comment: "", duration: "90" });
     this.createError.set(null);
     this.showCreateModal.set(true);
   }
@@ -144,11 +157,12 @@ export class ProfileComponent implements OnInit {
       this.isCreating.set(true);
       this.createError.set(null);
       try {
-        const { name, secret, comment } = this.createModel();
+        const { name, secret, comment, duration } = this.createModel();
         const created = await this.tokensSvc.createToken(
           name,
           secret.trim() || undefined,
           comment.trim() || undefined,
+          duration ? Number(duration) : null,
         );
         this.showCreateModal.set(false);
         this.keys.update((list) => [...list, created]);

@@ -13,3 +13,4 @@ class PersonalAccessToken(SQLModel, table=True):
     token_hash: str = Field(unique=True, index=True)
     comment: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    expires_at: datetime | None = Field(default=None)

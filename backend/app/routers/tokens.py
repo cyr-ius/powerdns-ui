@@ -66,6 +66,7 @@ async def create_token(
         payload.name,
         payload.token or None,
         payload.comment,
+        payload.duration_days,
     )
     await audit.success("create", "token", payload.name)
     return {**token_service.token_to_response(token), "token": raw}

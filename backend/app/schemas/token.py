@@ -1,12 +1,24 @@
 from datetime import datetime
+from enum import IntEnum
 
 from pydantic import BaseModel
+
+
+class TokenDurationDays(IntEnum):
+    """Durées proposées à la création d'un jeton (jours). Absente => illimité."""
+
+    SEVEN = 7
+    THIRTY = 30
+    NINETY = 90
+    ONE_EIGHTY = 180
+    THREE_SIXTY_FIVE = 365
 
 
 class TokenCreate(BaseModel):
     name: str
     token: str | None = None
     comment: str | None = None
+    duration_days: TokenDurationDays | None = None
 
 
 class TokenUpdate(BaseModel):
@@ -19,6 +31,8 @@ class TokenResponse(BaseModel):
     token_prefix: str
     comment: str | None
     created_at: datetime
+    expires_at: datetime | None
+    is_expired: bool
 
 
 class TokenCreated(TokenResponse):

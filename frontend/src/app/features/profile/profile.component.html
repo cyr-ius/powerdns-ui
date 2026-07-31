@@ -36,6 +36,14 @@
         @if (keys().length > 0) {
           <span class="badge bg-secondary ms-1">{{ keys().length }}</span>
         }
+        @if (expiredKeysCount() > 0) {
+          <span
+            class="badge bg-danger ms-1"
+            [title]="'TOKENS.EXPIRED_WARNING' | translate: { count: expiredKeysCount() }"
+          >
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </span>
+        }
       </button>
     </li>
   }
@@ -344,6 +352,13 @@
     </div>
   }
 
+  @if (expiredKeysCount() > 0) {
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ "TOKENS.EXPIRED_WARNING" | translate: { count: expiredKeysCount() } }}</span>
+    </div>
+  }
+
   <div class="card shadow-sm">
     <div class="table-responsive">
       @if (isLoadingKeys()) {
@@ -365,6 +380,7 @@
               <th>{{ "TOKENS.COL_PREFIX" | translate }}</th>
               <th>{{ "TOKENS.COMMENT" | translate }}</th>
               <th>{{ "TOKENS.COL_CREATED" | translate }}</th>
+              <th>{{ "TOKENS.COL_EXPIRES" | translate }}</th>
               <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
             </tr>
           </thead>
@@ -381,6 +397,17 @@
                   }
                 </td>
                 <td class="small text-muted">{{ key.created_at | date: "dd/MM/yyyy HH:mm" }}</td>
+                <td class="small">
+                  @if (key.is_expired) {
+                    <span class="badge bg-danger">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ "TOKENS.STATUS_EXPIRED" | translate }}
+                    </span>
+                  } @else if (key.expires_at) {
+                    <span class="text-muted">{{ key.expires_at | date: "dd/MM/yyyy HH:mm" }}</span>
+                  } @else {
+                    <span class="text-muted fst-italic">{{ "TOKENS.DURATION_UNLIMITED" | translate }}</span>
+                  }
+                </td>
                 <td class="text-end">
                   <div class="d-flex gap-1 justify-content-end">
                     <button
@@ -455,6 +482,15 @@
                 [formField]="createForm.secret"
               />
               <div class="form-text">{{ "TOKENS.SECRET_HELP" | translate }}</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">{{ "TOKENS.DURATION_LABEL" | translate }}</label>
+              <select class="form-select" [formField]="createForm.duration">
+                @for (opt of durationOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label | translate }}</option>
+                }
+              </select>
+              <div class="form-text">{{ "TOKENS.DURATION_HELP" | translate }}</div>
             </div>
             <div class="mb-0">
               <label class="form-label fw-medium">
