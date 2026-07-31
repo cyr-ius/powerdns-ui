@@ -48,4 +48,6 @@ repos:
       - id: prettier
         args: ["--print-width=120"]
         types_or: [javascript, html, css, scss, json, yaml, markdown]
-        exclude: node_modules|.agents|swagger
+        # docs/ is excluded because Prettier reflows the indented admonition
+        # bodies used by the MkDocs (pymdownx.admonition) syntax and breaks them.
+        exclude: node_modules|.agents|swagger|^docs/

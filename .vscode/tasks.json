@@ -43,6 +43,27 @@
         "reveal": "always",
         "panel": "shared"
       }
+    },
+    {
+      "type": "shell",
+      "command": "python3 -m venv .venv-docs 2>/dev/null; .venv-docs/bin/pip install -q -r docs/requirements.txt && .venv-docs/bin/mkdocs serve -a 0.0.0.0:8001",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^ERROR\\s+-\\s+(.*)$",
+          "message": 1
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*",
+          "endsPattern": "Serving on"
+        }
+      },
+      "label": "mkdocs: serve",
+      "detail": "MkDocs live-reload docs server (http://localhost:8001/)"
     }
   ]
 }

@@ -1,0 +1,111 @@
+site_name: PowerDNS UI
+site_description: Web management interface for PowerDNS Authoritative Server
+site_url: https://cyr-ius.github.io/pdns-ui/
+repo_name: cyr-ius/pdns-ui
+repo_url: https://github.com/cyr-ius/pdns-ui
+edit_uri: edit/master/docs/
+copyright: Copyright &copy; cyr-ius — MIT License
+
+theme:
+  name: material
+  favicon: assets/favicon.ico
+  icon:
+    logo: material/dns
+  palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.tabs.link
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: false
+      fallback_to_build_date: true
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path:
+        - .
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/cyr-ius/pdns-ui
+    - icon: fontawesome/brands/docker
+      link: https://github.com/cyr-ius/pdns-ui/pkgs/container/pdns-ui
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Configuration:
+      - PowerDNS Configuration: configuration/powerdns.md
+      - Environment Variables: configuration/environment-variables.md
+      - OIDC & Mail Connectors: configuration/oidc-mail.md
+      - Rate Limiting & Reverse Proxy: configuration/rate-limiting.md
+      - MariaDB Backend (gmysql): configuration/mariadb.md
+  - Features:
+      - DNS Zones & Records: features/zones.md
+      - DNSSEC: features/dnssec.md
+      - Reverse DNS: features/reverse-dns.md
+      - Catalog Zones: features/catalog-zones.md
+      - Lua Records: features/lua-records.md
+      - DNS Views & Networks: features/views-networks.md
+      - TSIG Keys: features/tsig-keys.md
+      - Autoprimaries: features/autoprimaries.md
+      - ACME Keys & Personal Access Tokens: features/acme-pat.md
+      - Search & Statistics: features/search-statistics.md
+  - Administration:
+      - Roles & Permissions: administration/roles-permissions.md
+      - User Management: administration/user-management.md
+      - Audit Log: administration/audit-log.md
+  - API Reference: api.md
+  - Development: development.md
+  - Screenshots & Demos: screenshots.md
+  - License: license.md
