@@ -18,15 +18,16 @@ certbot credentials file:
 """
 
 import logging
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Security
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.client_ip import get_client_ip
 from app.database import get_db
-from app.dependencies import get_client_ip
 from app.models.acme_key import AcmeApiKey
 from app.services import acme_service, admin_service
 from app.services.audit_service import AuditLogger
@@ -69,7 +70,7 @@ async def _check_zone_allowed(
         raise HTTPException(status_code=403, detail=detail)
 
 
-def _normalize_acme_body(body: dict) -> dict:
+def _normalize_acme_body(body: dict[str, Any]) -> dict[str, Any]:
     """Normalize a Traefik/LEGO patch payload for PowerDNS 4.x/5.x compatibility.
 
     LEGO may send names without a trailing dot, a spurious `kind` field copied
@@ -83,7 +84,7 @@ def _normalize_acme_body(body: dict) -> dict:
         if name and not name.endswith("."):
             name += "."
         changetype = rrset.get("changetype", "REPLACE").upper()
-        clean: dict = {
+        clean: dict[str, Any] = {
             "name": name,
             "type": rrset.get("type", ""),
             "changetype": changetype,
@@ -129,7 +130,9 @@ async def list_zones(
     audit = AuditLogger(db, username, key.user_id, get_client_ip(request))
     allowed = acme_service._decode_zones(key)
     try:
-        zones: list[dict] = await pdns_request("GET", f"/servers/{server_id}/zones")
+        zones: list[dict[str, Any]] = await pdns_request(
+            "GET", f"/servers/{server_id}/zones"
+        )
     except httpx.HTTPStatusError as exc:
         await audit.failure(
             "list", "acme_zone", details={"acme_key": key.name, "detail": str(exc)}

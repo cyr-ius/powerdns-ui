@@ -1,5 +1,7 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -15,7 +17,9 @@ router = APIRouter(
 
 
 @router.get("/all", response_model=list[AcmeApiKeyAdminResponse])
-async def list_all_acme_keys(db: AsyncSession = Depends(get_db)) -> list[dict]:
+async def list_all_acme_keys(
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
     """Vue d'ensemble (admin) de toutes les clés ACME, tous utilisateurs/zones confondus."""
     rows = await acme_service.list_all_keys(db)
     return [

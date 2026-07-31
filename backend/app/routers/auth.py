@@ -1,9 +1,11 @@
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
+from app.client_ip import get_client_ip
 from app.config import settings
 from app.cookies import (
     clear_auth_cookie,
@@ -14,7 +16,6 @@ from app.cookies import (
 from app.database import get_db
 from app.dependencies import (
     get_audit_logger,
-    get_client_ip,
     get_current_user,
     user_from_session_cookie,
 )
@@ -35,7 +36,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/auth")
 
 
-async def _get_oidc_cfg(db: AsyncSession) -> dict | None:
+async def _get_oidc_cfg(db: AsyncSession) -> dict[str, Any] | None:
     """Load OIDC config from DB; returns None if not configured or disabled."""
     db_cfg = await admin_service.get_oidc_settings(db)
     if db_cfg and db_cfg.enabled:

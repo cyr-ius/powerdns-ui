@@ -4,8 +4,9 @@ from collections import defaultdict, deque
 from threading import Lock
 
 from fastapi import Request, status
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
+from starlette.types import ASGIApp
 
 from app.client_ip import get_client_ip
 from app.config import settings
@@ -33,7 +34,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     ]
     _CSP: str = "; ".join(_CSP_DIRECTIVES) + ";"
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -125,7 +128,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     def __init__(
         self,
-        app,
+        app: ASGIApp,
         *,
         max_requests: int,
         window_seconds: int,
@@ -149,7 +152,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "the key. Set TRUSTED_PROXIES so the real client IP is used."
             )
 
-    async def dispatch(self, request: Request, call_next) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         path = request.url.path
         if not path.startswith("/api/") or path in self._EXEMPT_PATHS:
             return await call_next(request)

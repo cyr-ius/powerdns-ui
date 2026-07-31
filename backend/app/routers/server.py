@@ -1,8 +1,8 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_user
@@ -49,9 +49,9 @@ async def list_accounts(
 
 
 @router.get("/server", response_model=ServerInfo)
-async def get_server_info() -> dict:
+async def get_server_info() -> dict[str, Any]:
     try:
-        return await pdns_request("GET", _SERVER)
+        return await pdns_request("GET", _SERVER)  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error(exc) from exc
 
@@ -64,7 +64,7 @@ async def get_config(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> list:
+) -> list[Any]:
     if not current_user.is_admin:
         await audit.failure(
             "read",
@@ -75,7 +75,7 @@ async def get_config(
             status_code=403, detail="Access restricted to administrators"
         )
     try:
-        return await pdns_request("GET", f"{_SERVER}/config")
+        return await pdns_request("GET", f"{_SERVER}/config")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error(exc) from exc
 
@@ -92,12 +92,12 @@ async def search_data(
     object_type: Annotated[
         str | None, Query(description="Filter: all | zone | record | comment")
     ] = "all",
-) -> list:
-    params: dict = {"q": q, "max": max}
+) -> list[Any]:
+    params: dict[str, Any] = {"q": q, "max": max}
     if object_type and object_type != "all":
         params["object_type"] = object_type
     try:
-        return await pdns_request("GET", f"{_SERVER}/search-data", params=params)
+        return await pdns_request("GET", f"{_SERVER}/search-data", params=params)  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error(exc) from exc
 
@@ -114,12 +114,12 @@ async def get_statistics(
         ),
     ] = None,
     includerings: Annotated[bool, Query(description="Include Ring items")] = False,
-) -> list:
-    params: dict = {"includerings": str(includerings).lower()}
+) -> list[Any]:
+    params: dict[str, Any] = {"includerings": str(includerings).lower()}
     if statistic:
         params["statistic"] = statistic
     try:
-        return await pdns_request("GET", f"{_SERVER}/statistics", params=params)
+        return await pdns_request("GET", f"{_SERVER}/statistics", params=params)  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         if exc.response.status_code == 422:
             raise HTTPException(
@@ -139,9 +139,9 @@ async def flush_cache(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     try:
-        result = await pdns_request(
+        result: dict[str, Any] = await pdns_request(
             "PUT", f"{_SERVER}/cache/flush", params={"domain": domain}
         )
         await audit.success("flush_cache", "server", domain)

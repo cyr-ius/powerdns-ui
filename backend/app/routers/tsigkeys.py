@@ -1,6 +1,8 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -29,9 +31,9 @@ def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
 
 
 @router.get("", response_model=list[TsigKey])
-async def list_tsigkeys() -> list:
+async def list_tsigkeys() -> list[Any]:
     try:
-        return await pdns_request("GET", f"{_SERVER}/tsigkeys")
+        return await pdns_request("GET", f"{_SERVER}/tsigkeys")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -42,9 +44,9 @@ async def create_tsigkey(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     try:
-        result = await pdns_request(
+        result: dict[str, Any] = await pdns_request(
             "POST", f"{_SERVER}/tsigkeys", json=payload.model_dump(exclude_none=True)
         )
         await audit.success("create", "tsig_key", payload.name)
@@ -58,9 +60,9 @@ async def create_tsigkey(
 
 
 @router.get("/{tsigkey_id}", response_model=TsigKey)
-async def get_tsigkey(tsigkey_id: str) -> dict:
+async def get_tsigkey(tsigkey_id: str) -> dict[str, Any]:
     try:
-        return await pdns_request("GET", f"{_SERVER}/tsigkeys/{tsigkey_id}")
+        return await pdns_request("GET", f"{_SERVER}/tsigkeys/{tsigkey_id}")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -72,9 +74,9 @@ async def update_tsigkey(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     try:
-        result = await pdns_request(
+        result: dict[str, Any] = await pdns_request(
             "PUT",
             f"{_SERVER}/tsigkeys/{tsigkey_id}",
             json=payload.model_dump(exclude_none=True),

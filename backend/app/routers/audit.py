@@ -1,11 +1,11 @@
 import json
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.concurrency import run_in_threadpool
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -39,7 +39,7 @@ async def list_audit_logs(
     date_from: datetime | None = None,
     date_to: datetime | None = None,
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     return await audit_service.list_audit_logs(
         db,
         skip=skip,
@@ -62,7 +62,7 @@ async def count_audit_logs(
     date_from: datetime | None = None,
     date_to: datetime | None = None,
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     count = await audit_service.count_audit_logs(
         db,
         username=username,
@@ -76,7 +76,7 @@ async def count_audit_logs(
 
 
 @router.get("/pdns-logs", response_model=list[PdnsLogEntry])
-async def get_pdns_logs() -> list:
+async def get_pdns_logs() -> list[Any]:
     try:
         stats = await pdns_request(
             "GET", f"{_SERVER}/statistics", params={"includerings": "true"}

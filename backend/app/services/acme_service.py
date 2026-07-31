@@ -2,10 +2,11 @@ import hashlib
 import json
 import secrets
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import select as sa_select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.acme_key import AcmeApiKey
 from app.models.user import User
@@ -20,7 +21,8 @@ def _decode_zones(key: AcmeApiKey) -> list[str]:
     if key.zone_name:
         return [key.zone_name]
     try:
-        return json.loads(key.zones)
+        result: list[str] = json.loads(key.zones)
+        return result
     except ValueError, TypeError:
         return []
 
@@ -56,7 +58,7 @@ async def create_zone_key(
 async def list_zone_keys(db: AsyncSession, zone_name: str) -> list[AcmeApiKey]:
     """Liste les clés ACME d'une zone spécifique."""
     normalized = zone_name.rstrip(".") + "."
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(AcmeApiKey).where(
             AcmeApiKey.zone_name == normalized,
             AcmeApiKey.key_type == "acme",
@@ -70,7 +72,7 @@ async def get_zone_key(
 ) -> AcmeApiKey | None:
     """Récupère une clé ACME par ID et zone."""
     normalized = zone_name.rstrip(".") + "."
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(AcmeApiKey).where(
             AcmeApiKey.id == key_id,
             AcmeApiKey.zone_name == normalized,
@@ -122,7 +124,7 @@ async def list_all_keys(db: AsyncSession) -> list[tuple[AcmeApiKey, str, int]]:
 
 async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
     """Supprime n'importe quelle clé par ID (usage admin)."""
-    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))  # type: ignore[attr-defined]
+    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))
     key = result.first()
     if key is None:
         return False
@@ -133,7 +135,7 @@ async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
 
 async def verify_key(db: AsyncSession, raw_key: str) -> AcmeApiKey | None:
     """Recherche une clé par son hash SHA-256 et trace sa dernière utilisation."""
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(AcmeApiKey).where(AcmeApiKey.key_hash == _hash(raw_key))
     )
     key = result.first()
@@ -145,7 +147,7 @@ async def verify_key(db: AsyncSession, raw_key: str) -> AcmeApiKey | None:
     return key
 
 
-def key_to_response(key: AcmeApiKey) -> dict:
+def key_to_response(key: AcmeApiKey) -> dict[str, Any]:
     return {
         "id": key.id,
         "name": key.name,

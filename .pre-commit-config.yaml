@@ -35,7 +35,7 @@ repos:
     hooks:
       - id: codespell
         args:
-          - --ignore-words-list=mailserver
+          - --ignore-words-list=pdns,Powerdns,tsigkeys,autoprimaries,redoc
           - --skip="./.*,*.csv,*.json,*.ambr"
           - --quiet-level=2
         exclude_types: [csv, json, html]

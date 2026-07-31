@@ -1,6 +1,8 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -27,19 +29,21 @@ def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
 
 
 @router.get("", response_model=list[str])
-async def list_views() -> list:
+async def list_views() -> list[Any]:
     try:
-        result = await pdns_request("GET", f"{_SERVER}/views")
-        return result.get("views", [])
+        result: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/views")
+        views: list[Any] = result.get("views", [])
+        return views
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
 
 @router.get("/{view}", response_model=list[str])
-async def get_view_zones(view: str) -> list:
+async def get_view_zones(view: str) -> list[Any]:
     try:
-        result = await pdns_request("GET", f"{_SERVER}/views/{view}")
-        return result.get("zones", [])
+        result: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/views/{view}")
+        zones: list[Any] = result.get("zones", [])
+        return zones
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 

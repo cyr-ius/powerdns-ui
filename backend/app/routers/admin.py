@@ -1,6 +1,8 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -34,7 +36,7 @@ router = APIRouter(prefix="/api/admin", dependencies=[Depends(get_current_admin)
 
 
 @router.get("/users", response_model=list[AdminUserResponse])
-async def list_users(db: AsyncSession = Depends(get_db)) -> list:
+async def list_users(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
     return await admin_service.list_users(db)
 
 
@@ -44,7 +46,7 @@ async def create_user(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     if await get_user_by_username(db, payload.username):
         await audit.failure(
             "create",
@@ -87,7 +89,7 @@ async def update_user(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     user = await admin_service.get_user_by_id(db, user_id)
     if not user:
         await audit.failure(
@@ -215,7 +217,7 @@ async def delete_user(
 
 
 @router.get("/accounts", response_model=list[AccountResponse])
-async def list_accounts(db: AsyncSession = Depends(get_db)) -> list:
+async def list_accounts(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
     return await admin_service.list_accounts(db)
 
 
@@ -225,7 +227,7 @@ async def create_account(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     if await admin_service.get_account_by_name(db, payload.name):
         await audit.failure(
             "create",
@@ -248,7 +250,7 @@ async def update_account(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     account = await admin_service.get_account_by_id(db, account_id)
     if not account:
         await audit.failure(
@@ -258,7 +260,7 @@ async def update_account(
     data = payload.model_dump(exclude_none=True)
     account = await admin_service.update_account(db, account, data)
     await audit.success("update", "account", account.name, data)
-    count = await db.exec(  # type: ignore[call-overload]
+    count = await db.exec(
         select(UserAccount).where(UserAccount.account_id == account.id)
     )
     return {**account.model_dump(), "user_count": len(count.all())}
@@ -349,9 +351,9 @@ async def update_oidc_settings(
 
 
 @router.get("/record-types", response_model=list[RecordTypeResponse])
-async def list_record_types(db: AsyncSession = Depends(get_db)) -> list:
-    result = await db.exec(select(RecordType).order_by(RecordType.name))  # type: ignore[call-overload]
-    return result.all()
+async def list_record_types(db: AsyncSession = Depends(get_db)) -> list[RecordType]:
+    result = await db.exec(select(RecordType).order_by(RecordType.name))
+    return list(result.all())
 
 
 @router.post("/record-types", response_model=RecordTypeResponse, status_code=201)
@@ -362,9 +364,7 @@ async def create_record_type(
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> RecordType:
     name = payload.name.upper()
-    existing = await db.exec(  # type: ignore[call-overload]
-        select(RecordType).where(RecordType.name == name)
-    )
+    existing = await db.exec(select(RecordType).where(RecordType.name == name))
     if existing.first():
         await audit.failure(
             "create", "record_type", name, {"detail": "This record type already exists"}
@@ -390,7 +390,7 @@ async def update_record_type(
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> RecordType:
-    result = await db.exec(select(RecordType).where(RecordType.id == rt_id))  # type: ignore[call-overload]
+    result = await db.exec(select(RecordType).where(RecordType.id == rt_id))
     rt = result.first()
     if not rt:
         await audit.failure(
@@ -414,7 +414,7 @@ async def delete_record_type(
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
-    result = await db.exec(select(RecordType).where(RecordType.id == rt_id))  # type: ignore[call-overload]
+    result = await db.exec(select(RecordType).where(RecordType.id == rt_id))
     rt = result.first()
     if not rt:
         await audit.failure(

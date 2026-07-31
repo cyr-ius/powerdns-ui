@@ -1,17 +1,18 @@
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from urllib.parse import urlencode
 
 import bcrypt
 import httpx
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import settings
 from app.models.user import User
 
-_oidc_discovery_cache: dict | None = None
+_oidc_discovery_cache: dict[str, Any] | None = None
 
 
 def clear_oidc_cache() -> None:
@@ -27,7 +28,7 @@ def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
-def create_access_token(data: dict) -> str:
+def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode["exp"] = expire
@@ -35,7 +36,7 @@ def create_access_token(data: dict) -> str:
 
 
 async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
-    result = await db.exec(select(User).where(User.username == username))  # type: ignore[call-overload]
+    result = await db.exec(select(User).where(User.username == username))
     return result.first()
 
 
@@ -92,19 +93,18 @@ async def get_or_create_oidc_user(
     return await create_user(db, username=username, email=email, is_oidc=True)
 
 
-def _oidc_cfg(override: dict | None) -> dict:
+def _oidc_cfg(override: dict[str, Any] | None) -> dict[str, Any]:
     return override or {}
 
 
-async def _get_oidc_discovery(cfg: dict) -> dict:
+async def _get_oidc_discovery(cfg: dict[str, Any]) -> dict[str, Any]:
     global _oidc_discovery_cache
     if _oidc_discovery_cache is None:
         async with httpx.AsyncClient() as client:
             resp = await client.get(cfg["discovery_url"])
             resp.raise_for_status()
             _oidc_discovery_cache = resp.json()
-    result: dict = _oidc_discovery_cache  # type: ignore[assignment]
-    return result
+    return _oidc_discovery_cache
 
 
 def _generate_oidc_state() -> str:
@@ -113,7 +113,7 @@ def _generate_oidc_state() -> str:
     Stateless: survives app restarts and works across multiple workers.
     """
     expire = datetime.now(UTC) + timedelta(minutes=10)
-    return jwt.encode(
+    return jwt.encode(  # type: ignore[no-any-return]
         {"sub": "oidc_state", "exp": expire, "nonce": secrets.token_urlsafe(16)},
         settings.secret_key,
         algorithm=settings.algorithm,
@@ -132,7 +132,9 @@ def validate_and_consume_oidc_state(state: str) -> None:
         raise ValueError("Invalid or expired OIDC state") from exc
 
 
-async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
+async def build_oidc_authorization_url(
+    cfg_override: dict[str, Any] | None = None,
+) -> str:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)
     auth_endpoint = discovery["authorization_endpoint"]
@@ -148,7 +150,7 @@ async def build_oidc_authorization_url(cfg_override: dict | None = None) -> str:
 
 
 async def build_oidc_logout_url(
-    id_token: str | None, cfg_override: dict | None = None
+    id_token: str | None, cfg_override: dict[str, Any] | None = None
 ) -> str | None:
     """Return the provider's RP-initiated logout URL, or None if unavailable.
 
@@ -172,7 +174,9 @@ async def build_oidc_logout_url(
     return f"{end_session_endpoint}?{urlencode(params)}"
 
 
-async def exchange_oidc_code(code: str, cfg_override: dict | None = None) -> dict:
+async def exchange_oidc_code(
+    code: str, cfg_override: dict[str, Any] | None = None
+) -> dict[str, Any]:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)
     token_endpoint = discovery["token_endpoint"]
@@ -191,8 +195,8 @@ async def exchange_oidc_code(code: str, cfg_override: dict | None = None) -> dic
 
 
 async def get_oidc_userinfo(
-    access_token: str, cfg_override: dict | None = None
-) -> dict:
+    access_token: str, cfg_override: dict[str, Any] | None = None
+) -> dict[str, Any]:
     cfg = _oidc_cfg(cfg_override)
     discovery = await _get_oidc_discovery(cfg)
     userinfo_endpoint = discovery["userinfo_endpoint"]

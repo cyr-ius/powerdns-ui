@@ -1,5 +1,7 @@
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import (
@@ -30,7 +32,7 @@ router = APIRouter(
 async def list_tokens(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Liste les jetons d'accès personnels de l'utilisateur courant."""
     tokens = await token_service.list_tokens(db, current_user.id)  # type: ignore[arg-type]
     return [token_service.token_to_response(t) for t in tokens]
@@ -41,7 +43,7 @@ async def list_tokens(
     response_model=list[TokenAdminResponse],
     dependencies=[Depends(get_current_admin)],
 )
-async def list_all_tokens(db: AsyncSession = Depends(get_db)) -> list[dict]:
+async def list_all_tokens(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
     rows = await token_service.list_all_tokens(db)
     return [
         {**token_service.token_to_response(token), "username": username, "user_id": uid}
@@ -55,7 +57,7 @@ async def create_token(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     """Crée un jeton d'accès personnel pour l'utilisateur courant.
 
     Le secret n'est renvoyé qu'ici : seul son hash est conservé.
@@ -79,12 +81,12 @@ async def update_token(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     updated = await token_service.update_token(
         db,
         token_id,
-        current_user.id,
-        payload.comment,  # type: ignore[arg-type]
+        current_user.id,  # type: ignore[arg-type]
+        payload.comment,
     )
     if updated is None:
         await audit.failure(

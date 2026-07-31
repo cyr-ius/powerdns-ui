@@ -1,6 +1,8 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -29,9 +31,11 @@ def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
 
 
 @router.get("", response_model=list[Autoprimary])
-async def list_autoprimaries() -> list:
+async def list_autoprimaries() -> list[Any]:
     try:
-        return await pdns_request("GET", f"{_SERVER}/autoprimaries")
+        return await pdns_request(  # type: ignore[no-any-return]
+            "GET", f"{_SERVER}/autoprimaries"
+        )
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -42,7 +46,7 @@ async def create_autoprimary(
     current_admin: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     try:
         await pdns_request(
             "POST",

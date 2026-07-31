@@ -1,10 +1,11 @@
 import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import select as sa_select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.models.token import PersonalAccessToken
 from app.models.user import User
@@ -60,7 +61,7 @@ async def create_token(
 
 
 async def list_tokens(db: AsyncSession, user_id: int) -> list[PersonalAccessToken]:
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(PersonalAccessToken)
         .where(PersonalAccessToken.user_id == user_id)
         .order_by(PersonalAccessToken.created_at)  # type: ignore[arg-type]
@@ -83,7 +84,7 @@ async def list_all_tokens(
 async def get_token(
     db: AsyncSession, token_id: int, user_id: int
 ) -> PersonalAccessToken | None:
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(PersonalAccessToken).where(
             PersonalAccessToken.id == token_id,
             PersonalAccessToken.user_id == user_id,
@@ -116,7 +117,7 @@ async def delete_token(db: AsyncSession, token_id: int, user_id: int) -> bool:
 
 async def delete_token_any(db: AsyncSession, token_id: int) -> bool:
     """Supprime n'importe quel jeton par ID (usage admin)."""
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(PersonalAccessToken).where(PersonalAccessToken.id == token_id)
     )
     token = result.first()
@@ -129,7 +130,7 @@ async def delete_token_any(db: AsyncSession, token_id: int) -> bool:
 
 async def delete_user_tokens(db: AsyncSession, user_id: int) -> None:
     """Supprime tous les jetons d'un utilisateur (appelé à sa suppression)."""
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(PersonalAccessToken).where(PersonalAccessToken.user_id == user_id)
     )
     for token in result.all():
@@ -138,7 +139,7 @@ async def delete_user_tokens(db: AsyncSession, user_id: int) -> None:
 
 async def verify_token(db: AsyncSession, raw_token: str) -> PersonalAccessToken | None:
     """Recherche un jeton par son hash SHA-256 et rejette les jetons expirés."""
-    result = await db.exec(  # type: ignore[attr-defined]
+    result = await db.exec(
         select(PersonalAccessToken).where(
             PersonalAccessToken.token_hash == _hash(raw_token)
         )
@@ -149,7 +150,7 @@ async def verify_token(db: AsyncSession, raw_token: str) -> PersonalAccessToken 
     return token
 
 
-def token_to_response(token: PersonalAccessToken) -> dict:
+def token_to_response(token: PersonalAccessToken) -> dict[str, Any]:
     return {
         "id": token.id,
         "name": token.name,

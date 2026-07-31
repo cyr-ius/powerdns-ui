@@ -1,6 +1,8 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_admin
@@ -25,10 +27,13 @@ def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
 
 
 @router.get("", response_model=list[Network])
-async def list_networks() -> list:
+async def list_networks() -> list[Any]:
     try:
-        result = await pdns_request("GET", f"{_SERVER}/networks")
-        return result.get("networks", result) if isinstance(result, dict) else result
+        result: Any = await pdns_request("GET", f"{_SERVER}/networks")
+        networks: list[Any] = (
+            result.get("networks", result) if isinstance(result, dict) else result
+        )
+        return networks
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 

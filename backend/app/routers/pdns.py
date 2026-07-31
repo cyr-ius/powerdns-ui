@@ -1,5 +1,6 @@
 import asyncio
 import re
+from typing import Any
 
 import dns.asyncquery
 import dns.asyncresolver
@@ -16,8 +17,8 @@ from fastapi import (
     UploadFile,
     status,
 )
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_user
@@ -98,10 +99,10 @@ async def _check_zone_access(
     db: AsyncSession,
     audit: AuditLogger | None = None,
     action: str = "access",
-) -> tuple[dict, str]:
+) -> tuple[dict[str, Any], str]:
     """Fetch zone and verify the user has access. Returns (zone_dict, effective_role)."""
     try:
-        zone: dict = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
+        zone: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:
         http_exc = _pdns_error_handler(exc)
         if audit:
@@ -131,7 +132,7 @@ async def _check_zone_access(
 async def list_users_basic(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     return await admin_service.list_users_basic(db)
 
 
@@ -142,8 +143,8 @@ async def list_users_basic(
 async def list_zones(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
-    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+) -> list[Any]:
+    zones: list[Any] = await pdns_request("GET", f"{_SERVER}/zones")
     if current_user.is_admin:
         return zones
     user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
@@ -156,7 +157,7 @@ async def create_zone(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
@@ -196,7 +197,7 @@ async def create_zone(
     data = payload.model_dump(exclude_none=True)
     if not data["name"].endswith("."):
         data["name"] += "."
-    zone = await pdns_request("POST", f"{_SERVER}/zones", json=data)
+    zone: dict[str, Any] = await pdns_request("POST", f"{_SERVER}/zones", json=data)
     await audit.success("create", "zone", data["name"])
     return zone
 
@@ -209,7 +210,7 @@ async def get_zone_role(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     return {"role": role}
 
@@ -219,7 +220,7 @@ async def list_zone_members(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     zone, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     account = zone.get("account") or ""
@@ -235,7 +236,7 @@ async def add_zone_member(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     zone, role = await _check_zone_access(
         zone_id, current_user, db, audit, "add_member"
     )
@@ -285,7 +286,7 @@ async def update_zone_member(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     zone, role = await _check_zone_access(
         zone_id, current_user, db, audit, "update_member"
     )
@@ -392,11 +393,11 @@ async def list_metadata(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/metadata")
+        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/metadata")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -407,11 +408,11 @@ async def create_metadata(
     payload: Metadata,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request(
+        return await pdns_request(  # type: ignore[no-any-return]
             "POST", f"{_SERVER}/zones/{zone_id}/metadata", json=payload.model_dump()
         )
     except httpx.HTTPStatusError as exc:
@@ -424,11 +425,11 @@ async def get_metadata(
     kind: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/metadata/{kind}")
+        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/metadata/{kind}")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -440,11 +441,11 @@ async def replace_metadata(
     payload: Metadata,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request(
+        return await pdns_request(  # type: ignore[no-any-return]
             "PUT",
             f"{_SERVER}/zones/{zone_id}/metadata/{kind}",
             json=payload.model_dump(),
@@ -476,11 +477,11 @@ async def list_cryptokeys(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/cryptokeys")
+        return await pdns_request("GET", f"{_SERVER}/zones/{zone_id}/cryptokeys")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -491,11 +492,11 @@ async def create_cryptokey(
     payload: CryptoKeyCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request(
+        return await pdns_request(  # type: ignore[no-any-return]
             "POST",
             f"{_SERVER}/zones/{zone_id}/cryptokeys",
             json=payload.model_dump(exclude_none=True),
@@ -510,11 +511,11 @@ async def get_cryptokey(
     key_id: int,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request(
+        return await pdns_request(  # type: ignore[no-any-return]
             "GET", f"{_SERVER}/zones/{zone_id}/cryptokeys/{key_id}"
         )
     except httpx.HTTPStatusError as exc:
@@ -564,11 +565,11 @@ async def notify_slaves(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/notify")
+        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/notify")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -578,11 +579,11 @@ async def axfr_retrieve(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/axfr-retrieve")
+        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/axfr-retrieve")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -592,11 +593,11 @@ async def rectify_zone(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     try:
-        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/rectify")
+        return await pdns_request("PUT", f"{_SERVER}/zones/{zone_id}/rectify")  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
 
@@ -627,7 +628,9 @@ async def import_zone(
         # SOA and NS are managed by PowerDNS — never touch them during import.
         safe_rrsets = [r for r in imported_rrsets if r["type"] not in ("SOA", "NS")]
         imported_keys = {(r["name"], r["type"]) for r in safe_rrsets}
-        patch: list[dict] = [{"changetype": "REPLACE", **r} for r in safe_rrsets]
+        patch: list[dict[str, Any]] = [
+            {"changetype": "REPLACE", **r} for r in safe_rrsets
+        ]
         for rrset in current_rrsets:
             if rrset["type"] in ("SOA", "NS"):
                 continue
@@ -649,7 +652,7 @@ async def import_zone(
         raise http_exc from exc
 
 
-def _parse_zone_file(zone_name: str, content: str) -> list[dict]:
+def _parse_zone_file(zone_name: str, content: str) -> list[dict[str, Any]]:
     import dns.name
     import dns.rdatatype
     import dns.zone
@@ -701,7 +704,7 @@ async def get_zone(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     zone, _ = await _check_zone_access(zone_id, current_user, db)
     return zone
 
@@ -777,7 +780,7 @@ async def get_zone_record_types(
 ) -> ZoneRecordTypesResponse:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "viewer")
-    zone_types = await db.exec(  # type: ignore[call-overload]
+    zone_types = await db.exec(
         select(ZoneRecordType).where(ZoneRecordType.zone_id == zone_id)
     )
     rows = zone_types.all()
@@ -786,7 +789,7 @@ async def get_zone_record_types(
             types=sorted(r.record_type_name for r in rows),
             is_custom=True,
         )
-    global_types = await db.exec(  # type: ignore[call-overload]
+    global_types = await db.exec(
         select(RecordType).where(RecordType.enabled == True).order_by(RecordType.name)  # noqa: E712
     )
     return ZoneRecordTypesResponse(
@@ -804,14 +807,14 @@ async def set_zone_record_types(
 ) -> ZoneRecordTypesResponse:
     _, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
-    existing = await db.exec(  # type: ignore[call-overload]
+    existing = await db.exec(
         select(ZoneRecordType).where(ZoneRecordType.zone_id == zone_id)
     )
     for row in existing.all():
         await db.delete(row)
     if not payload.types:
         await db.commit()
-        global_types = await db.exec(  # type: ignore[call-overload]
+        global_types = await db.exec(
             select(RecordType)
             .where(RecordType.enabled == True)  # noqa: E712
             .order_by(RecordType.name)
@@ -831,7 +834,7 @@ async def set_zone_record_types(
 # ── SOA sync check ────────────────────────────────────────────────────────────
 
 
-async def _query_ns_serial(ns: str, zone: str) -> dict:
+async def _query_ns_serial(ns: str, zone: str) -> dict[str, Any]:
     try:
         ns_hostname = ns.rstrip(".")
         answers = await dns.asyncresolver.resolve(ns_hostname, "A", lifetime=5)
@@ -856,7 +859,7 @@ async def soa_sync_check(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     zone, _ = await _check_zone_access(zone_id, current_user, db)
     zone_name: str = zone.get("name", "")
 
@@ -915,7 +918,7 @@ def _clean_txt(content: str) -> str:
     return s.replace("\\;", ";")
 
 
-def _check_spf(apex_txt: list[str]) -> dict:
+def _check_spf(apex_txt: list[str]) -> dict[str, Any]:
     spf = [r for r in apex_txt if r.startswith("v=spf1")]
     if not spf:
         return {
@@ -961,7 +964,7 @@ def _check_spf(apex_txt: list[str]) -> dict:
     }
 
 
-def _check_dmarc(dmarc_txt: list[str]) -> dict:
+def _check_dmarc(dmarc_txt: list[str]) -> dict[str, Any]:
     dmarc = [r for r in dmarc_txt if r.startswith("v=DMARC1")]
     if not dmarc:
         return {
@@ -1010,8 +1013,8 @@ def _check_dmarc(dmarc_txt: list[str]) -> dict:
     return {"status": status, "record": record, "policy": policy, "details": detail}
 
 
-def _check_dkim(rrsets: list[dict], zone_name: str) -> list[dict]:
-    results: list[dict] = []
+def _check_dkim(rrsets: list[dict[str, Any]], zone_name: str) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
     suffix = f"._domainkey.{zone_name}"
     for rrset in rrsets:
         if rrset.get("type") != "TXT":
@@ -1060,10 +1063,10 @@ async def email_security_check(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> dict[str, Any]:
     zone, _ = await _check_zone_access(zone_id, current_user, db)
     zone_name: str = zone.get("name", "")
-    rrsets: list[dict] = zone.get("rrsets", [])
+    rrsets: list[dict[str, Any]] = zone.get("rrsets", [])
 
     apex_txt: list[str] = []
     dmarc_txt: list[str] = []
@@ -1096,7 +1099,7 @@ async def list_zone_acme_keys(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     zone, role = await _check_zone_access(zone_id, current_user, db)
     await _require_min_role(role, "admin")
     keys = await acme_service.list_zone_keys(db, zone.get("name", zone_id))
@@ -1110,7 +1113,7 @@ async def create_zone_acme_key(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     zone, role = await _check_zone_access(
         zone_id, current_user, db, audit, "create_acme_key"
     )
@@ -1136,7 +1139,7 @@ async def update_zone_acme_key(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     zone, role = await _check_zone_access(
         zone_id, current_user, db, audit, "update_acme_key"
     )

@@ -5,9 +5,10 @@ import smtplib
 import socket
 from datetime import datetime
 from email.mime.text import MIMEText
+from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import env_overrides
 from app.models.audit_log import AuditLog
@@ -48,7 +49,7 @@ async def log_action(
     resource_type: str,
     user_id: int | None = None,
     resource_id: str | None = None,
-    details: dict | None = None,
+    details: dict[str, Any] | None = None,
     ip_address: str | None = None,
     status: str = "success",
 ) -> None:
@@ -94,7 +95,7 @@ class AuditLogger:
         action: str,
         resource_type: str,
         resource_id: str | None = None,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
         status: str = "success",
     ) -> None:
         await log_action(
@@ -114,7 +115,7 @@ class AuditLogger:
         action: str,
         resource_type: str,
         resource_id: str | None = None,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         await self.log(action, resource_type, resource_id, details, "success")
 
@@ -123,7 +124,7 @@ class AuditLogger:
         action: str,
         resource_type: str,
         resource_id: str | None = None,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         await self.log(action, resource_type, resource_id, details, "failure")
 
@@ -198,7 +199,7 @@ def _normalize_smtp_override(field: str, value: object) -> object:
 
 
 async def _load_smtp_row(db: AsyncSession) -> SmtpSettings | None:
-    result = await db.exec(select(SmtpSettings).where(SmtpSettings.id == 1))  # type: ignore[call-overload]
+    result = await db.exec(select(SmtpSettings).where(SmtpSettings.id == 1))
     return result.first()
 
 
@@ -219,7 +220,7 @@ async def get_smtp_settings(db: AsyncSession) -> SmtpSettings | None:
     return merged
 
 
-async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
+async def upsert_smtp_settings(db: AsyncSession, data: dict[str, Any]) -> SmtpSettings:
     for key in _SMTP_LIST_FIELDS:
         if key in data and isinstance(data[key], list):
             data[key] = json.dumps(data[key])
@@ -240,7 +241,7 @@ async def upsert_smtp_settings(db: AsyncSession, data: dict) -> SmtpSettings:
     return await get_smtp_settings(db)  # type: ignore[return-value]
 
 
-def build_smtp_config(data: dict) -> SmtpSettings:
+def build_smtp_config(data: dict[str, Any]) -> SmtpSettings:
     """Turn a submitted SMTP form into a transient config, environment applied.
 
     Used to probe settings that have not been saved yet; the environment-pinned
@@ -331,7 +332,7 @@ async def list_audit_logs(
 ) -> list[AuditLog]:
     q = select(AuditLog)
     if username:
-        q = q.where(AuditLog.username.contains(username))  # type: ignore[union-attr]
+        q = q.where(AuditLog.username.contains(username))  # type: ignore[attr-defined]
     if action:
         q = q.where(AuditLog.action == action)
     if resource_type:
@@ -342,8 +343,8 @@ async def list_audit_logs(
         q = q.where(AuditLog.created_at >= date_from)
     if date_to:
         q = q.where(AuditLog.created_at <= date_to)
-    q = q.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)  # type: ignore[union-attr]
-    result = await db.exec(q)  # type: ignore[call-overload]
+    q = q.order_by(AuditLog.created_at.desc()).offset(skip).limit(limit)  # type: ignore[attr-defined]
+    result = await db.exec(q)
     return list(result.all())
 
 
@@ -361,7 +362,7 @@ async def count_audit_logs(
 
     q = sel(func.count()).select_from(AuditLog)
     if username:
-        q = q.where(AuditLog.username.contains(username))  # type: ignore[union-attr]
+        q = q.where(AuditLog.username.contains(username))  # type: ignore[attr-defined]
     if action:
         q = q.where(AuditLog.action == action)
     if resource_type:
@@ -372,16 +373,18 @@ async def count_audit_logs(
         q = q.where(AuditLog.created_at >= date_from)
     if date_to:
         q = q.where(AuditLog.created_at <= date_to)
-    result = await db.exec(q)  # type: ignore[call-overload]
+    result = await db.exec(q)
     return result.one()
 
 
 async def get_syslog_settings(db: AsyncSession) -> SyslogSettings | None:
-    result = await db.exec(select(SyslogSettings).where(SyslogSettings.id == 1))  # type: ignore[call-overload]
+    result = await db.exec(select(SyslogSettings).where(SyslogSettings.id == 1))
     return result.first()
 
 
-async def upsert_syslog_settings(db: AsyncSession, data: dict) -> SyslogSettings:
+async def upsert_syslog_settings(
+    db: AsyncSession, data: dict[str, Any]
+) -> SyslogSettings:
     existing = await get_syslog_settings(db)
     if existing:
         for key, value in data.items():

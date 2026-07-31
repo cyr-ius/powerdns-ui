@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter, Request
 
 from app.config import GITHUB_REPOSITORY, settings
@@ -6,7 +8,7 @@ router = APIRouter()
 
 
 @router.get("/api/info")
-async def info(request: Request) -> dict:
+async def info(request: Request) -> dict[str, Any]:
     """Public application metadata consumed by the About page."""
     return {
         "version": request.app.version,

@@ -1,6 +1,8 @@
+from typing import Any
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_audit_logger, get_current_user
@@ -25,9 +27,9 @@ def _pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
     return HTTPException(status_code=exc.response.status_code, detail=detail)
 
 
-async def _get_catalog_zone(zone_id: str) -> dict:
+async def _get_catalog_zone(zone_id: str) -> dict[str, Any]:
     try:
-        zone: dict = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
+        zone: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
     if zone.get("kind") != "Producer":
@@ -42,8 +44,8 @@ async def _get_catalog_zone(zone_id: str) -> dict:
 async def list_catalogues(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
-    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+) -> list[Any]:
+    zones: list[Any] = await pdns_request("GET", f"{_SERVER}/zones")
     catalogs = [z for z in zones if z.get("kind") == "Producer"]
     if current_user.is_admin:
         return catalogs
@@ -57,7 +59,7 @@ async def create_catalogue(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
@@ -78,7 +80,9 @@ async def create_catalogue(
     if not data["name"].endswith("."):
         data["name"] += "."
     try:
-        result = await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        result: dict[str, Any] = await pdns_request(
+            "POST", f"{_SERVER}/zones", json=data
+        )
         await audit.success("create", "catalogue", data["name"])
         return result
     except httpx.HTTPStatusError as exc:
@@ -124,10 +128,10 @@ async def list_members(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     catalog = await _get_catalog_zone(zone_id)
     catalog_name: str = catalog["name"]
-    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+    zones: list[Any] = await pdns_request("GET", f"{_SERVER}/zones")
     members = [z for z in zones if z.get("catalog") == catalog_name]
     if current_user.is_admin:
         return members
@@ -145,7 +149,9 @@ async def add_member(
 ) -> None:
     catalog = await _get_catalog_zone(zone_id)
     try:
-        member: dict = await pdns_request("GET", f"{_SERVER}/zones/{member_zone_id}")
+        member: dict[str, Any] = await pdns_request(
+            "GET", f"{_SERVER}/zones/{member_zone_id}"
+        )
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
     if not current_user.is_admin:
@@ -196,7 +202,9 @@ async def remove_member(
 ) -> None:
     await _get_catalog_zone(zone_id)
     try:
-        member: dict = await pdns_request("GET", f"{_SERVER}/zones/{member_zone_id}")
+        member: dict[str, Any] = await pdns_request(
+            "GET", f"{_SERVER}/zones/{member_zone_id}"
+        )
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
     if not current_user.is_admin:
@@ -240,9 +248,9 @@ async def remove_member(
 # ── Consumers ─────────────────────────────────────────────────────────────────
 
 
-async def _get_consumer_zone(zone_id: str) -> dict:
+async def _get_consumer_zone(zone_id: str) -> dict[str, Any]:
     try:
-        zone: dict = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
+        zone: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:
         raise _pdns_error_handler(exc) from exc
     if zone.get("kind") != "Consumer":
@@ -254,8 +262,8 @@ async def _get_consumer_zone(zone_id: str) -> dict:
 async def list_consumers(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
-    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+) -> list[Any]:
+    zones: list[Any] = await pdns_request("GET", f"{_SERVER}/zones")
     consumers = [z for z in zones if z.get("kind") == "Consumer"]
     if current_user.is_admin:
         return consumers
@@ -269,7 +277,7 @@ async def create_consumer(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
-) -> dict:
+) -> dict[str, Any]:
     if not current_user.is_admin:
         user_accounts = await admin_service.get_user_account_names(db, current_user.id)  # type: ignore[arg-type]
         if not payload.account or payload.account not in user_accounts:
@@ -304,7 +312,9 @@ async def create_consumer(
     if not data["name"].endswith("."):
         data["name"] += "."
     try:
-        result = await pdns_request("POST", f"{_SERVER}/zones", json=data)
+        result: dict[str, Any] = await pdns_request(
+            "POST", f"{_SERVER}/zones", json=data
+        )
         await audit.success("create", "consumer", data["name"])
         return result
     except httpx.HTTPStatusError as exc:
@@ -347,10 +357,10 @@ async def list_consumer_members(
     zone_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> list:
+) -> list[Any]:
     consumer = await _get_consumer_zone(zone_id)
     consumer_name: str = consumer["name"]
-    zones: list = await pdns_request("GET", f"{_SERVER}/zones")
+    zones: list[Any] = await pdns_request("GET", f"{_SERVER}/zones")
     members = [z for z in zones if z.get("catalog") == consumer_name]
     if current_user.is_admin:
         return members

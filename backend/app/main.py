@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
@@ -131,7 +131,7 @@ app.mount("/api/static", StaticFiles(directory=static_dir), name="static")
 
 
 @app.get("/api/docs", include_in_schema=False)
-async def swagger_ui():
+async def swagger_ui() -> HTMLResponse:
     if not settings.swagger_enabled:
         raise HTTPException(status_code=404, detail="Not Found")
     return get_swagger_ui_html(
@@ -144,7 +144,7 @@ async def swagger_ui():
 
 
 @app.get("/api/health")
-async def health() -> dict:
+async def health_check() -> dict[str, str]:
     return {"status": "healthy", "app": app.title, "version": app.version}
 
 

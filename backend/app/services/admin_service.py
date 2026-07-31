@@ -1,5 +1,7 @@
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any
+
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.config import env_overrides
 from app.models.account import Account, UserAccount, ZoneRole
@@ -12,8 +14,8 @@ from app.services.pdns_service import pdns_request
 # ── Users ─────────────────────────────────────────────────────────────────────
 
 
-async def list_users(db: AsyncSession) -> list[dict]:
-    result = await db.exec(select(User))  # type: ignore[call-overload]
+async def list_users(db: AsyncSession) -> list[dict[str, Any]]:
+    result = await db.exec(select(User))
     users = result.all()
     output = []
     for user in users:
@@ -26,7 +28,7 @@ async def list_users(db: AsyncSession) -> list[dict]:
 
 
 async def count_admins(db: AsyncSession) -> int:
-    result = await db.exec(select(User).where(User.is_admin == True))  # noqa: E712  # type: ignore[call-overload]
+    result = await db.exec(select(User).where(User.is_admin == True))  # noqa: E712
     return len(result.all())
 
 
@@ -36,7 +38,7 @@ async def count_active_oidc_admins(db: AsyncSession) -> int:
     These are the only admins who can still authenticate once local login is
     disabled, so this count guards against locking everyone out.
     """
-    result = await db.exec(  # type: ignore[call-overload]
+    result = await db.exec(
         select(User).where(
             User.is_admin == True,  # noqa: E712
             User.is_active == True,  # noqa: E712
@@ -46,13 +48,13 @@ async def count_active_oidc_admins(db: AsyncSession) -> int:
     return len(result.all())
 
 
-async def list_users_basic(db: AsyncSession) -> list[dict]:
-    result = await db.exec(select(User).where(User.is_active == True))  # noqa: E712  # type: ignore[call-overload]
+async def list_users_basic(db: AsyncSession) -> list[dict[str, Any]]:
+    result = await db.exec(select(User).where(User.is_active == True))  # noqa: E712
     return [{"id": u.id, "username": u.username} for u in result.all()]
 
 
 async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
-    result = await db.exec(select(User).where(User.id == user_id))  # type: ignore[call-overload]
+    result = await db.exec(select(User).where(User.id == user_id))
     return result.first()
 
 
@@ -76,7 +78,7 @@ async def create_local_user(
     return user
 
 
-async def update_user(db: AsyncSession, user: User, data: dict) -> User:
+async def update_user(db: AsyncSession, user: User, data: dict[str, Any]) -> User:
     for key, value in data.items():
         if value is not None:
             setattr(user, key, value)
@@ -94,16 +96,12 @@ async def reset_password(db: AsyncSession, user: User, new_password: str) -> Non
 
 async def delete_user(db: AsyncSession, user: User) -> None:
     # Remove account memberships first
-    assoc = await db.exec(  # type: ignore[call-overload]
-        select(UserAccount).where(UserAccount.user_id == user.id)
-    )
+    assoc = await db.exec(select(UserAccount).where(UserAccount.user_id == user.id))
     for row in assoc.all():
         await db.delete(row)
     # Detach ACME keys from their creator: they stay valid (authorization is
     # carried by the zone) but no longer point to a deleted user.
-    keys = await db.exec(  # type: ignore[call-overload]
-        select(AcmeApiKey).where(AcmeApiKey.user_id == user.id)
-    )
+    keys = await db.exec(select(AcmeApiKey).where(AcmeApiKey.user_id == user.id))
     for key in keys.all():
         key.user_id = None
         db.add(key)
@@ -114,12 +112,12 @@ async def delete_user(db: AsyncSession, user: User) -> None:
 # ── Accounts ──────────────────────────────────────────────────────────────────
 
 
-async def list_accounts(db: AsyncSession) -> list[dict]:
-    result = await db.exec(select(Account))  # type: ignore[call-overload]
+async def list_accounts(db: AsyncSession) -> list[dict[str, Any]]:
+    result = await db.exec(select(Account))
     accounts = result.all()
     output = []
     for acc in accounts:
-        count_result = await db.exec(  # type: ignore[call-overload]
+        count_result = await db.exec(
             select(UserAccount).where(UserAccount.account_id == acc.id)
         )
         output.append({**acc.model_dump(), "user_count": len(count_result.all())})
@@ -127,12 +125,12 @@ async def list_accounts(db: AsyncSession) -> list[dict]:
 
 
 async def get_account_by_id(db: AsyncSession, account_id: int) -> Account | None:
-    result = await db.exec(select(Account).where(Account.id == account_id))  # type: ignore[call-overload]
+    result = await db.exec(select(Account).where(Account.id == account_id))
     return result.first()
 
 
 async def get_account_by_name(db: AsyncSession, name: str) -> Account | None:
-    result = await db.exec(select(Account).where(Account.name == name))  # type: ignore[call-overload]
+    result = await db.exec(select(Account).where(Account.name == name))
     return result.first()
 
 
@@ -146,7 +144,9 @@ async def create_account(
     return account
 
 
-async def update_account(db: AsyncSession, account: Account, data: dict) -> Account:
+async def update_account(
+    db: AsyncSession, account: Account, data: dict[str, Any]
+) -> Account:
     for key, value in data.items():
         if value is not None:
             setattr(account, key, value)
@@ -160,7 +160,7 @@ async def delete_account(db: AsyncSession, account: Account) -> None:
     # Detach PowerDNS zones still referencing this account by name, otherwise
     # they would keep pointing to an account that no longer exists.
     await _clear_account_on_zones(account.name)
-    assoc = await db.exec(  # type: ignore[call-overload]
+    assoc = await db.exec(
         select(UserAccount).where(UserAccount.account_id == account.id)
     )
     for row in assoc.all():
@@ -187,7 +187,7 @@ async def set_account_users(
     user_ids: list[int],
     role: ZoneRole = ZoneRole.admin,
 ) -> None:
-    existing = await db.exec(  # type: ignore[call-overload]
+    existing = await db.exec(
         select(UserAccount).where(UserAccount.account_id == account_id)
     )
     for row in existing.all():
@@ -198,7 +198,7 @@ async def set_account_users(
 
 
 async def get_user_account_names(db: AsyncSession, user_id: int) -> list[str]:
-    result = await db.exec(  # type: ignore[call-overload]
+    result = await db.exec(
         select(Account.name)
         .join(UserAccount, UserAccount.account_id == Account.id)  # type: ignore[arg-type]
         .where(UserAccount.user_id == user_id)
@@ -207,15 +207,13 @@ async def get_user_account_names(db: AsyncSession, user_id: int) -> list[str]:
 
 
 async def get_user_account_roles(db: AsyncSession, user_id: int) -> dict[str, str]:
-    uas_result = await db.exec(  # type: ignore[call-overload]
+    uas_result = await db.exec(
         select(UserAccount).where(UserAccount.user_id == user_id)
     )
     uas = uas_result.all()
     output: dict[str, str] = {}
     for ua in uas:
-        acc_result = await db.exec(  # type: ignore[call-overload]
-            select(Account).where(Account.id == ua.account_id)
-        )
+        acc_result = await db.exec(select(Account).where(Account.id == ua.account_id))
         acc = acc_result.first()
         if acc:
             output[acc.name] = (
@@ -240,7 +238,7 @@ async def get_user_role_for_account(
     account = await get_account_by_name(db, account_name)
     if account is None:
         return None
-    result = await db.exec(  # type: ignore[call-overload]
+    result = await db.exec(
         select(UserAccount).where(
             UserAccount.user_id == user_id,
             UserAccount.account_id == account.id,
@@ -249,19 +247,19 @@ async def get_user_role_for_account(
     return result.first()
 
 
-async def list_account_members(db: AsyncSession, account_name: str) -> list[dict]:
+async def list_account_members(
+    db: AsyncSession, account_name: str
+) -> list[dict[str, Any]]:
     account = await get_account_by_name(db, account_name)
     if account is None:
         return []
-    uas_result = await db.exec(  # type: ignore[call-overload]
+    uas_result = await db.exec(
         select(UserAccount).where(UserAccount.account_id == account.id)
     )
     uas = uas_result.all()
     output = []
     for ua in uas:
-        user_result = await db.exec(  # type: ignore[call-overload]
-            select(User).where(User.id == ua.user_id)
-        )
+        user_result = await db.exec(select(User).where(User.id == ua.user_id))
         user = user_result.first()
         if user:
             output.append(
@@ -281,7 +279,7 @@ async def upsert_account_member(
     account = await get_account_by_name(db, account_name)
     if account is None or account.id is None:
         return
-    result = await db.exec(  # type: ignore[call-overload]
+    result = await db.exec(
         select(UserAccount).where(
             UserAccount.user_id == user_id, UserAccount.account_id == account.id
         )
@@ -301,7 +299,7 @@ async def remove_account_member(
     account = await get_account_by_name(db, account_name)
     if account is None or account.id is None:
         return False
-    result = await db.exec(  # type: ignore[call-overload]
+    result = await db.exec(
         select(UserAccount).where(
             UserAccount.user_id == user_id, UserAccount.account_id == account.id
         )
@@ -323,7 +321,7 @@ def oidc_env_locked_fields() -> list[str]:
 
 
 async def _load_oidc_row(db: AsyncSession) -> OidcSettings | None:
-    result = await db.exec(select(OidcSettings).where(OidcSettings.id == 1))  # type: ignore[call-overload]
+    result = await db.exec(select(OidcSettings).where(OidcSettings.id == 1))
     return result.first()
 
 
@@ -344,7 +342,7 @@ async def get_oidc_settings(db: AsyncSession) -> OidcSettings | None:
     return merged
 
 
-async def upsert_oidc_settings(db: AsyncSession, data: dict) -> OidcSettings:
+async def upsert_oidc_settings(db: AsyncSession, data: dict[str, Any]) -> OidcSettings:
     # Environment-pinned fields are authoritative; ignore whatever the client
     # submitted for them rather than persisting a value that would be shadowed.
     locked = env_overrides("oidc_")
