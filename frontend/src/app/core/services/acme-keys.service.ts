@@ -50,10 +50,13 @@ export class AcmeKeysService {
     );
   }
 
-  /** Met à jour le commentaire d'une clé ACME de zone. */
-  updateZoneAcmeKey(zoneId: string, keyId: number, comment: string | null): Promise<AcmeApiKey> {
+  /** Met à jour le nom et/ou le commentaire d'une clé ACME de zone. */
+  updateZoneAcmeKey(zoneId: string, keyId: number, name: string, comment: string | null): Promise<AcmeApiKey> {
     return firstValueFrom(
-      this.http.patch<AcmeApiKey>(`/api/zones/${encodeURIComponent(zoneId)}/acme-keys/${keyId}`, { comment }),
+      this.http.patch<AcmeApiKey>(`/api/zones/${encodeURIComponent(zoneId)}/acme-keys/${keyId}`, {
+        name,
+        comment,
+      }),
     );
   }
 

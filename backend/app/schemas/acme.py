@@ -10,6 +10,7 @@ class AcmeApiKeyZoneCreate(BaseModel):
 
 
 class AcmeApiKeyUpdate(BaseModel):
+    name: str | None = None
     comment: str | None = None
 
 

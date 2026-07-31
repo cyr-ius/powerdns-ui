@@ -80,12 +80,18 @@ async def get_zone_key(
 
 
 async def update_zone_key(
-    db: AsyncSession, key_id: int, zone_name: str, comment: str | None
+    db: AsyncSession,
+    key_id: int,
+    zone_name: str,
+    comment: str | None,
+    name: str | None = None,
 ) -> AcmeApiKey | None:
-    """Met à jour le commentaire d'une clé ACME de zone."""
+    """Met à jour le nom et/ou le commentaire d'une clé ACME de zone."""
     key = await get_zone_key(db, key_id, zone_name)
     if key is None:
         return None
+    if name is not None:
+        key.name = name
     key.comment = comment
     db.add(key)
     await db.commit()

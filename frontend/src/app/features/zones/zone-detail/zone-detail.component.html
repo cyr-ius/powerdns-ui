@@ -1773,13 +1773,22 @@
                   <td class="text-muted small">{{ key.comment || "—" }}</td>
                   <td class="text-muted small">{{ key.created_at | date: "dd/MM/yyyy" }}</td>
                   <td class="text-end text-nowrap">
-                    <button
-                      class="btn btn-sm btn-outline-danger"
-                      (click)="deleteAcmeKey(key)"
-                      [title]="'COMMON.DELETE' | translate"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
+                    <div class="d-flex gap-1 justify-content-end">
+                      <button
+                        class="btn btn-sm btn-outline-secondary"
+                        (click)="openAcmeEditModal(key)"
+                        [title]="'COMMON.EDIT' | translate"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <button
+                        class="btn btn-sm btn-outline-danger"
+                        (click)="deleteAcmeKey(key)"
+                        [title]="'COMMON.DELETE' | translate"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -2156,6 +2165,74 @@
   </div>
 }
 
+<!-- ── Modal: Modifier une clé ACME ──────────────────────────────────────────── -->
+@if (editingAcmeKey()) {
+  <div class="modal-backdrop-overlay" (click)="closeAcmeEditModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil me-2 text-primary"></i>{{ "ZONE_DETAIL.ACME_KEY_EDIT_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeAcmeEditModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onEditAcmeKey()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (acmeEditError()) {
+              <div class="alert alert-danger py-2 small">{{ acmeEditError() | translate }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "COMMON.NAME" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [class.is-invalid]="acmeEditForm.name().touched() && acmeEditForm.name().errors().length"
+                placeholder="certbot-prod"
+                [formField]="acmeEditForm.name"
+              />
+              @if (acmeEditForm.name().touched() && acmeEditForm.name().errors().length) {
+                <div class="invalid-feedback">{{ acmeEditForm.name().errors()[0].message }}</div>
+              }
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium"
+                >{{ "APIKEYS.COMMENT" | translate }}
+                <span class="text-muted small">{{ "APIKEYS.COMMENT_OPTIONAL" | translate }}</span></label
+              >
+              <input
+                type="text"
+                class="form-control"
+                [placeholder]="'APIKEYS.COMMENT_PLACEHOLDER' | translate"
+                [formField]="acmeEditForm.comment"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeAcmeEditModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onEditAcmeKey()"
+              [disabled]="isEditingAcmeKey() || acmeEditForm().invalid()"
+            >
+              @if (isEditingAcmeKey()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.SAVE_CHANGES" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- ── Modal: Clé ACME créée (affichage secret) ──────────────────────────────── -->
 @if (showAcmeSecretModal() && createdAcmeKey()) {
   <div class="modal-backdrop-overlay"></div>
@@ -2186,8 +2263,7 @@
             <pre class="bg-body-secondary rounded p-2 small mb-0">
 dns_pdns_endpoint = https://&lt;your-domain&gt;
 dns_pdns_api_key  = {{ createdAcmeKey()!.key }}
-dns_pdns_server_id = localhost</pre
-            >
+dns_pdns_server_id = localhost</pre>
           </div>
         </div>
         <div class="modal-footer">

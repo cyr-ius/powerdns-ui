@@ -265,6 +265,15 @@ export class ZoneDetailComponent implements OnInit {
     required(s.name);
   });
 
+  // ── Édition clé ACME ────────────────────────────────────────────────────────
+  readonly editingAcmeKey = signal<AcmeApiKey | null>(null);
+  readonly isEditingAcmeKey = signal(false);
+  readonly acmeEditError = signal<string | null>(null);
+  readonly acmeEditModel = signal({ name: "", comment: "" });
+  readonly acmeEditForm = form(this.acmeEditModel, (s) => {
+    required(s.name);
+  });
+
   // ── Email security check (SPF/DMARC/DKIM) ───────────────────────────────
   readonly emailCheck = signal<EmailCheckResult | null>(null);
   readonly isCheckingEmail = signal(false);
@@ -448,6 +457,35 @@ export class ZoneDetailComponent implements OnInit {
     } catch {
       this.acmeKeysError.set("ZONE_DETAIL.ACME_KEY_DELETE_ERROR");
     }
+  }
+
+  openAcmeEditModal(key: AcmeApiKey): void {
+    this.editingAcmeKey.set(key);
+    this.acmeEditModel.set({ name: key.name, comment: key.comment ?? "" });
+    this.acmeEditError.set(null);
+  }
+
+  closeAcmeEditModal(): void {
+    this.editingAcmeKey.set(null);
+  }
+
+  onEditAcmeKey(): void {
+    submit(this.acmeEditForm, async () => {
+      const key = this.editingAcmeKey();
+      if (!key) return;
+      this.isEditingAcmeKey.set(true);
+      this.acmeEditError.set(null);
+      try {
+        const { name, comment } = this.acmeEditModel();
+        const updated = await this.acmeKeysSvc.updateZoneAcmeKey(this.zoneId, key.id, name, comment.trim() || null);
+        this.zoneAcmeKeys.update((keys) => keys.map((k) => (k.id === updated.id ? updated : k)));
+        this.editingAcmeKey.set(null);
+      } catch {
+        this.acmeEditError.set("ZONE_DETAIL.ACME_KEY_EDIT_ERROR");
+      } finally {
+        this.isEditingAcmeKey.set(false);
+      }
+    });
   }
 
   async loadZone(): Promise<void> {

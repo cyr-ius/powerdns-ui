@@ -1142,7 +1142,9 @@ async def update_zone_acme_key(
     )
     await _require_min_role(role, "admin", audit, "update_acme_key", "zone", zone_id)
     zone_name = zone.get("name", zone_id)
-    updated = await acme_service.update_zone_key(db, key_id, zone_name, payload.comment)
+    updated = await acme_service.update_zone_key(
+        db, key_id, zone_name, payload.comment, payload.name
+    )
     if updated is None:
         raise HTTPException(status_code=404, detail="Clé ACME introuvable")
     await audit.success("update", "acme_key", updated.name)
