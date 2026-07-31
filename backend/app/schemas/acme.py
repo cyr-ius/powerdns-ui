@@ -14,6 +14,10 @@ class AcmeApiKeyUpdate(BaseModel):
     comment: str | None = None
 
 
+class AcmeApiKeyOwnerUpdate(BaseModel):
+    user_id: int
+
+
 class AcmeApiKeyResponse(BaseModel):
     id: int
     name: str

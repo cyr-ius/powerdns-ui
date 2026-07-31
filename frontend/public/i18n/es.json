@@ -610,7 +610,12 @@
     "LOAD_ERROR": "No se pueden cargar las claves.",
     "DELETE_ERROR": "Error al eliminar la clave.",
     "ORPHAN_BADGE": "Huérfana",
-    "ORPHAN_NOTE": "Una clave huérfana ya no tiene propietario — la cuenta de su creador fue eliminada. Las claves ACME están vinculadas a su zona, no a un usuario: una clave huérfana sigue siendo plenamente operativa. Elimínela aquí si ya no es necesaria."
+    "ORPHAN_NOTE": "Una clave huérfana ya no tiene propietario — la cuenta de su creador fue eliminada. Las claves ACME están vinculadas a su zona, no a un usuario: una clave huérfana sigue siendo plenamente operativa. Elimínela aquí si ya no es necesaria.",
+    "REASSIGN_OWNER": "Reasignar propietario",
+    "REASSIGN_TITLE": "Reasignar la clave «{{name}}»",
+    "REASSIGN_HELP": "Elija el nuevo usuario propietario de esta clave ACME.",
+    "REASSIGN_ERROR": "Error al reasignar el propietario.",
+    "SELECT_OWNER": "Seleccionar un usuario…"
   },
   "TOKENS": {
     "SUBTITLE": "Tokens de acceso personal para autenticar sus llamadas a la API REST de PowerDNS UI",

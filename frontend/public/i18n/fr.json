@@ -610,7 +610,12 @@
     "LOAD_ERROR": "Impossible de charger les clés.",
     "DELETE_ERROR": "Erreur lors de la suppression de la clé.",
     "ORPHAN_BADGE": "Orpheline",
-    "ORPHAN_NOTE": "Une clé orpheline n'a plus de propriétaire — le compte de son créateur a été supprimé. Les clés ACME sont rattachées à leur zone, pas à un utilisateur : une clé orpheline reste donc pleinement opérationnelle. Supprimez-la ici si elle n'est plus utile."
+    "ORPHAN_NOTE": "Une clé orpheline n'a plus de propriétaire — le compte de son créateur a été supprimé. Les clés ACME sont rattachées à leur zone, pas à un utilisateur : une clé orpheline reste donc pleinement opérationnelle. Supprimez-la ici si elle n'est plus utile.",
+    "REASSIGN_OWNER": "Réaffecter le propriétaire",
+    "REASSIGN_TITLE": "Réaffecter la clé « {{name}} »",
+    "REASSIGN_HELP": "Choisissez le nouvel utilisateur propriétaire de cette clé ACME.",
+    "REASSIGN_ERROR": "Erreur lors de la réaffectation du propriétaire.",
+    "SELECT_OWNER": "Sélectionner un utilisateur…"
   },
   "TOKENS": {
     "SUBTITLE": "Jetons d'accès personnels pour authentifier vos appels à l'API REST PowerDNS UI",

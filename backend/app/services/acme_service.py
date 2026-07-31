@@ -122,6 +122,21 @@ async def list_all_keys(db: AsyncSession) -> list[tuple[AcmeApiKey, str, int]]:
     return [(key, username, uid) for key, username, uid in rows.all()]
 
 
+async def reassign_key_owner(
+    db: AsyncSession, key_id: int, user_id: int
+) -> AcmeApiKey | None:
+    """Reassign the owner of a key to another user (admin use)."""
+    result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))
+    key = result.first()
+    if key is None:
+        return None
+    key.user_id = user_id
+    db.add(key)
+    await db.commit()
+    await db.refresh(key)
+    return key
+
+
 async def delete_key_any(db: AsyncSession, key_id: int) -> bool:
     """Delete any key by ID (admin use)."""
     result = await db.exec(select(AcmeApiKey).where(AcmeApiKey.id == key_id))

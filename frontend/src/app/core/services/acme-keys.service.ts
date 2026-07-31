@@ -33,6 +33,11 @@ export class AcmeKeysService {
     return firstValueFrom(this.http.delete(`/api/acme-keys/${keyId}`));
   }
 
+  /** Reassigns the owner of an ACME key to another user (admin only). */
+  reassignOwner(keyId: number, userId: number): Promise<AcmeApiKey> {
+    return firstValueFrom(this.http.patch<AcmeApiKey>(`/api/acme-keys/${keyId}/owner`, { user_id: userId }));
+  }
+
   // ── Zone-centric methods for ACME keys ──────────────────────────────
 
   /** Lists the ACME keys of a zone (zone admin required). */
