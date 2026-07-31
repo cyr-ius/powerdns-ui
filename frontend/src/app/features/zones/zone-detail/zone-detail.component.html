@@ -571,6 +571,16 @@
                       >
                         <i class="bi" [class.bi-eye-slash-fill]="!rec.disabled" [class.bi-eye-fill]="rec.disabled"></i>
                       </button>
+                      @if (canWrite() && rrset.records.length > 1) {
+                        <button
+                          class="btn btn-link btn-sm p-0 ms-1 text-muted flex-shrink-0"
+                          style="font-size: 0.75rem; line-height: 1"
+                          [title]="'ZONE_DETAIL.DELETE_VALUE' | translate"
+                          (click)="pruneRecordValue(rrset, rec)"
+                        >
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      }
                     </div>
                   }
                 </td>

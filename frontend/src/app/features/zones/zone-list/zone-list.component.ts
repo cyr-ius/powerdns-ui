@@ -43,6 +43,7 @@ export class ZoneListComponent implements OnInit {
     nameservers: "",
     account: "",
     catalog: "",
+    soaEditApi: "",
   });
   readonly createForm = form(this.createModel, (s) => {
     required(s.name, { message: "The zone name is required" });
@@ -91,6 +92,7 @@ export class ZoneListComponent implements OnInit {
       nameservers: "",
       account: "",
       catalog: "",
+      soaEditApi: "",
     });
     this.createError.set(null);
     this.createMode.set("standard");
@@ -116,7 +118,7 @@ export class ZoneListComponent implements OnInit {
       this.isCreating.set(true);
       this.createError.set(null);
       try {
-        const { name, kind, nameservers, account, catalog } = this.createModel();
+        const { name, kind, nameservers, account, catalog, soaEditApi } = this.createModel();
         const nsList = nameservers
           .split(",")
           .map((s) => s.trim())
@@ -128,6 +130,7 @@ export class ZoneListComponent implements OnInit {
           masters: [],
           account: account || undefined,
           catalog: catalog || undefined,
+          soa_edit_api: soaEditApi || undefined,
         });
         this.showCreateModal.set(false);
         await this.loadZones();

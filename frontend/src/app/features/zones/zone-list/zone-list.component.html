@@ -231,6 +231,18 @@
                 <div class="form-text">{{ "ZONES.CATALOG_HELP" | translate }}</div>
               </div>
             }
+            <div class="mb-0 mt-3">
+              <label class="form-label fw-medium">{{ "ZONES.SOA_EDIT_API" | translate }}</label>
+              <select class="form-select" [formField]="createForm.soaEditApi">
+                <option value="">{{ "ZONES.SOA_EDIT_API_DEFAULT" | translate }}</option>
+                <option value="DEFAULT">DEFAULT</option>
+                <option value="INCREASE">INCREASE</option>
+                <option value="EPOCH">EPOCH</option>
+                <option value="SOA-EDIT">SOA-EDIT</option>
+                <option value="SOA-EDIT-INCREASE">SOA-EDIT-INCREASE</option>
+              </select>
+              <div class="form-text">{{ "ZONES.SOA_EDIT_API_HELP" | translate }}</div>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">

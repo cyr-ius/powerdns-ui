@@ -44,6 +44,7 @@ class ZoneCreate(BaseModel):
     masters: list[str] = []
     account: str | None = None
     catalog: str | None = None
+    soa_edit_api: str | None = None
 
 
 class ZoneUpdate(BaseModel):

@@ -47,6 +47,7 @@ export interface ZoneCreate {
   masters: string[];
   account?: string;
   catalog?: string;
+  soa_edit_api?: string;
 }
 
 export interface ZoneUpdate {
@@ -58,7 +59,7 @@ export interface ZoneUpdate {
 }
 
 interface RRsetChange {
-  changetype: "REPLACE" | "DELETE";
+  changetype: "REPLACE" | "DELETE" | "EXTEND" | "PRUNE";
   name: string;
   type: string;
   ttl?: number;

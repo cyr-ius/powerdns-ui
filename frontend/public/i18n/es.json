@@ -93,6 +93,9 @@
     "NAMESERVERS_HELP": "Separados por comas. El primero será el mname del SOA.",
     "CATALOG": "Catálogo",
     "CATALOG_HELP": "Asociar esta zona con un catálogo para distribuirla automáticamente a los servidores secundarios.",
+    "SOA_EDIT_API": "Estilo de número de serie SOA (API)",
+    "SOA_EDIT_API_DEFAULT": "— Valor predeterminado del servidor —",
+    "SOA_EDIT_API_HELP": "Controla cómo se actualiza el número de serie SOA cuando esta zona se modifica a través de la API. Deje el valor predeterminado del servidor salvo necesidad específica.",
     "CREATING": "Creando…"
   },
   "ZONE_DETAIL": {

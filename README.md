@@ -88,7 +88,7 @@ The Angular frontend is served statically by FastAPI — a single container is s
 # docker-compose.yaml
 services:
   pdns:
-    image: powerdns/pdns-auth-50
+    image: powerdns/pdns-auth-51:5.1.3
     restart: unless-stopped
     volumes:
       - powerdns_data:/var/lib/powerdns
@@ -359,6 +359,7 @@ Activation is per-zone and restricted to **Super Admins** and **Zone Admins**:
 3. The `LUA` record type is automatically added to the zone's available types
 
 > Lua Records must also be enabled at the PowerDNS server level (`enable-lua-records=yes` in `pdns.conf`).
+> Since PowerDNS 5.1, editing LUA records through the API, AXFR/IXFR, or DNS Update additionally requires `enable-lua-record-updates=yes` — without it, resolution keeps working but writes are rejected.
 
 ---
 

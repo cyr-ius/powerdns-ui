@@ -93,6 +93,9 @@
     "NAMESERVERS_HELP": "Separated by commas. The first server will be the mname of the SOA.",
     "CATALOG": "Catalog",
     "CATALOG_HELP": "Associate this zone with a catalog zone to distribute it automatically to secondary servers.",
+    "SOA_EDIT_API": "SOA serial style (API)",
+    "SOA_EDIT_API_DEFAULT": "— Server default —",
+    "SOA_EDIT_API_HELP": "Controls how the SOA serial is updated when this zone is edited through the API. Leave as server default unless you have a specific requirement.",
     "CREATING": "Creating…"
   },
   "ZONE_DETAIL": {

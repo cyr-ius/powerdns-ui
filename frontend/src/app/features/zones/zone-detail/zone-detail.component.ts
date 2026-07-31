@@ -537,16 +537,14 @@ export class ZoneDetailComponent implements OnInit {
       try {
         const { name, type, ttl, content } = this.recordModel();
         const normalizedName = name.endsWith(".") ? name : `${name}.`;
-        const existingRRset = this.zone()?.rrsets.find((r) => r.name === normalizedName && r.type === type);
-        const existingRecords = existingRRset?.records ?? [];
         await this.pdns.patchRRsets(this.zoneId, {
           rrsets: [
             {
-              changetype: "REPLACE",
+              changetype: "EXTEND",
               name: normalizedName,
               type,
               ttl,
-              records: [...existingRecords, { content, disabled: false }],
+              records: [{ content, disabled: false }],
             },
           ],
         });
@@ -573,7 +571,7 @@ export class ZoneDetailComponent implements OnInit {
       await this.pdns.patchRRsets(reverseZone.id, {
         rrsets: [
           {
-            changetype: "REPLACE",
+            changetype: "EXTEND",
             name: ptrName,
             type: "PTR",
             ttl,
@@ -586,6 +584,26 @@ export class ZoneDetailComponent implements OnInit {
         type: "error",
         text: `PTR not created in ${reverseZone.name} — check permissions for this zone.`,
       });
+    }
+  }
+
+  async pruneRecordValue(rrset: RRset, record: { content: string; disabled: boolean }): Promise<void> {
+    if (!confirm(`Supprimer la valeur "${record.content}" de "${rrset.name}" (${rrset.type}) ?`)) return;
+    try {
+      await this.pdns.patchRRsets(this.zoneId, {
+        rrsets: [
+          {
+            changetype: "PRUNE",
+            name: rrset.name,
+            type: rrset.type,
+            ttl: rrset.ttl,
+            records: [record],
+          },
+        ],
+      });
+      await this.loadZone();
+    } catch {
+      this.error.set("Unable to delete this value.");
     }
   }
 
