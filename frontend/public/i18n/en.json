@@ -336,6 +336,7 @@
     "PDNS_SEARCH_PLACEHOLDER": "Search logs…",
     "PDNS_NO_MATCH": "No logs match your search",
     "PDNS_MATCH_COUNT": "{{ count }} / {{ total }} entries",
+    "PDNS_CONFIG_HINT": "For structured, correctly parsed logs (timestamp, level, subsystem), the PowerDNS server needs <code>logging-structured=yes</code>, <code>loglevel=6</code> (or higher) and <code>loglevel-show=yes</code> in its configuration. See the <a href=\"https://doc.powerdns.com/authoritative/settings.html#logging-facility\" target=\"_blank\" rel=\"noopener\">PowerDNS documentation</a>.",
     "SYSLOG_TITLE": "Syslog Configuration",
     "SYSLOG_ACTIVATE": "Activate syslog forwarding",
     "SYSLOG_HOST": "Host",

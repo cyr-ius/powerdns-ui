@@ -336,6 +336,7 @@
     "PDNS_SEARCH_PLACEHOLDER": "Rechercher dans les journaux…",
     "PDNS_NO_MATCH": "Aucun journal ne correspond à la recherche",
     "PDNS_MATCH_COUNT": "{{ count }} / {{ total }} entrée(s)",
+    "PDNS_CONFIG_HINT": "Pour que les journaux soient structurés et correctement interprétés (horodatage, niveau, sous-système), le serveur PowerDNS doit avoir <code>logging-structured=yes</code>, <code>loglevel=6</code> (ou plus) et <code>loglevel-show=yes</code> dans sa configuration. Voir la <a href=\"https://doc.powerdns.com/authoritative/settings.html#logging-facility\" target=\"_blank\" rel=\"noopener\">documentation PowerDNS</a>.",
     "SYSLOG_TITLE": "Configuration Syslog",
     "SYSLOG_ACTIVATE": "Activer le transfert syslog",
     "SYSLOG_HOST": "Hôte",

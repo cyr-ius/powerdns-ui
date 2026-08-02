@@ -37,8 +37,13 @@ class SyslogSettingsUpdate(BaseModel):
 
 
 class PdnsLogEntry(BaseModel):
-    name: str
-    value: str
+    raw: str
+    count: int
+    timestamp: str | None = None
+    prio: str | None = None
+    subsystem: str | None = None
+    message: str
+    fields: dict[str, str] = {}
 
 
 class SmtpSettingsResponse(BaseModel):

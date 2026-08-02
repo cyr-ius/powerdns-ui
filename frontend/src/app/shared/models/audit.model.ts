@@ -21,8 +21,13 @@ export interface SyslogSettings {
 }
 
 export interface PdnsLogEntry {
-  name: string;
-  value: string;
+  raw: string;
+  count: number;
+  timestamp: string | null;
+  prio: string | null;
+  subsystem: string | null;
+  message: string;
+  fields: Record<string, string>;
 }
 
 export interface SmtpSettings {

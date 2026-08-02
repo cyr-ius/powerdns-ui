@@ -14,6 +14,9 @@ services:
       - "--webserver-address=0.0.0.0"
       - "--webserver-port=8081"
       - "--webserver-allow-from=0.0.0.0/0"
+      - "--logging-structured=yes"
+      - "--loglevel=6"
+      - "--loglevel-show=yes"
 
   pdns-ui:
     image: ghcr.io/cyr-ius/powerdns-ui:latest

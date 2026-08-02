@@ -11,8 +11,10 @@
 
 .pdns-log-line {
   display: flex;
-  gap: 1rem;
-  padding: 0.1rem 0;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.15rem 0;
   border-bottom: 1px solid #21262d;
 }
 
@@ -23,10 +25,58 @@
 .pdns-log-time {
   color: #8b949e;
   white-space: nowrap;
-  min-width: 180px;
+  min-width: 110px;
+}
+
+.pdns-log-level {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 0.05rem 0.4rem;
+  border-radius: 3px;
+  background: #30363d;
+  color: #c9d1d9;
+}
+
+.level-error .pdns-log-level {
+  background: #f85149;
+  color: #1c1c1c;
+}
+
+.level-warning .pdns-log-level {
+  background: #d29922;
+  color: #1c1c1c;
+}
+
+.level-notice .pdns-log-level {
+  background: #58a6ff;
+  color: #0d1117;
+}
+
+.level-debug .pdns-log-level {
+  background: #21262d;
+  color: #8b949e;
+}
+
+.pdns-log-subsystem {
+  color: #79c0ff;
+  white-space: nowrap;
 }
 
 .pdns-log-msg {
   color: #c9d1d9;
-  word-break: break-all;
+  word-break: break-word;
+  flex: 1 1 auto;
+}
+
+.pdns-log-field {
+  color: #8b949e;
+  margin-left: 0.5rem;
+}
+
+.pdns-log-count {
+  color: #8b949e;
+  white-space: nowrap;
+  font-size: 0.75rem;
 }

@@ -336,6 +336,7 @@
     "PDNS_SEARCH_PLACEHOLDER": "Buscar en los registros…",
     "PDNS_NO_MATCH": "Ningún registro coincide con la búsqueda",
     "PDNS_MATCH_COUNT": "{{ count }} / {{ total }} entradas",
+    "PDNS_CONFIG_HINT": "Para que los registros sean estructurados y se interpreten correctamente (marca de tiempo, nivel, subsistema), el servidor PowerDNS necesita <code>logging-structured=yes</code>, <code>loglevel=6</code> (o superior) y <code>loglevel-show=yes</code> en su configuración. Consulte la <a href=\"https://doc.powerdns.com/authoritative/settings.html#logging-facility\" target=\"_blank\" rel=\"noopener\">documentación de PowerDNS</a>.",
     "SYSLOG_TITLE": "Configuración Syslog",
     "SYSLOG_ACTIVATE": "Activar reenvío syslog",
     "SYSLOG_HOST": "Host",

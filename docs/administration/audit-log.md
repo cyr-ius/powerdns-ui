@@ -23,6 +23,22 @@ The log can be filtered by username, action, resource type, status, and date ran
 
 The Audit Log page also surfaces relevant PowerDNS server-side log entries alongside PowerDNS UI's own audit trail, giving a single place to correlate a user action with what PowerDNS itself did as a result.
 
+These entries are read from PowerDNS's own `logmessages` ring buffer (via the API's `?includerings=true` statistics) and parsed as structured logs — timestamp, level, subsystem, and message are shown as separate fields, with a badge colored by level (Error/Warning/Notice/Debug/Info).
+
+For this parsing to work, the PowerDNS Authoritative Server must be configured with:
+
+```
+logging-structured=yes
+loglevel=6
+loglevel-show=yes
+```
+
+- `logging-structured=yes` makes PowerDNS emit `key="value"` structured log lines instead of free-form text.
+- `loglevel=6` (or higher) is needed for a useful level of verbosity — lower levels omit most `Info`/`Notice` entries.
+- `loglevel-show=yes` includes the `prio` (level) field in each structured log line, used here to color-code entries by severity.
+
+See the [PowerDNS settings documentation](https://doc.powerdns.com/authoritative/settings.html#logging-facility) for details. Without `logging-structured=yes`, log lines are still displayed, but only as raw, unparsed text.
+
 ## Syslog export
 
 From the Audit Log page (**Syslog: active/inactive** button), audit events can be forwarded to an external syslog server:

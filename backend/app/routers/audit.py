@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from typing import Annotated, Any
 
@@ -26,6 +27,43 @@ from app.services.pdns_service import pdns_request
 router = APIRouter(prefix="/api/admin/audit", dependencies=[Depends(get_current_admin)])
 
 _SERVER = "/servers/localhost"
+
+# PowerDNS 5.x logfmt-style log lines, e.g.:
+#   Aug 02 19:55:03 msg="Packet denied" subsystem="receiver0" prio="Error" ts="1785693303.307" key="jerome-dyndns"
+_LOG_TS_RE = re.compile(r"^(?P<ts>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<rest>.*)$")
+_LOG_KV_RE = re.compile(r'(?P<key>\w+)="(?P<qval>[^"]*)"|(?P<key2>\w+)=(?P<val>\S+)')
+
+
+def _parse_pdns_log_line(raw: str) -> dict[str, Any]:
+    timestamp = None
+    rest = raw
+    if m := _LOG_TS_RE.match(raw):
+        timestamp = m.group("ts")
+        rest = m.group("rest")
+
+    fields = {}
+    for m in _LOG_KV_RE.finditer(rest):
+        key = m.group("key") or m.group("key2")
+        value = m.group("qval") if m.group("key") else m.group("val")
+        fields[key] = value
+
+    message = fields.pop("msg", None)
+    prio = fields.pop("prio", None)
+    subsystem = fields.pop("subsystem", None)
+    fields.pop("ts", None)
+
+    if message is None:
+        # Not a logfmt line (e.g. a backend's freeform banner) — use the text as-is.
+        message = rest.strip()
+        fields = {}
+
+    return {
+        "timestamp": timestamp,
+        "prio": prio,
+        "subsystem": subsystem,
+        "message": message,
+        "fields": fields,
+    }
 
 
 @router.get("", response_model=list[AuditLogResponse])
@@ -89,10 +127,17 @@ async def get_pdns_logs() -> list[Any]:
             item.get("name") == "logmessages"
             and item.get("type") == "RingStatisticItem"
         ):
-            return [
-                {"name": e.get("name", ""), "value": e.get("value", "")}
-                for e in item.get("value", [])
-            ]
+            entries = []
+            for e in item.get("value", []):
+                raw = e.get("name", "")
+                try:
+                    count = int(e.get("value", "0"))
+                except ValueError:
+                    count = 0
+                entries.append(
+                    {"raw": raw, "count": count, **_parse_pdns_log_line(raw)}
+                )
+            return entries
     return []
 
 

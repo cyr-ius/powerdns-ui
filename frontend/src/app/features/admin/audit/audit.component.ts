@@ -60,9 +60,7 @@ export class AdminAuditComponent implements OnInit {
   readonly filteredPdnsLogs = computed(() => {
     const term = this.pdnsSearch().trim().toLowerCase();
     if (!term) return this.pdnsLogs();
-    return this.pdnsLogs().filter(
-      (entry) => entry.name.toLowerCase().includes(term) || entry.value.toLowerCase().includes(term),
-    );
+    return this.pdnsLogs().filter((entry) => entry.raw.toLowerCase().includes(term));
   });
 
   // Syslog settings modal
@@ -239,6 +237,28 @@ export class AdminAuditComponent implements OnInit {
 
   clearPdnsSearch(): void {
     this.pdnsSearch.set("");
+  }
+
+  pdnsLevelClass(prio: string | null): string {
+    switch ((prio ?? "").toLowerCase()) {
+      case "error":
+      case "critical":
+      case "alert":
+      case "emergency":
+        return "level-error";
+      case "warning":
+        return "level-warning";
+      case "notice":
+        return "level-notice";
+      case "debug":
+        return "level-debug";
+      default:
+        return "level-info";
+    }
+  }
+
+  pdnsFields(entry: PdnsLogEntry): { key: string; value: string }[] {
+    return Object.entries(entry.fields).map(([key, value]) => ({ key, value }));
   }
 
   // ── Syslog modal ────────────────────────────────────────────────────────────
