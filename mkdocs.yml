@@ -1,8 +1,8 @@
 site_name: PowerDNS UI
 site_description: Web management interface for PowerDNS Authoritative Server
-site_url: https://cyr-ius.github.io/pdns-ui/
-repo_name: cyr-ius/pdns-ui
-repo_url: https://github.com/cyr-ius/pdns-ui
+site_url: https://cyr-ius.github.io/powerdns-ui/
+repo_name: cyr-ius/powerdns-ui
+repo_url: https://github.com/cyr-ius/powerdns-ui
 edit_uri: edit/master/docs/
 copyright: Copyright &copy; cyr-ius — MIT License
 
@@ -77,9 +77,9 @@ markdown_extensions:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/cyr-ius/pdns-ui
+      link: https://github.com/cyr-ius/powerdns-ui
     - icon: fontawesome/brands/docker
-      link: https://github.com/cyr-ius/pdns-ui/pkgs/container/pdns-ui
+      link: https://github.com/cyr-ius/powerdns-ui/pkgs/container/powerdns-ui
 
 nav:
   - Home: index.md
