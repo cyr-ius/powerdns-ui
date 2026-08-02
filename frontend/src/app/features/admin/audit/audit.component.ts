@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { disabled, form, FormField, required, submit } from "@angular/forms/signals";
 import { AuditService } from "../../../core/services/audit.service";
 import { AuditLog, PdnsLogEntry, SmtpSettings, SyslogSettings } from "../../../shared/models/audit.model";
@@ -56,6 +56,14 @@ export class AdminAuditComponent implements OnInit {
   readonly pdnsLogs = signal<PdnsLogEntry[]>([]);
   readonly pdnsLoading = signal(false);
   readonly pdnsError = signal<string | null>(null);
+  readonly pdnsSearch = signal("");
+  readonly filteredPdnsLogs = computed(() => {
+    const term = this.pdnsSearch().trim().toLowerCase();
+    if (!term) return this.pdnsLogs();
+    return this.pdnsLogs().filter(
+      (entry) => entry.name.toLowerCase().includes(term) || entry.value.toLowerCase().includes(term),
+    );
+  });
 
   // Syslog settings modal
   readonly showSyslogModal = signal(false);
@@ -223,6 +231,14 @@ export class AdminAuditComponent implements OnInit {
     } finally {
       this.pdnsLoading.set(false);
     }
+  }
+
+  onPdnsSearchInput(value: string): void {
+    this.pdnsSearch.set(value);
+  }
+
+  clearPdnsSearch(): void {
+    this.pdnsSearch.set("");
   }
 
   // ── Syslog modal ────────────────────────────────────────────────────────────
