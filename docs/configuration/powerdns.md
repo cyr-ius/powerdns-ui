@@ -42,6 +42,22 @@ enable-lua-record-updates=yes
 
 Without `enable-lua-record-updates=yes`, resolution of existing Lua records keeps working, but PowerDNS UI (and any other client) will not be able to write new ones.
 
+## Structured logging (Audit Log page)
+
+To let the [Audit Log](../administration/audit-log.md) page parse PowerDNS's own log entries (timestamp, level, subsystem, message) instead of showing raw text, enable structured logging:
+
+```ini
+logging-structured=yes
+loglevel=6
+loglevel-show=yes
+```
+
+- `logging-structured=yes` makes PowerDNS emit `key="value"` structured log lines instead of free-form text.
+- `loglevel=6` (or higher) is needed for a useful level of verbosity — lower levels omit most `Info`/`Notice` entries.
+- `loglevel-show=yes` includes the `prio` (level) field in each structured log line, used to color-code entries by severity.
+
+See [Audit Log — PDNS logs](../administration/audit-log.md#pdns-logs) for details.
+
 ## gmysql backend
 
 If PowerDNS is configured with the `gmysql` backend, the database schema must exist before PowerDNS starts. PowerDNS UI bundles a helper script for this — see [MariaDB Backend (gmysql)](mariadb.md).

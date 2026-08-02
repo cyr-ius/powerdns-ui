@@ -23,6 +23,7 @@ services:
       - "--webserver-allow-from=0.0.0.0/0"
       - "--loglevel=6"
       - "--loglevel-show=yes"
+      - "--logging-structured=yes"
 
   pdns-ui:
     image: ghcr.io/cyr-ius/pdns-ui:latest
