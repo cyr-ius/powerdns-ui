@@ -1,13 +1,6 @@
-# PowerDNS UI
+# 🌐 PowerDNS UI
 
-Web management interface for [PowerDNS Authoritative Server](https://www.powerdns.com/auth.html).
-
-![license](https://img.shields.io/github/license/cyr-ius/powerdns-ui?label=Licence&color=blue)
-![python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python)
-![angular](https://img.shields.io/badge/Angular-22-blue?logo=angular)
-[![ci::status]][ci::github]
-[![docker::pulls]][docker::hub]
-[![documentation::badge]][documentation::web]
+![License](https://img.shields.io/github/license/cyr-ius/powerdns-ui?label=License&color=blue) ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python) ![Angular](https://img.shields.io/badge/Angular-22-blue?logo=angular) [![ci::status]][ci::github] [![docker::pulls]][docker::hub] [![documentation::badge]][documentation::web]
 
 [ci::status]: https://img.shields.io/github/actions/workflow/status/cyr-ius/powerdns-ui/docker-publish.yml?logo=github
 [ci::github]: https://github.com/cyr-ius/powerdns-ui/actions
@@ -16,85 +9,31 @@ Web management interface for [PowerDNS Authoritative Server](https://www.powerdn
 [documentation::badge]: https://img.shields.io/badge/Documentation-Wiki-green?logo=helpdesk
 [documentation::web]: https://cyr-ius.github.io/powerdns-ui/
 
+**PowerDNS UI** is a modern web management interface for the [PowerDNS Authoritative Server](https://www.powerdns.com/auth.html). It wraps the PowerDNS REST API with an Angular frontend and a FastAPI backend, adding its own accounts, roles and audit layer so teams can manage zones, records, DNSSEC and more without touching the raw API.
 
-
----
-
-## Table of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Quick Start](#quick-start)
-  - [Docker Compose](#docker-compose)
-  - [Build from Source](#build-from-source)
-- [PowerDNS Configuration](#powerdns-configuration)
-- [Environment Variables](#environment-variables)
-- [Rate Limiting & Reverse Proxy](#rate-limiting--reverse-proxy)
-- [MariaDB Backend (gmysql)](#mariadb-backend-gmysql)
-  - [When to run it](#when-to-run-it)
-  - [Usage](#usage)
-  - [Custom SQL schema](#--schema----custom-sql-file)
-  - [Recommended startup order](#recommended-startup-order)
-- [Catalog Zones](#catalog-zones)
-  - [Producer](#producer)
-  - [Consumer](#consumer)
-- [Lua Records](#lua-records)
-- [OIDC Authentication](#oidc-authentication)
-- [Roles and Permissions](#roles-and-permissions)
-- [Audit Log](#audit-log)
-- [API](#api)
-- [Development](#development)
-  - [Prerequisites](#prerequisites)
-  - [Backend](#backend)
-  - [Frontend](#frontend)
-- [Screenshots](#screenshots)
-- [Demos](#demos)
-- [License](#license)
+<img width="1151" height="680" alt="PowerDNS UI zone view" src="https://github.com/user-attachments/assets/542b271b-f806-4be9-9ebf-58d04e4d0676" />
 
 ---
 
 ## Features
 
-- **DNS Zones** — create, edit, delete (Native / Master / Slave), record management with catalog assignment at creation
-- **DNSSEC** — cryptographic key management per zone
-- **Reverse DNS** — IPv4/IPv6 PTR zone creation with automatic PTR record generation
-- **Lua Records** — per-zone activation of dynamic Lua records (admin/zone-admin only), automatically adds the `LUA` record type
-- **Catalog Zones** — Producer zones (manual member management) and Consumer zones (automatic sync via AXFR from a Producer)
-- **ACME Keys** — per-zone and per-user API keys for DNS-01 ACME challenges (Let's Encrypt / cert-manager integration)
-- **TSIG Keys** — creation and management of signing keys
-- **Autoprimaries** — automatic primary server configuration
-- **DNS Views** _(LMDB only)_ — split-horizon, zone ↔ view association
-- **Networks** _(LMDB only)_ — network assignment to views
-- **Search** — global search across zones, records, and comments
-- **Statistics** — real-time PowerDNS server metrics
-- **Server Configuration** — active configuration visualization
-- **Audit Log** — history of all user actions + PDNS logs, export to syslog
-- **User Management** — admin / manager / viewer roles per account
-- **OIDC SSO** — delegated authentication (Keycloak, Authentik, etc.)
-- **Theme** — light / dark / automatic
+- 🗂️ **DNS Zones** — create, edit, delete (Native / Master / Slave), record management with catalog assignment at creation
+- 🔑 **DNSSEC** — cryptographic key management per zone
+- 🔁 **Reverse DNS** — IPv4/IPv6 PTR zone creation with automatic PTR record generation
+- 🧩 **Catalog Zones** — Producer (manual members) and Consumer (automatic AXFR sync) zones
+- 🧮 **Lua Records** — per-zone activation of dynamic Lua records (admin/zone-admin only)
+- 🔐 **ACME & TSIG Keys** — DNS-01 challenge keys and signing key management
+- 🛰️ **Autoprimaries** & **DNS Views / Networks** _(LMDB only)_
+- 🔍 **Search & Statistics** — global search plus real-time PowerDNS server metrics
+- 📋 **Audit Log** — history of every user action + PDNS logs, syslog export
+- 👥 **User Management** — admin / manager / viewer roles per account, OIDC SSO
+- 🎨 **Theme** — light / dark / automatic
 
-## Architecture
+Single container (Angular served statically by FastAPI), SQLite by default — see the [Architecture](https://cyr-ius.github.io/powerdns-ui/#architecture) section for details.
 
-```
-┌─────────────────────────────────────┐
-│          Browser (Angular 22)       │
-└───────────────┬─────────────────────┘
-                │ HTTP
-┌───────────────▼─────────────────────┐
-│        FastAPI  (Python 3.12+)      │
-│        SQLite  (SQLModel)           │
-└───────────────┬─────────────────────┘
-                │ REST API
-┌───────────────▼─────────────────────┐
-│   PowerDNS Authoritative Server     │
-└─────────────────────────────────────┘
-```
-
-The Angular frontend is served statically by FastAPI — a single container is sufficient.
+---
 
 ## Quick Start
-
-### Docker Compose
 
 ```yaml
 # docker-compose.yaml
@@ -114,27 +53,18 @@ services:
       - "--webserver-address=0.0.0.0"
       - "--webserver-port=8081"
       - "--webserver-allow-from=0.0.0.0/0"
-      - "--loglevel=6"
-      - "--loglevel-show=yes"
 
   pdns-ui:
     image: ghcr.io/cyr-ius/pdns-ui:latest
     restart: unless-stopped
     depends_on: [pdns]
     environment:
-      # The admin password is always auto-generated: a one-time password is
-      # printed in the logs on first start. Leave SECRET_KEY unset to
-      # auto-generate and persist a random key under DATA_DIR.
       - PDNS_AUTH_API_URL=http://pdns:8081
       - PDNS_AUTH_API_KEY=change-this-api-key-in-production
-      # Set to false to disable the Swagger UI and OpenAPI schema in production.
-      - SWAGGER_ENABLED=true
     volumes:
       - powerdns-ui_data:/var/lib/powerdns-ui
     ports:
-      - 8080:8080/tcp
-    depends_on:
-      - pdns
+      - 8080:8080
 
 volumes:
   powerdns_data:
@@ -145,302 +75,36 @@ volumes:
 docker compose up -d
 ```
 
-Access: http://localhost:8080 — log in as `admin` with the one-time password printed in the container logs on first start, then change it immediately.
+Open **http://localhost:8080** and log in as `admin` with the one-time password printed in the container logs on first start, then change it immediately.
 
-### Build from Source
+> **Note:** mounting a persistent volume on `/var/lib/powerdns-ui` is required — the generated admin password and JWT secret key are stored there.
 
-```bash
-# Build with version
-docker build --build-arg VERSION=1.2.0 -t powerdns-ui .
-
-# Without version (default: 1.0.0)
-docker build -t powerdns-ui .
-```
-
-## PowerDNS Configuration
-
-Enable the REST API in `pdns.conf`:
-
-```ini
-webserver=yes
-webserver-address=0.0.0.0
-webserver-port=8081
-webserver-allow-from=127.0.0.1,172.16.0.0/12,192.168.0.0/16
-```
-
-For **DNS Views** and **Networks** (LMDB backend only):
-
-```ini
-launch=lmdb
-lmdb-filename=/var/lib/powerdns/pdns.lmdb
-views=yes
-```
-
-> The _Views_ and _Networks_ menus only appear in the interface if the detected backend is `lmdb`.
-
-## Environment Variables
-
-| Variable                          | Default                             | Description                                                                                       |
-| --------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ADMIN_USERNAME`                  | `admin`                             | Super-administrator account name created at startup                                               |
-| `SECRET_KEY`                      | _(empty)_                           | JWT signing key — when unset, a random key is generated and persisted under `DATA_DIR`            |
-| `ACCESS_TOKEN_EXPIRE_MINUTES`     | `480`                               | Token validity duration (minutes)                                                                 |
-| `PDNS_AUTH_API_URL`               | `http://pdns:8081`                  | PowerDNS REST API URL                                                                             |
-| `PDNS_AUTH_API_KEY`               | `change-this-api-key-in-production` | PowerDNS API key (`api-key` in pdns.conf)                                                         |
-| `DATABASE_URL`                    | `sqlite+aiosqlite:///…/database.db` | Database URL                                                                                      |
-| `DATA_DIR`                        | `/var/lib/powerdns-ui`              | Data directory (SQLite)                                                                           |
-| `LOG_LEVEL`                       | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                                                   |
-| `SWAGGER_ENABLED`                 | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema                                            |
-| `API_KEYS_ENABLED`                | `true`                              | Allow personal access tokens; when `false` the API refuses them and the UI hides their management |
-| `APP_VERSION`                     | `1.0.0`                             | Application version (injected via `--build-arg VERSION=x.y.z`)                                    |
-| `TRUSTED_PROXIES`                 | _(empty)_                           | Comma-separated proxy IPs/CIDRs whose `X-Forwarded-For` is trusted                                |
-| `RATE_LIMIT_ENABLED`              | `true`                              | Enable the in-memory per-IP rate limiter on `/api/*` routes                                       |
-| `RATE_LIMIT_MAX_REQUESTS`         | `300`                               | Max requests per IP within the global window                                                      |
-| `RATE_LIMIT_WINDOW_SECONDS`       | `60`                                | Global sliding-window duration (seconds)                                                          |
-| `RATE_LIMIT_LOGIN_MAX_ATTEMPTS`   | `10`                                | Max login attempts per IP within the login window                                                 |
-| `RATE_LIMIT_LOGIN_WINDOW_SECONDS` | `300`                               | Login sliding-window duration (seconds)                                                           |
-| `RATE_LIMIT_LOGIN_PATH`           | `/api/auth/login`                   | Path the stricter login budget applies to                                                         |
-
-### OIDC & Mail Connectors
-
-Both connectors are configured from the settings screens and stored in the database. Any variable below **overrides** the stored value and is shown read-only in the interface, so all or part of the configuration can be pinned from the deployment manifest.
-
-| Variable                        | Default                | Description                                                                   |
-| ------------------------------- | ---------------------- | ----------------------------------------------------------------------------- |
-| `OIDC_ENABLED`                  | `false`                | Enable OIDC single sign-on                                                    |
-| `OIDC_CLIENT_ID`                | _(empty)_              | OIDC client identifier                                                        |
-| `OIDC_CLIENT_SECRET`            | _(empty)_              | OIDC client secret                                                            |
-| `OIDC_DISCOVERY_URL`            | _(empty)_              | Provider discovery document (`…/.well-known/openid-configuration`)            |
-| `OIDC_REDIRECT_URI`             | _(empty)_              | Callback URL (`https://<host>/api/auth/oidc/callback`)                        |
-| `OIDC_SCOPES`                   | `openid email profile` | Requested scopes                                                              |
-| `OIDC_LOCAL_LOGIN_DISABLED`     | `false`                | Refuse local accounts; sign-in through OIDC only                              |
-| `OIDC_LOGOUT_ENABLED`           | `false`                | RP-initiated logout: also end the session at the provider on sign-out         |
-| `OIDC_POST_LOGOUT_REDIRECT_URI` | _(empty)_              | Page the provider redirects to after logout (e.g. `https://<host>/login`)     |
-| `SMTP_ENABLED`                  | `false`                | Enable e-mail notifications                                                   |
-| `SMTP_HOST`                     | `localhost`            | SMTP relay host                                                               |
-| `SMTP_PORT`                     | `587`                  | SMTP relay port                                                               |
-| `SMTP_USERNAME`                 | _(empty)_              | SMTP username (empty = no authentication)                                     |
-| `SMTP_PASSWORD`                 | _(empty)_              | SMTP password                                                                 |
-| `SMTP_FROM_EMAIL`               | _(empty)_              | Sender address                                                                |
-| `SMTP_RECIPIENT_EMAIL`          | _(empty)_              | Recipient of the notifications                                                |
-| `SMTP_USE_TLS`                  | `false`                | Implicit TLS (SMTPS, usually port 465)                                        |
-| `SMTP_USE_STARTTLS`             | `true`                 | STARTTLS upgrade (usually port 587)                                           |
-| `SMTP_ALERT_ACTIONS`            | _(empty)_              | Comma-separated actions to alert on, e.g. `login,logout,delete` (empty = all) |
-| `SMTP_ALERT_RESOURCES`          | _(empty)_              | Comma-separated resource types to alert on (empty = all)                      |
-| `SMTP_ALERT_STATUSES`           | _(empty)_              | Comma-separated statuses to alert on, e.g. `failure` (empty = all)            |
-
-> `OIDC_LOCAL_LOGIN_DISABLED` is only honoured while at least one **active OIDC administrator** exists — the application refuses any change that would lock everyone out. An OIDC identity can never take over an existing local account.
-
-> `OIDC_LOGOUT_ENABLED` requires the provider to advertise an `end_session_endpoint` in its discovery document. The `id_token` received at sign-in is kept in an HttpOnly cookie and replayed as `id_token_hint`; `OIDC_POST_LOGOUT_REDIRECT_URI` must be registered with the provider.
-
-The Mail settings screen offers a **Send a test e-mail** button that probes the relay with the settings as displayed, without saving them first.
-
-## Personal Access Tokens (PAT)
-
-Users create personal access tokens from their profile (`/api/tokens`). A token authenticates REST calls as an HTTP Bearer credential:
-
-```bash
-curl -H "Authorization: Bearer <token>" https://<host>/api/zones
-```
-
-This scheme is declared in the OpenAPI document, so the Swagger UI (`/api/docs`) can authorise its requests with a token. Setting `API_KEYS_ENABLED=false` refuses tokens on every endpoint and hides token management from the interface.
-
-ACME keys (for the certbot-dns-pdns compatibility layer used in DNS-01 challenges) are a separate mechanism: they are scoped to a zone, created from that zone's page, and still authenticate via the `X-API-Key` header — that header is not used anywhere else in the API.
-
-## Rate Limiting & Reverse Proxy
-
-The backend applies an **in-memory sliding-window rate limiter** to every `/api/*` route (the health probe `/api/health` is exempt so container orchestration is never blocked). Two independent budgets are enforced per client IP:
-
-- a **global** budget (`RATE_LIMIT_MAX_REQUESTS` per `RATE_LIMIT_WINDOW_SECONDS`), and
-- a stricter **login** budget on `RATE_LIMIT_LOGIN_PATH` (`RATE_LIMIT_LOGIN_MAX_ATTEMPTS` per `RATE_LIMIT_LOGIN_WINDOW_SECONDS`) to slow credential brute-forcing.
-
-Throttled requests receive a `429 Too Many Requests` with a `Retry-After` header before reaching any route. Idle IP buckets are swept periodically so memory stays bounded.
-
-> **State is per-process** and not shared across workers or replicas — adequate for the single-container deployment. Front with a shared store (e.g. Redis) for multi-worker setups.
-
-**Behind a reverse proxy**, set `TRUSTED_PROXIES` to the proxy IPs/CIDRs (e.g. `10.0.0.0/8,172.16.0.0/12`). `X-Forwarded-For` is honoured **only** when the direct peer matches one of these ranges; otherwise it is ignored to prevent IP spoofing. When left empty, all clients behind the proxy share the proxy's IP as the rate-limit key.
-
-## MariaDB Backend (gmysql)
-
-When PowerDNS is configured with the `gmysql` backend, the database schema must be present before the server starts. The UI container bundles the official PDNS schema and exposes a one-shot script to apply it.
-
-### When to run it
-
-- **First deployment** — before starting `pdns` for the first time.
-- **After recreating the database volume** — the schema is lost along with the data.
-
-> The script is idempotent: if the `domains` table already exists it exits immediately without touching anything.
-
-### Usage
-
-```
-python init_pdns_schema.py --host HOST [options]
-
-required:
-  --host HOST          MariaDB host
-
-optional:
-  --port PORT          MariaDB port           (default: 3306)
-  --user USER          MariaDB user           (default: powerdns)
-  --password PASSWORD  MariaDB password       (default: pdns)
-  --database DATABASE  MariaDB database       (default: powerdns)
-  --schema FILE_OR_URL SQL schema to apply (see below)
-```
-
-**Via `docker compose run`** (one-shot, before or after `up`):
-
-```bash
-docker compose run --rm pdns-ui \
-  python /app/backend/scripts/init_pdns_schema.py \
-  --host pdns-db --password pdns
-```
-
-**Local development:**
-
-```bash
-python backend/scripts/init_pdns_schema.py \
-  --host localhost --user powerdns --password pdns --database powerdns
-```
-
-### `--schema` — custom SQL file
-
-When `--schema` is omitted the script uses the file bundled in the image (`/var/lib/powerdns/schema.sql`), then falls back to `docker/pdns_schema.sql` in the repository.
-
-You can override it with:
-
-| Value passed                            | Behaviour                                                                                                     |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Local path (`/tmp/my.sql`)              | Reads the file directly                                                                                       |
-| Full URL (`https://…/schema.mysql.sql`) | Downloads and applies                                                                                         |
-| Filename only (`schema.mysql.sql`)      | Downloads from the [PowerDNS GitHub repo](https://github.com/PowerDNS/pdns/tree/master/modules/gmysqlbackend) |
-
-```bash
-# Use a specific file from the PowerDNS GitHub repo (branch: master)
-docker exec pdns-ui \
-  python /app/backend/scripts/init_pdns_schema.py \
-  --host pdns-db --password pdns \
-  --schema schema.mysql.sql
-```
-
-### Example output
-
-```
-INFO: Connecting to MariaDB powerdns@pdns-db:3306/powerdns ...
-INFO: Using bundled schema: /var/lib/powerdns/schema.sql
-INFO: PDNS schema successfully created in 'powerdns'.
-```
-
-### Recommended startup order
-
-```
-pdns-db  →  init_pdns_schema  →  pdns  →  pdns-ui
-```
+For the full installation guide (PowerDNS API setup, MariaDB backend, reverse proxy) see **[Getting Started](https://cyr-ius.github.io/powerdns-ui/getting-started/)**.
 
 ---
 
-## Catalog Zones
+## Documentation
 
-Catalog zones (RFC 9432) allow a PowerDNS server to automatically distribute zone configurations to secondary servers.
+Full documentation — configuration reference, every feature explained, the REST API, and how to contribute — is published at **[cyr-ius.github.io/powerdns-ui](https://cyr-ius.github.io/powerdns-ui/)**.
 
-### Producer
-
-A **Producer** catalog zone is a primary zone that lists member zones. When a zone is added to a Producer, secondary Consumer servers discover and provision it automatically.
-
-- Create a Producer from the **Catalogs → Producer** tab
-- Assign an existing zone to a Producer at creation time or from the Catalogs page
-- Add / remove member zones manually from the Producer's member list
-
-### Consumer
-
-A **Consumer** catalog zone is a secondary zone that pulls its configuration from a Producer via AXFR. Member zones are created automatically by PowerDNS after each zone transfer — they cannot be managed manually.
-
-- Create a Consumer from the **Catalogs → Consumer** tab
-- Provide the name of the catalog (must match the Producer's zone name) and the IP address(es) of the Producer server
-- The received member zones are displayed in read-only mode
+| Looking for...                          | Go to                                                                                               |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Every environment variable              | [Environment Variables](https://cyr-ius.github.io/powerdns-ui/configuration/environment-variables/) |
+| PowerDNS API setup & DNS Views/Networks | [PowerDNS Configuration](https://cyr-ius.github.io/powerdns-ui/configuration/powerdns/)             |
+| OIDC SSO & e-mail alerting              | [OIDC & Mail Connectors](https://cyr-ius.github.io/powerdns-ui/configuration/oidc-mail/)            |
+| Rate limiting behind a reverse proxy    | [Rate Limiting & Reverse Proxy](https://cyr-ius.github.io/powerdns-ui/configuration/rate-limiting/) |
+| MariaDB (gmysql) backend schema init    | [MariaDB Backend](https://cyr-ius.github.io/powerdns-ui/configuration/mariadb/)                     |
+| Roles, permissions & user management    | [Administration](https://cyr-ius.github.io/powerdns-ui/administration/roles-permissions/)           |
+| REST API endpoints                      | [API Reference](https://cyr-ius.github.io/powerdns-ui/api/)                                         |
+| Running the frontend/backend locally    | [Development](https://cyr-ius.github.io/powerdns-ui/development/)                                   |
 
 ---
-
-## Lua Records
-
-[Lua Records](https://doc.powerdns.com/authoritative/lua-records/index.html) allow dynamic DNS responses generated by Lua scripts embedded directly in zone records.
-
-Activation is per-zone and restricted to **Super Admins** and **Zone Admins**:
-
-1. Open a zone → **Settings** tab
-2. Enable the **Lua Records** toggle
-3. The `LUA` record type is automatically added to the zone's available types
-
-> Lua Records must also be enabled at the PowerDNS server level (`enable-lua-records=yes` in `pdns.conf`).
-> Since PowerDNS 5.1, editing LUA records through the API, AXFR/IXFR, or DNS Update additionally requires `enable-lua-record-updates=yes` — without it, resolution keeps working but writes are rejected.
-
----
-
-## OIDC Authentication
-
-SSO configuration (Keycloak, Authentik, …) is done entirely from the web interface: **Administration → OIDC**. No environment variables are required — settings are stored in the database.
-
-Configurable fields: enable/disable, Client ID, Client Secret, Discovery URL, Redirect URI, scopes, disable local login.
-
-## Roles and Permissions
-
-| Role              | Zones       | Records      | Members            | Zone Settings (Lua Records, Record Types) |
-| ----------------- | ----------- | ------------ | ------------------ | ----------------------------------------- |
-| **Super Admin**   | All         | Read / Write | Full management    | ✅ All zones                              |
-| **Account Admin** | Own account | Read / Write | Account management | —                                         |
-| **Manager**       | Own account | Read / Write | —                  | —                                         |
-| **Viewer**        | Own account | Read only    | —                  | —                                         |
-| **Zone Admin**    | Own zone    | Read / Write | Zone management    | ✅ Own zone                               |
-
-Users are grouped by **accounts**. Each account is associated with zones and users with their role.
-
-> **Zone Admin** is a per-zone role assignable from the zone's _Members_ tab. It grants full control over that zone's settings, including enabling Lua Records and customizing available record types.
-
-## Audit Log
-
-All actions are tracked: logins, zone/record modifications, user management, configuration changes.
-
-**Syslog Export**: configurable from the _Audit Log_ page (_Syslog: active/inactive_ button) — host, port, UDP/TCP protocol, facility.
-
-## API
-
-Interactive documentation is available on the running instance:
-
-- Swagger UI: http://localhost:8080/api/docs
-
-## Development
-
-### Prerequisites
-
-- Python 3.12+, [uv](https://docs.astral.sh/uv/)
-- Node.js 22+
-
-### Backend
-
-```bash
-cd backend
-uv sync
-uv run uvicorn app.main:app --reload --port 8080
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run start   # proxy to localhost:8080
-```
-
-## Screenshots
-
-<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/542b271b-f806-4be9-9ebf-58d04e4d0676" />
-<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/4a17d385-c4cc-4772-923f-4a7a696cbc81" />
-<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/e3718deb-2b8b-47ea-9515-dcaeab94e6ed" />
-<img width="1151" height="680" alt="image" src="https://github.com/user-attachments/assets/36df2912-52e6-4890-8d6b-e2322583b774" />
-
-## Demos
-
-<img width="640" height="480" alt="Capture vidéo du 2026-04-27 12-31-15(1)" src="https://github.com/user-attachments/assets/4a5eb088-0441-42ab-a926-8d22ec835112" />
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE) for details.
+
+## About
+
+Author: [@cyr-ius](https://github.com/cyr-ius) — Sponsor: [GitHub Sponsors](https://github.com/sponsors/cyr-ius)
+</content>
