@@ -43,7 +43,7 @@
     "ADMINISTRATION": "Administration",
     "USERS": "Utilisateurs",
     "ACCOUNTS": "Comptes",
-    "OIDC": "OIDC",
+    "OIDC": "Connexions",
     "DNS_TYPES": "Types DNS",
     "MAIL": "Serveur mail",
     "AUDIT_JOURNAL": "Journal d'audit",
@@ -385,7 +385,7 @@
     "ENV_LOCKED": "Imposé par variables d'environnement (lecture seule) : {{ fields }}"
   },
   "OIDC": {
-    "TITLE": "Configuration OIDC/SSO",
+    "TITLE": "Connexions",
     "SUBTITLE": "Configuration de l'authentification OpenID Connect",
     "SAVED": "Configuration enregistrée. Les nouveaux paramètres sont actifs immédiatement.",
     "ACTIVATE_SSO": "Activer l'authentification SSO",
