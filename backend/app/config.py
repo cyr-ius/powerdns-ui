@@ -1,6 +1,7 @@
 import logging
 import os
 import secrets
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 
@@ -98,14 +99,24 @@ def _resolve_secret_key(value: str) -> str:
     generated = secrets.token_urlsafe(64)
     try:
         SECRET_KEY_FILE.parent.mkdir(parents=True, exist_ok=True)
-        SECRET_KEY_FILE.write_text(generated, encoding="utf-8")
-        os.chmod(SECRET_KEY_FILE, 0o600)
+        # Write the key to a private (0600) temporary file, then hard-link it into
+        # place: the link is atomic and fails if another worker created the key
+        # first, so every worker ends up signing with the same key.
+        fd, tmp_path = tempfile.mkstemp(dir=SECRET_KEY_FILE.parent)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as tmp_file:
+                tmp_file.write(generated)
+            os.link(tmp_path, SECRET_KEY_FILE)
+        finally:
+            os.unlink(tmp_path)
         logger.warning(
             "SECRET_KEY not configured — generated a random signing key and "
             "persisted it to %s. Set SECRET_KEY explicitly for multi-instance "
             "deployments.",
             SECRET_KEY_FILE,
         )
+    except FileExistsError:
+        return SECRET_KEY_FILE.read_text(encoding="utf-8").strip() or generated
     except OSError:
         logger.warning(
             "SECRET_KEY not configured and a generated key could not be "

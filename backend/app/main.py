@@ -3,10 +3,11 @@ Powerdns UI - FastAPI Backend
 Copyright (C) 2021-2024  Cyr-ius (github.com/cyr-ius)
 """
 
+import fcntl
 import logging
 import secrets
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -14,7 +15,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
+from app.config import DATA_DIR, settings
 from app.database import async_session, init_db
 from app.routers import (
     acme,
@@ -44,8 +45,37 @@ logging.basicConfig(
 )
 
 
+@contextmanager
+def startup_lock() -> Iterator[None]:
+    """Serialize the one-time initialization between the Uvicorn workers.
+
+    Every worker runs the lifespan: without this lock they race to create the
+    schema and the initial admin account on the first start.
+    """
+    try:
+        Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
+        lock_file = open(Path(DATA_DIR) / ".startup.lock", "a")
+    except OSError:
+        logger.warning("Cannot create the startup lock in %s", DATA_DIR)
+        yield
+        return
+    with lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    with startup_lock():
+        await _initialize()
+    yield
+
+
+async def _initialize() -> None:
+    """Create or migrate the schema and the initial admin account."""
     await init_db()
     async with async_session() as db:
         admin_user = await get_user_by_username(db, settings.admin_username)
@@ -82,7 +112,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 "Admin account promoted to super administrator : %s",
                 settings.admin_username,
             )
-    yield
 
 
 app = FastAPI(
