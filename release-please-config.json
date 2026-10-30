@@ -3,7 +3,6 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "powerdns-ui",
       "include-v-in-tag": false,
       "draft": true,
       "force-tag-creation": true,
