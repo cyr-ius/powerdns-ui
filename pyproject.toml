@@ -51,6 +51,10 @@ script_location = "%(here)s/backend/app/migrations"
 prepend_sys_path = ["backend"]
 file_template = "%%(year)d%%(month).2d%%(day).2d_%%(rev)s_%%(slug)s"
 
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+
 [tool.ruff]
 line-length = 88
 target-version = "py314"
