@@ -121,7 +121,8 @@ async def update_user(
             detail = (
                 "Cannot demote the last OIDC admin while local login is disabled"
                 if demoting
-                else "Cannot deactivate the last OIDC admin while local login is disabled"
+                else "Cannot deactivate the last OIDC admin "
+                "while local login is disabled"
             )
             await audit.failure("update", "user", user.username, {"detail": detail})
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=detail)

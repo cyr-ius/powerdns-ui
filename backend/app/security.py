@@ -24,7 +24,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     # Build CSP once at class level — one directive per list entry, auditable.
     _CSP_DIRECTIVES: list[str] = [
         "default-src 'self'",
-        f"script-src 'self' 'unsafe-inline' {JSDELIVR}",  # Angular requires unsafe-inline
+        # Angular requires unsafe-inline
+        f"script-src 'self' 'unsafe-inline' {JSDELIVR}",
         f"style-src 'self' 'unsafe-inline' {JSDELIVR}",  # Bootstrap inline styles
         "img-src 'self' data: https:",  # logos, QR codes base64
         f"font-src 'self' data: {FONT_GOOGLE}",  # Bootstrap Icons embedded font
@@ -100,7 +101,10 @@ class _SlidingWindowLimiter:
             return True, 0
 
     def _sweep(self, now: float) -> None:
-        """Drop idle buckets. Called under the lock, throttled to one scan per interval."""
+        """Drop idle buckets.
+
+        Called under the lock, throttled to one scan per interval.
+        """
         if now - self._last_cleanup < self._CLEANUP_INTERVAL_S:
             return
         self._last_cleanup = now

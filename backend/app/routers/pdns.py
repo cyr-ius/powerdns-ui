@@ -100,7 +100,10 @@ async def _check_zone_access(
     audit: AuditLogger | None = None,
     action: str = "access",
 ) -> tuple[dict[str, Any], str]:
-    """Fetch zone and verify the user has access. Returns (zone_dict, effective_role)."""
+    """Fetch zone and verify the user has access.
+
+    Returns (zone_dict, effective_role).
+    """
     try:
         zone: dict[str, Any] = await pdns_request("GET", f"{_SERVER}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:
@@ -733,12 +736,16 @@ async def update_zone(
             "zone",
             zone_id,
             {
-                "detail": "Only a global administrator can modify the account associated with a zone"
+                "detail": "Only a global administrator can modify "
+                "the account associated with a zone"
             },
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only a global administrator can modify the account associated with a zone",
+            detail=(
+                "Only a global administrator can modify "
+                "the account associated with a zone"
+            ),
         )
     try:
         await pdns_request(
@@ -930,7 +937,9 @@ def _check_spf(apex_txt: list[str]) -> dict[str, Any]:
         return {
             "status": "error",
             "record": spf[0],
-            "details": f"{len(spf)} SPF records found — only one is allowed (RFC 7208).",
+            "details": (
+                f"{len(spf)} SPF records found — only one is allowed (RFC 7208)."
+            ),
         }
     record = spf[0]
     if "-all" in record:
@@ -943,7 +952,10 @@ def _check_spf(apex_txt: list[str]) -> dict[str, Any]:
         return {
             "status": "warning",
             "record": record,
-            "details": "Soft fail (~all): unauthorised senders are accepted but tagged. Consider -all.",
+            "details": (
+                "Soft fail (~all): unauthorised senders are accepted but tagged. "
+                "Consider -all."
+            ),
         }
     if "?all" in record:
         return {

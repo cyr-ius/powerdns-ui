@@ -59,13 +59,15 @@ async def init_db() -> None:
         if "local_login_disabled" not in oidc_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE oidcsettings ADD COLUMN local_login_disabled BOOLEAN NOT NULL DEFAULT 0"
+                    "ALTER TABLE oidcsettings ADD COLUMN local_login_disabled "
+                    "BOOLEAN NOT NULL DEFAULT 0"
                 )
             )
         if "post_logout_redirect_uri" not in oidc_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE oidcsettings ADD COLUMN post_logout_redirect_uri VARCHAR NOT NULL DEFAULT ''"
+                    "ALTER TABLE oidcsettings ADD COLUMN post_logout_redirect_uri "
+                    "VARCHAR NOT NULL DEFAULT ''"
                 )
             )
         result = await conn.execute(text("PRAGMA table_info(useraccount)"))
@@ -73,7 +75,8 @@ async def init_db() -> None:
         if "role" not in ua_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE useraccount ADD COLUMN role VARCHAR NOT NULL DEFAULT 'admin'"
+                    "ALTER TABLE useraccount ADD COLUMN role "
+                    "VARCHAR NOT NULL DEFAULT 'admin'"
                 )
             )
         result = await conn.execute(text("PRAGMA table_info(acmeapikey)"))
@@ -81,7 +84,8 @@ async def init_db() -> None:
         if "key_type" not in acme_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE acmeapikey ADD COLUMN key_type VARCHAR(10) NOT NULL DEFAULT 'acme'"
+                    "ALTER TABLE acmeapikey ADD COLUMN key_type "
+                    "VARCHAR(10) NOT NULL DEFAULT 'acme'"
                 )
             )
         if "comment" not in acme_columns:
@@ -212,19 +216,22 @@ async def init_db() -> None:
         if "alert_actions" not in smtp_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE smtpsettings ADD COLUMN alert_actions VARCHAR NOT NULL DEFAULT ''"
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_actions "
+                    "VARCHAR NOT NULL DEFAULT ''"
                 )
             )
         if "alert_resources" not in smtp_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE smtpsettings ADD COLUMN alert_resources VARCHAR NOT NULL DEFAULT ''"
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_resources "
+                    "VARCHAR NOT NULL DEFAULT ''"
                 )
             )
         if "alert_statuses" not in smtp_columns:
             await conn.execute(
                 text(
-                    "ALTER TABLE smtpsettings ADD COLUMN alert_statuses VARCHAR NOT NULL DEFAULT ''"
+                    "ALTER TABLE smtpsettings ADD COLUMN alert_statuses "
+                    "VARCHAR NOT NULL DEFAULT ''"
                 )
             )
         # Seed default record types if the table is empty
@@ -233,7 +240,8 @@ async def init_db() -> None:
             for name, enabled, applicable_to in DEFAULT_RECORD_TYPES:
                 await conn.execute(
                     text(
-                        "INSERT INTO recordtype (name, enabled, applicable_to) VALUES (:name, :enabled, :applicable_to)"
+                        "INSERT INTO recordtype (name, enabled, applicable_to) "
+                        "VALUES (:name, :enabled, :applicable_to)"
                     ),
                     {
                         "name": name,

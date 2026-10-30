@@ -68,12 +68,16 @@ async def create_catalogue(
                 "catalogue",
                 payload.name,
                 {
-                    "detail": "You must specify an account to which you belong to create a catalogue"
+                    "detail": "You must specify an account to which you belong "
+                    "to create a catalogue"
                 },
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must specify an account to which you belong to create a catalogue",
+                detail=(
+                    "You must specify an account to which you belong "
+                    "to create a catalogue"
+                ),
             )
     data = payload.model_dump(exclude_none=True)
     data["kind"] = "Producer"
@@ -286,12 +290,16 @@ async def create_consumer(
                 "consumer",
                 payload.name,
                 {
-                    "detail": "You must specify an account to which you belong to create a consumer"
+                    "detail": "You must specify an account to which you belong "
+                    "to create a consumer"
                 },
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must specify an account to which you belong to create a consumer",
+                detail=(
+                    "You must specify an account to which you belong "
+                    "to create a consumer"
+                ),
             )
     if not payload.masters:
         await audit.failure(
@@ -299,7 +307,8 @@ async def create_consumer(
             "consumer",
             payload.name,
             {
-                "detail": "At least one master server is required for a Consumer catalog zone"
+                "detail": "At least one master server is required "
+                "for a Consumer catalog zone"
             },
         )
         raise HTTPException(
