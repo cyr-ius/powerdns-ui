@@ -24,6 +24,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 RUN apk add --no-cache \
     curl \
     ca-certificates \
+    su-exec \
     && addgroup -S -g 1000 powerdns-ui \
     && adduser -S -D -H -u 1000 -G powerdns-ui powerdns-ui
 
@@ -68,6 +69,9 @@ VOLUME [ "/var/lib/powerdns-ui" ]
 
 EXPOSE 8080/tcp
 
-USER powerdns-ui:powerdns-ui
+# Starts as root only to hand an existing data volume over to powerdns-ui,
+# then runs the command as powerdns-ui (see docker/entrypoint.sh).
+COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]

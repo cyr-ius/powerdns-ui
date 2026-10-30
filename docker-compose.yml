@@ -28,6 +28,12 @@ x-hardening: &hardening
 services:
   pdns-ui:
     <<: *hardening
+    # The entrypoint hands the data volume over to the powerdns-ui user, then
+    # drops root: it needs these capabilities, which the process loses after.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
     build:
       context: .
       args:
