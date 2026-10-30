@@ -27,11 +27,11 @@ from app.routers import (
     catalogues,
     health,
     networks,
-    pdns,
     server,
     tokens,
     tsigkeys,
     views,
+    zones,
 )
 from app.routers.acme import router_api as acme_api_router
 from app.security import RateLimitMiddleware, SecurityHeadersMiddleware
@@ -151,7 +151,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(audit.router)
-app.include_router(pdns.router)
+app.include_router(zones.router)
 app.include_router(catalogues.router)
 app.include_router(tsigkeys.router)
 app.include_router(server.router)

@@ -219,9 +219,7 @@ async def get_user_account_roles(db: AsyncSession, user_id: int) -> dict[str, st
         acc_result = await db.exec(select(Account).where(Account.id == ua.account_id))
         acc = acc_result.first()
         if acc:
-            output[acc.name] = (
-                ua.role.value if hasattr(ua.role, "value") else str(ua.role)
-            )
+            output[acc.name] = str(ua.role)
     return output
 
 
@@ -270,7 +268,7 @@ async def list_account_members(
                     "user_id": user.id,
                     "username": user.username,
                     "email": user.email,
-                    "role": ua.role.value if hasattr(ua.role, "value") else ua.role,
+                    "role": str(ua.role),
                 }
             )
     return output
