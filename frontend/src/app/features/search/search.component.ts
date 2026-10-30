@@ -6,6 +6,7 @@ import { debounceTime, distinctUntilChanged, filter, map, skip } from "rxjs";
 import { PdnsService } from "../../core/services/pdns.service";
 import { SearchResult } from "../../shared/models/pdns.model";
 import { TranslatePipe } from "@ngx-translate/core";
+import { toSearchPattern } from "../../shared/utils/search-term";
 
 @Component({
   selector: "app-search",
@@ -85,7 +86,7 @@ export class SearchComponent implements OnInit {
     this.hasSearched.set(true);
     try {
       const { objectType, max } = this.searchModel();
-      const data = await this.pdns.search(q, max, objectType);
+      const data = await this.pdns.search(toSearchPattern(q), max, objectType);
       this.results.set(data);
     } catch {
       this.error.set("Error occurred while searching. Please check that the PDNS backend is accessible.");

@@ -555,7 +555,7 @@
     "RESULTS": "{{ total }} result(s) — {{ zones }} zone(s), {{ records }} record(s), {{ comments }} comment(s)",
     "NO_RESULTS": "No results for this search",
     "NO_RESULTS_HELP": "Try with wildcards: *.example.com",
-    "WILDCARD_HELP": "Use * as a multi-character wildcard, ? for a single character.",
+    "WILDCARD_HELP": "Matches anywhere in the name or content by default. Use * as a multi-character wildcard, ? for a single character: the term is then used as typed.",
     "COL_NAME": "Name",
     "COL_TYPE": "Type",
     "COL_TTL": "TTL",

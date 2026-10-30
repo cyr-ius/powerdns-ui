@@ -555,7 +555,7 @@
     "RESULTS": "{{ total }} resultado(s) — {{ zones }} zona(s), {{ records }} registro(s), {{ comments }} comentario(s)",
     "NO_RESULTS": "No hay resultados para esta búsqueda",
     "NO_RESULTS_HELP": "Pruebe con comodines: *.example.com",
-    "WILDCARD_HELP": "Use * como comodín multicarácter, ? para un solo carácter.",
+    "WILDCARD_HELP": "Por defecto busca en cualquier parte del nombre o del contenido. Use * como comodín multicarácter, ? para un solo carácter: el término se usa entonces tal cual.",
     "COL_NAME": "Nombre",
     "COL_TYPE": "Tipo",
     "COL_TTL": "TTL",

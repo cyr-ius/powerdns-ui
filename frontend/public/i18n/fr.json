@@ -555,7 +555,7 @@
     "RESULTS": "{{ total }} résultat(s) — {{ zones }} zone(s), {{ records }} enregistrement(s), {{ comments }} commentaire(s)",
     "NO_RESULTS": "Aucun résultat pour cette recherche",
     "NO_RESULTS_HELP": "Essayez avec des jokers : *.example.com",
-    "WILDCARD_HELP": "Utilisez * comme joker multi-caractères, ? pour un seul caractère.",
+    "WILDCARD_HELP": "Par défaut, la recherche porte sur n'importe quelle partie du nom ou du contenu. Utilisez * comme joker multi-caractères, ? pour un seul caractère : le terme est alors utilisé tel quel.",
     "COL_NAME": "Nom",
     "COL_TYPE": "Type",
     "COL_TTL": "TTL",
