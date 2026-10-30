@@ -46,9 +46,7 @@ AI agents must not:
 2. Call `get_review_checklist` for `python`, `api`, `*` and `company`.
    Add `config` if the `Dockerfile` changes.
 3. If `pyproject.toml` or `uv.lock` changes, call `scan_dependencies`.
-4. Call `save_security_report` once:
-   project `shop-api`, `review_type` `security-review`, branch and commit,
-   `checklist_results` and `scan_rules` filled in.
+4. Call `save_security_report`
 5. Fix the `critical` and `high` findings before finishing.
 6. Never change a status. Use `propose_finding_status` with a reason.
 
