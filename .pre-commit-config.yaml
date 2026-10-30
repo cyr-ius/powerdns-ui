@@ -58,7 +58,7 @@ repos:
         name: dependency scan
         entry: uvx --isolated security-review-ci@latest scan-deps --skip-unconfigured --require-database --allow-http --save --project powerdns-ui
         language: system
-        files: ^(uv\.lock|pyproject\.toml|web/package(-lock)?\.json)$
+        files: ^(uv\.lock|pyproject\.toml|frontend/package(-lock)?\.json)$
       - id: agent-review
         name: agent security review
         entry: uvx --isolated security-review-ci@latest agent-review --project powerdns-ui
