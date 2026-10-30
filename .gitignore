@@ -30,3 +30,4 @@ venv/
 # MkDocs
 site/
 .venv-docs/
+.mcp.json
