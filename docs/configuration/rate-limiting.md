@@ -14,7 +14,7 @@ Throttled requests receive `429 Too Many Requests` with a `Retry-After` header b
 See [Environment Variables](environment-variables.md) for the full list of `RATE_LIMIT_*` settings, including how to disable the limiter entirely with `RATE_LIMIT_ENABLED=false`.
 
 !!! warning "State is per-process"
-    The limiter's state is **not shared** across workers or replicas — this is adequate for the single-container deployment PowerDNS UI targets. If you scale to multiple workers or replicas, front them with a shared store (e.g. Redis) or rely on rate limiting at the reverse proxy / load balancer level instead.
+    The limiter's state is **not shared** across workers or replicas — this is adequate for the single-container deployment PowerDNS UI targets, which runs one Uvicorn worker (`WEB_CONCURRENCY=1`). With `N` workers or replicas, a client effectively gets up to `N` times each budget. If you scale out, front them with a shared store (e.g. Redis) or rely on rate limiting at the reverse proxy / load balancer level instead.
 
 ## Behind a reverse proxy
 

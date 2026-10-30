@@ -14,6 +14,7 @@
 | `LOG_LEVEL`                       | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                                                                            |
 | `SWAGGER_ENABLED`                 | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema                                                                     |
 | `API_KEYS_ENABLED`                | `true`                              | Allow personal access tokens; when `false` the API refuses them and the UI hides their management                          |
+| `WEB_CONCURRENCY`                 | `1`                                 | Number of Uvicorn worker processes — keep `1`: the rate limiter state is per-process (see [Rate Limiting & Reverse Proxy](rate-limiting.md)) |
 | `APP_VERSION`                     | `1.0.0`                             | Application version (injected via `--build-arg VERSION=x.y.z`)                                                             |
 | `TRUSTED_PROXIES`                 | _(empty)_                           | Comma-separated proxy IPs/CIDRs whose `X-Forwarded-For` is trusted — see [Rate Limiting & Reverse Proxy](rate-limiting.md) |
 | `RATE_LIMIT_ENABLED`              | `true`                              | Enable the in-memory per-IP rate limiter on `/api/*` routes                                                                |
