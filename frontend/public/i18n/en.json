@@ -275,7 +275,7 @@
     "NEW_ACCOUNT": "New account",
     "LOADING": "Loading…",
     "NO_ACCOUNTS": "No account defined",
-    "NO_ACCOUNTS_HELP": "Accounts correspond to the account attribute of PowerDNS zones",
+    "NO_ACCOUNTS_HELP": "An account groups zones, much like a tenant. It corresponds to the account attribute of PowerDNS zones",
     "COL_NAME": "Name",
     "COL_DESCRIPTION": "Description",
     "COL_USERS": "Users",

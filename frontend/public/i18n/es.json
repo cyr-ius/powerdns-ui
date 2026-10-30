@@ -275,7 +275,7 @@
     "NEW_ACCOUNT": "Nueva cuenta",
     "LOADING": "Cargando…",
     "NO_ACCOUNTS": "No hay cuentas definidas",
-    "NO_ACCOUNTS_HELP": "Las cuentas corresponden al atributo account de las zonas PowerDNS",
+    "NO_ACCOUNTS_HELP": "Una cuenta agrupa zonas, a la manera de un tenant. Corresponde al atributo account de las zonas PowerDNS",
     "COL_NAME": "Nombre",
     "COL_DESCRIPTION": "Descripción",
     "COL_USERS": "Usuarios",
