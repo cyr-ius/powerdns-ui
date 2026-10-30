@@ -18,6 +18,7 @@ from app.cookies import (
 )
 from app.database import get_db
 from app.dependencies import (
+    ensure_password_length,
     get_audit_logger,
     get_current_user,
     user_from_session_cookie,
@@ -181,17 +182,9 @@ async def change_password(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
-    if len(payload.new_password) < 8:
-        await audit.failure(
-            "change_password",
-            "user",
-            current_user.username,
-            {"detail": "New password must contain at least 8 characters"},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="New password must contain at least 8 characters",
-        )
+    await ensure_password_length(
+        audit, "change_password", current_user.username, payload.new_password
+    )
     current_user.hashed_password = auth_service.hash_password(payload.new_password)
     # Revoke every other session; the current one gets a fresh token.
     auth_service.revoke_sessions(current_user)

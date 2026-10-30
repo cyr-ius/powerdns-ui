@@ -99,6 +99,26 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
+PASSWORD_MIN_LENGTH = 8
+
+
+async def ensure_password_length(
+    audit: AuditLogger, action: str, username: str, password: str
+) -> None:
+    """Reject a too-short password, after recording the failure in the audit log.
+
+    Checked in the route rather than in the request schema: a schema rejection
+    happens before the route runs, so the attempt would not be audited.
+    """
+    if len(password) >= PASSWORD_MIN_LENGTH:
+        return
+    detail = f"The password must contain at least {PASSWORD_MIN_LENGTH} characters."
+    await audit.failure(action, "user", username, {"detail": detail})
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail
+    )
+
+
 def get_audit_logger(
     request: Request,
     db: AsyncSession = Depends(get_db),
