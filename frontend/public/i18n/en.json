@@ -475,6 +475,7 @@
     "CONSUMERS": "Catalogs (Consumer)",
     "LOADING": "Loading…",
     "NO_CATALOGS": "No producer catalogs",
+    "NO_CATALOGS_HELP": "A producer catalog is a special zone (RFC 9432) that lists zones of this primary server. Secondary servers subscribed to the catalog create and follow these zones automatically, with no manual configuration.",
     "NO_CONSUMERS": "No consumer catalogs",
     "SELECT_CATALOG": "Select a catalogue to manage its members",
     "SELECT_CONSUMER": "Select a consumer catalog to view its zones",

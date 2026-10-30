@@ -475,6 +475,7 @@
     "CONSUMERS": "Catálogos (Consumidor)",
     "LOADING": "Cargando…",
     "NO_CATALOGS": "No hay catálogos productor",
+    "NO_CATALOGS_HELP": "Un catálogo productor es una zona especial (RFC 9432) que enumera zonas de este servidor primario. Los servidores secundarios suscritos al catálogo crean y siguen estas zonas automáticamente, sin configuración manual.",
     "NO_CONSUMERS": "No hay catálogos consumidor",
     "SELECT_CATALOG": "Seleccione un catálogo para gestionar sus miembros",
     "SELECT_CONSUMER": "Seleccione un catálogo consumidor para ver sus zonas",
