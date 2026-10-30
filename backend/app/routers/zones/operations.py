@@ -15,6 +15,9 @@ from app.services.pdns_service import pdns_request, pdns_request_text
 
 router = APIRouter()
 
+# Largest zone file accepted by the import, in bytes.
+MAX_ZONE_FILE_SIZE = 10 * 1024 * 1024
+
 
 @router.put(
     "/{zone_id}/notify", status_code=200, dependencies=[Depends(zone_access("admin"))]
@@ -58,8 +61,14 @@ async def import_zone(
     file: UploadFile,
     audit: AuditLogger = Depends(get_audit_logger),
 ) -> None:
+    # Read one byte past the limit to tell a full file from a truncated one.
+    raw = await file.read(MAX_ZONE_FILE_SIZE + 1)
+    if len(raw) > MAX_ZONE_FILE_SIZE:
+        detail = f"Zone file larger than {MAX_ZONE_FILE_SIZE // (1024 * 1024)} MiB"
+        await audit.failure("import", "zone", zone_id, {"detail": detail})
+        raise HTTPException(status_code=413, detail=detail)
     try:
-        content = (await file.read()).decode("utf-8")
+        content = raw.decode("utf-8")
         imported_rrsets = _parse_zone_file(zone_id, content)
     except Exception as exc:
         await audit.failure(
