@@ -86,20 +86,55 @@
         </button>
       </div>
       <div class="card-body">
-        <div class="d-flex align-items-center gap-3 mb-3">
-          @if (appInfoSvc.healthChecking()) {
+        @if (appInfoSvc.healthChecking()) {
+          <div class="d-flex align-items-center gap-2 mb-3">
             <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
             <span class="text-muted small">{{ "ABOUT.CHECKING" | translate }}</span>
-          } @else if (appInfoSvc.healthy()) {
-            <span class="badge bg-success-subtle text-success-emphasis fs-6">
-              <i class="bi bi-check-circle-fill me-1"></i>{{ "ABOUT.HEALTH_OK" | translate }}
-            </span>
-          } @else {
-            <span class="badge bg-danger-subtle text-danger-emphasis fs-6">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ "ABOUT.HEALTH_KO" | translate }}
-            </span>
-          }
-        </div>
+          </div>
+        } @else {
+          <dl class="row mb-3">
+            <dt class="col-5 text-muted fw-normal">{{ "ABOUT.BACKEND_STATUS" | translate }}</dt>
+            <dd class="col-7">
+              @if (appInfoSvc.healthy()) {
+                <span class="badge bg-success-subtle text-success-emphasis">
+                  <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>{{ "ABOUT.HEALTH_OK" | translate }}
+                </span>
+              } @else {
+                <span class="badge bg-danger-subtle text-danger-emphasis">
+                  <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i
+                  >{{ "ABOUT.HEALTH_KO" | translate }}
+                </span>
+              }
+            </dd>
+
+            <dt class="col-5 text-muted fw-normal">{{ "ABOUT.PDNS_STATUS" | translate }}</dt>
+            <dd class="col-7">
+              @if (appInfoSvc.pdnsStatus()?.connected) {
+                <span class="badge bg-success-subtle text-success-emphasis">
+                  <i class="bi bi-plug-fill me-1" aria-hidden="true"></i>{{ "ABOUT.PDNS_CONNECTED" | translate }}
+                </span>
+              } @else {
+                <span class="badge bg-danger-subtle text-danger-emphasis">
+                  <i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>{{ "ABOUT.PDNS_DISCONNECTED" | translate }}
+                </span>
+              }
+            </dd>
+
+            <dt class="col-5 text-muted fw-normal">{{ "ABOUT.PDNS_VERSION" | translate }}</dt>
+            <dd class="col-7">
+              @if (appInfoSvc.pdnsStatus()?.version; as version) {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace">{{ version }}</span>
+              } @else {
+                <span class="text-muted small">—</span>
+              }
+            </dd>
+
+            @if (appInfoSvc.pdnsStatus()?.url; as url) {
+              <dt class="col-5 text-muted fw-normal">{{ "ABOUT.PDNS_URL" | translate }}</dt>
+              <dd class="col-7 mb-0 font-monospace small text-break">{{ url }}</dd>
+            }
+          </dl>
+        }
         <a
           [href]="appInfoSvc.appInfo()?.health_url ?? '/api/health'"
           target="_blank"
