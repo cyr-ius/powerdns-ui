@@ -1,0 +1,133 @@
+<div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-tags me-2 text-primary"></i>{{ "ZONE_DETAIL.METADATA_TITLE" | translate }}</span
+  >
+  <button class="btn btn-sm btn-primary" (click)="openMetaModal()">
+    <i class="bi bi-plus-lg me-1"></i>{{ "COMMON.ADD" | translate }}
+  </button>
+</div>
+
+@if (metaError()) {
+  <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ metaError() }}
+  </div>
+}
+
+@if (isLoadingMeta()) {
+  <div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+  </div>
+} @else if (metadata().length === 0) {
+  <div class="text-center py-5">
+    <i class="bi bi-tags text-muted" style="font-size: 2.5rem"></i>
+    <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_METADATA" | translate }}</p>
+  </div>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>{{ "ZONE_DETAIL.META_TYPE" | translate }}</th>
+          <th>{{ "ZONE_DETAIL.META_VALUES" | translate }}</th>
+          <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (meta of metadata(); track trackByMeta($index, meta)) {
+          <tr>
+            <td>
+              <code class="text-primary">{{ meta.kind }}</code>
+            </td>
+            <td class="font-monospace small">
+              @for (v of meta.metadata; track $index) {
+                <div>{{ v }}</div>
+              }
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteMeta(meta.kind)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- ── Modal: Add Metadata ─────────────────────────────────────────────────────── -->
+@if (showMetaModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeMetaModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-tag me-2 text-primary"></i>{{ "ZONE_DETAIL.ADD_METADATA_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeMetaModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onSaveMeta()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.META_TYPE" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                list="meta-kinds"
+                class="form-control font-monospace"
+                [class.is-invalid]="metaForm.kind().touched() && metaForm.kind().errors().length"
+                placeholder="ALLOW-AXFR-FROM"
+                [formField]="metaForm.kind"
+              />
+              <datalist id="meta-kinds">
+                @for (k of metaKindOptions; track k) {
+                  <option [value]="k"></option>
+                }
+              </datalist>
+              @if (metaForm.kind().touched() && metaForm.kind().errors().length) {
+                <div class="invalid-feedback">
+                  {{ metaForm.kind().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.META_VALUE" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="metaForm.value().touched() && metaForm.value().errors().length"
+                placeholder="192.168.0.0/16"
+                [formField]="metaForm.value"
+              />
+              @if (metaForm.value().touched() && metaForm.value().errors().length) {
+                <div class="invalid-feedback">
+                  {{ metaForm.value().errors()[0].message }}
+                </div>
+              }
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeMetaModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onSaveMeta()"
+              [disabled]="isSubmittingMeta() || metaForm().invalid()"
+            >
+              @if (isSubmittingMeta()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.SAVE" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

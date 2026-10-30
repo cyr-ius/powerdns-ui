@@ -1,19 +1,24 @@
 {
   "name": "FastAPI + Angular Dev Environment",
-  "image": "mcr.microsoft.com/devcontainers/base:trixie",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "runServices": ["app", "pdns"],
+  "workspaceFolder": "/workspaces/powerdns-ui",
+  "shutdownAction": "stopCompose",
   "features": {
-    "ghcr.io/devcontainers/features/python:1": {},
     "ghcr.io/devcontainers-extra/features/prek:1": {},
     "ghcr.io/devcontainers-extra/features/uv:1": {},
-    "ghcr.io/devcontainers/features/node:2.1.0": {},
-    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+    "ghcr.io/devcontainers/features/node:2.1.1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1.10.1": {
       "moby": false
     }
   },
-  "mounts": [
-    "source=${env:HOME}/.claude,target=/home/vscode/.claude,type=bind,consistency=cached",
-    "target=${containerWorkspaceFolder}/.data_env,type=volume,consistency=cached"
-  ],
+  "forwardPorts": [4200, 8000],
+  "portsAttributes": {
+    "4200": { "label": "Angular Frontend", "onAutoForward": "notify" },
+    "8000": { "label": "FastAPI Backend", "onAutoForward": "notify" }
+  },
+  "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && sudo apt-get update -qq && prek install --overwrite && uv sync --extra dev --extra docs --link-mode=copy && npm --prefix frontend ci --no-audit --no-fund && sudo chown -R vscode:vscode ${containerWorkspaceFolder}/.data_env",
   // ─── VS Code extensions ────────────────────────────────────────────────
   "customizations": {
     "vscode": {
@@ -21,19 +26,15 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "charliermarsh.ruff",
-        "angular.ng-template",
         "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint",
-        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
         "streetsidesoftware.code-spell-checker",
-        "editorconfig.editorconfig",
-        "anthropic.claude-code",
         "bowlerr.sqlite-intelliview-vscode"
       ],
       "settings": {
         // ── Python ──────────────────────────────────────────────────────
-        "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
-        "python.pythonPath": "${workspaceFolder}/backend/.venv/bin/python",
+        "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+        "python.pythonPath": "${workspaceFolder}/.venv/bin/python",
         "python.terminal.activateEnvInCurrentTerminal": true,
         "[python]": {
           "editor.defaultFormatter": "charliermarsh.ruff",
@@ -72,35 +73,5 @@
         "prettier.printWidth": 120
       }
     }
-  },
-
-  // ─── Ports forwardés automatiquement ──────────────────────────────────
-  // appPort publie les ports sur 0.0.0.0 (accessible via IP LAN, ex: 192.168.1.x)
-  // forwardPorts crée un tunnel localhost uniquement — insuffisant pour OIDC avec IP réelle
-  "appPort": ["0.0.0.0:4200:4200", "0.0.0.0:8000:8000"],
-  "portsAttributes": {
-    "4200": {
-      "label": "Angular Frontend",
-      "onAutoForward": "notify",
-      "host": "0.0.0.0"
-    },
-    "8000": {
-      "label": "FastAPI Backend",
-      "onAutoForward": "notify",
-      "host": "0.0.0.0"
-    }
-  },
-
-  // ─── Environment varaibles ──────────────────────────────────────────────
-  "containerEnv": {
-    "UV_LINK_MODE": "copy",
-    "NG_FORCE_TTY": "false",
-    "DATA_DIR": "${containerWorkspaceFolder}/.data_env" // (db, configuration files, etc...)
-  },
-
-  // ─── Cycle de vie ──────────────────────────────────────────────────────
-  "postCreateCommand": "bash .devcontainer/scripts/post-create.sh ${containerWorkspaceFolder}",
-
-  // ─── Utilisateur non-root ──────────────────────────────────────────────
-  "remoteUser": "vscode"
+  }
 }

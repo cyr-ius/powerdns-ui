@@ -8,7 +8,7 @@ from app.models.account import Account, UserAccount, ZoneRole
 from app.models.acme_key import AcmeApiKey
 from app.models.oidc_settings import OidcSettings
 from app.models.user import User
-from app.services.auth_service import hash_password
+from app.services.auth_service import hash_password, revoke_sessions
 from app.services.pdns_service import pdns_request
 
 # ── Users ─────────────────────────────────────────────────────────────────────
@@ -79,6 +79,8 @@ async def create_local_user(
 
 
 async def update_user(db: AsyncSession, user: User, data: dict[str, Any]) -> User:
+    if data.get("is_active") is False and user.is_active:
+        revoke_sessions(user)
     for key, value in data.items():
         if value is not None:
             setattr(user, key, value)
@@ -90,6 +92,7 @@ async def update_user(db: AsyncSession, user: User, data: dict[str, Any]) -> Use
 
 async def reset_password(db: AsyncSession, user: User, new_password: str) -> None:
     user.hashed_password = hash_password(new_password)
+    revoke_sessions(user)
     db.add(user)
     await db.commit()
 
@@ -216,9 +219,7 @@ async def get_user_account_roles(db: AsyncSession, user_id: int) -> dict[str, st
         acc_result = await db.exec(select(Account).where(Account.id == ua.account_id))
         acc = acc_result.first()
         if acc:
-            output[acc.name] = (
-                ua.role.value if hasattr(ua.role, "value") else str(ua.role)
-            )
+            output[acc.name] = str(ua.role)
     return output
 
 
@@ -267,7 +268,7 @@ async def list_account_members(
                     "user_id": user.id,
                     "username": user.username,
                     "email": user.email,
-                    "role": ua.role.value if hasattr(ua.role, "value") else ua.role,
+                    "role": str(ua.role),
                 }
             )
     return output

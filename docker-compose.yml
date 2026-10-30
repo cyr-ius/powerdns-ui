@@ -1,0 +1,135 @@
+# PowerDNS UI built from the sources (contributors), to test a local build against a
+# PowerDNS Authoritative Server backed by PostgreSQL. To deploy the published image,
+# use examples/docker-compose-*.yml.
+#
+#   (umask 077 && printf 'POSTGRES_PASSWORD=%s\nPDNS_AUTH_API_KEY=%s\n' \
+#       "$(openssl rand -hex 24)" "$(openssl rand -hex 32)" >> .env)
+#   docker compose up -d --build
+#   docker compose logs pdns-ui | grep -i password   # one-time admin password
+#
+# The UI listens on 127.0.0.1:8080 and the DNS server on 127.0.0.1:1053 (tcp/udp) only:
+#   dig @127.0.0.1 -p 1053 example.org SOA
+# To publish them on another address of the host, set DOCKER_PUBLISH_ADDRESS in .env.
+# The PowerDNS API (8081) and PostgreSQL stay on the internal network.
+# The UI keeps its own SQLite database, admin password and JWT secret in the pdns-ui volume:
+# `docker compose down -v` resets everything.
+
+name: powerdns-ui
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  pdns-ui:
+    <<: *hardening
+    # The entrypoint hands the data volume over to the powerdns-ui user, then
+    # drops root: it needs these capabilities, which the process loses after.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    image: powerdns-ui
+    restart: unless-stopped
+    depends_on:
+      pdns:
+        condition: service_started
+    environment:
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PDNS_AUTH_API_URL: http://pdns:8081
+      PDNS_AUTH_API_KEY: ${PDNS_AUTH_API_KEY:?set PDNS_AUTH_API_KEY in .env}
+      SWAGGER_ENABLED: ${SWAGGER_ENABLED:-true}
+    volumes:
+      - pdns-ui:/var/lib/powerdns-ui
+    networks:
+      - backend
+    ports:
+      - "${DOCKER_PUBLISH_ADDRESS:-127.0.0.1}:8080:8080"
+
+  pdns:
+    image: powerdns/pdns-auth-51:5.1.5
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - "--no-config"
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:?set PDNS_AUTH_API_KEY in .env}"
+      - "--launch=gpgsql"
+      - "--gpgsql-host=db"
+      - "--gpgsql-port=5432"
+      - "--gpgsql-user=powerdns"
+      - "--gpgsql-password=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}"
+      - "--gpgsql-dbname=powerdns"
+      - "--gpgsql-dnssec=yes"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      # The API (8081) is not published: only the containers of the Compose networks reach it.
+      - "--webserver-allow-from=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      - "--logging-structured=yes"
+      - "--loglevel=6"
+    volumes:
+      - pdns:/var/lib/powerdns
+    networks:
+      - backend
+    ports:
+      - "${DOCKER_PUBLISH_ADDRESS:-127.0.0.1}:1053:53"
+      - "${DOCKER_PUBLISH_ADDRESS:-127.0.0.1}:1053:53/udp"
+    security_opt:
+      - no-new-privileges:true
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      pdns-schema:
+        condition: service_completed_successfully
+    environment:
+      POSTGRES_DB: powerdns
+      POSTGRES_USER: powerdns
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pdns-pg:/var/lib/postgresql
+      # Applied by the postgres entrypoint only on the first start (empty data dir).
+      - pdns-initdb:/docker-entrypoint-initdb.d:ro
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U powerdns -d powerdns"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+  # One-shot: copies the PostgreSQL schema shipped with the PowerDNS image so that it
+  # matches the server version. Root only to write into the new (root-owned) volume.
+  pdns-schema:
+    <<: *hardening
+    image: powerdns/pdns-auth-51:5.1.5
+    user: root
+    entrypoint: ["cp", "/usr/local/share/doc/pdns/schema.pgsql.sql", "/initdb/"]
+    volumes:
+      - pdns-initdb:/initdb
+    network_mode: none
+
+volumes:
+  pdns-ui:
+  pdns:
+  pdns-pg:
+  pdns-initdb:
+
+networks:
+  backend:

@@ -1,0 +1,297 @@
+<div class="card-header py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-arrow-left-right me-2 text-primary"></i>{{ "ZONE_DETAIL.TRANSFER_TITLE" | translate }}</span
+  >
+  <div class="text-muted small mt-1">
+    {{ "ZONE_DETAIL.TRANSFER_DESC" | translate }}
+  </div>
+</div>
+
+@if (isLoadingMeta()) {
+  <div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+  </div>
+} @else {
+  @if (transferError()) {
+    <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>{{ transferError() }}
+      <button type="button" class="btn-close btn-sm ms-auto" (click)="transferError.set(null)"></button>
+    </div>
+  }
+  @if (transferSuccess()) {
+    <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-check-circle-fill"></i>{{ transferSuccess() }}
+    </div>
+  }
+
+  <div class="card-body pb-0">
+    <!-- ── Primary zone (Outgoing AXFR) ───────────────── -->
+    @if (zone()!.kind === "Master" || zone()!.kind === "Primary" || zone()!.kind === "Native") {
+      <div class="mb-4">
+        <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+          <i class="bi bi-upload me-2"></i>{{ "ZONE_DETAIL.PRIMARY_ZONE" | translate }}
+        </h6>
+
+        <!-- ALLOW-AXFR-FROM -->
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            {{ "ZONE_DETAIL.ALLOW_AXFR_FROM" | translate }}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">ALLOW-AXFR-FROM</span>
+          </label>
+          <div class="form-text mb-2">
+            {{ "ZONE_DETAIL.ALLOW_AXFR_FROM_HELP" | translate }}
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            @for (ip of allowAxfrFrom(); track ip) {
+              <span
+                class="badge bg-primary-subtle text-primary-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+              >
+                <i class="bi bi-hdd-network me-1 small"></i>{{ ip }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-sm ms-1"
+                  style="font-size: 0.6rem"
+                  [disabled]="isSubmittingTransfer()"
+                  (click)="removeMetadataEntry('ALLOW-AXFR-FROM', ip)"
+                  [title]="'COMMON.DELETE' | translate"
+                ></button>
+              </span>
+            }
+            @if (allowAxfrFrom().length === 0) {
+              <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_AXFR_RESTRICTION" | translate }}</span>
+            }
+          </div>
+          <div class="input-group" style="max-width: 420px">
+            <input
+              type="text"
+              class="form-control font-monospace"
+              placeholder="192.168.1.0/24"
+              [value]="newAllowAxfrFrom()"
+              (input)="newAllowAxfrFrom.set($any($event.target).value)"
+              (keyup.enter)="addAllowAxfrFromEntry()"
+            />
+            <button
+              class="btn btn-outline-primary"
+              type="button"
+              [disabled]="isSubmittingTransfer() || !newAllowAxfrFrom().trim()"
+              (click)="addAllowAxfrFromEntry()"
+            >
+              <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- TSIG-ALLOW-AXFR -->
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            {{ "ZONE_DETAIL.TSIG_ALLOW_AXFR" | translate }}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">TSIG-ALLOW-AXFR</span>
+          </label>
+          <div class="form-text mb-2">
+            {{ "ZONE_DETAIL.TSIG_ALLOW_AXFR_HELP" | translate }}
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            @for (keyId of tsigAllowAxfr(); track keyId) {
+              @let keyInfo = getTsigKeyById(keyId);
+              <span
+                class="badge bg-success-subtle text-success-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+              >
+                <i class="bi bi-key me-1 small"></i>
+                {{ keyInfo ? keyInfo.name + " (" + keyInfo.algorithm + ")" : keyId }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-sm ms-1"
+                  style="font-size: 0.6rem"
+                  [disabled]="isSubmittingTransfer()"
+                  (click)="removeMetadataEntry('TSIG-ALLOW-AXFR', keyId)"
+                  [title]="'COMMON.DELETE' | translate"
+                ></button>
+              </span>
+            }
+            @if (tsigAllowAxfr().length === 0) {
+              <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_TSIG_KEY" | translate }}</span>
+            }
+          </div>
+          @if (availableTsigForAxfr().length > 0) {
+            <div class="input-group" style="max-width: 420px">
+              <select
+                class="form-select"
+                [value]="newTsigAllowAxfr()"
+                (change)="newTsigAllowAxfr.set($any($event.target).value)"
+              >
+                <option value="">{{ "ZONE_DETAIL.CHOOSE_TSIG" | translate }}</option>
+                @for (k of availableTsigForAxfr(); track k.id) {
+                  <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+                }
+              </select>
+              <button
+                class="btn btn-outline-success"
+                type="button"
+                [disabled]="isSubmittingTransfer() || !newTsigAllowAxfr()"
+                (click)="addTsigAllowAxfrEntry()"
+              >
+                <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
+              </button>
+            </div>
+          } @else if (tsigKeys().length === 0) {
+            <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
+              <i class="bi bi-info-circle-fill"></i>
+              {{ "ZONE_DETAIL.NO_TSIG_AVAILABLE" | translate }}
+              <a routerLink="/tsigkeys" class="ms-1">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
+            </div>
+          } @else {
+            <div class="text-muted small fst-italic">{{ "ZONE_DETAIL.ALL_TSIG_ASSIGNED" | translate }}</div>
+          }
+          @if (tsigKeys().length > 0) {
+            <div class="form-text mt-1">
+              <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }}</a>
+            </div>
+          }
+        </div>
+
+        <!-- ALSO-NOTIFY -->
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            {{ "ZONE_DETAIL.ALSO_NOTIFY" | translate }}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">ALSO-NOTIFY</span>
+          </label>
+          <div class="form-text mb-2">
+            {{ "ZONE_DETAIL.ALSO_NOTIFY_HELP" | translate }}
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            @for (addr of alsoNotify(); track addr) {
+              <span
+                class="badge bg-warning-subtle text-warning-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+              >
+                <i class="bi bi-broadcast me-1 small"></i>{{ addr }}
+                <button
+                  type="button"
+                  class="btn-close btn-close-sm ms-1"
+                  style="font-size: 0.6rem"
+                  [disabled]="isSubmittingTransfer()"
+                  (click)="removeMetadataEntry('ALSO-NOTIFY', addr)"
+                  [title]="'COMMON.DELETE' | translate"
+                ></button>
+              </span>
+            }
+            @if (alsoNotify().length === 0) {
+              <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_ALSO_NOTIFY" | translate }}</span>
+            }
+          </div>
+          <div class="input-group" style="max-width: 420px">
+            <input
+              type="text"
+              class="form-control font-monospace"
+              placeholder="198.51.100.1 or 198.51.100.1:5300"
+              [value]="newAlsoNotify()"
+              (input)="newAlsoNotify.set($any($event.target).value)"
+              (keyup.enter)="addAlsoNotifyEntry()"
+            />
+            <button
+              class="btn btn-outline-warning"
+              type="button"
+              [disabled]="isSubmittingTransfer() || !newAlsoNotify().trim()"
+              (click)="addAlsoNotifyEntry()"
+            >
+              <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    <!-- /primary zone -->
+
+    <!-- ── Secondary zone (Incoming AXFR) ─────────────── -->
+    @if (zone()!.kind === "Slave" || zone()!.kind === "Secondary") {
+      <div class="mb-4">
+        <h6 class="fw-bold text-warning border-bottom pb-2 mb-3">
+          <i class="bi bi-download me-2"></i>{{ "ZONE_DETAIL.SECONDARY_ZONE" | translate }}
+        </h6>
+
+        <!-- AXFR-MASTER-TSIG -->
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            {{ "ZONE_DETAIL.AXFR_MASTER_TSIG" | translate }}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">AXFR-MASTER-TSIG</span>
+          </label>
+          <div class="form-text mb-2">
+            {{ "ZONE_DETAIL.AXFR_MASTER_TSIG_HELP" | translate }}
+          </div>
+          @if (axfrMasterTsig()) {
+            <div class="mb-2">
+              <span class="badge bg-success-subtle text-success-emphasis fs-6 fw-normal px-2 py-1">
+                <i class="bi bi-key me-1"></i>
+                @let currentMasterKey = getTsigKeyById(axfrMasterTsig());
+                {{
+                  currentMasterKey ? currentMasterKey.name + " (" + currentMasterKey.algorithm + ")" : axfrMasterTsig()
+                }}
+              </span>
+            </div>
+          }
+          <div class="input-group" style="max-width: 420px">
+            <select
+              class="form-select"
+              [value]="editAxfrMasterTsig()"
+              (change)="editAxfrMasterTsig.set($any($event.target).value)"
+            >
+              <option value="">{{ "ZONE_DETAIL.NO_KEY" | translate }}</option>
+              @for (k of tsigKeys(); track k.id) {
+                <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+              }
+            </select>
+            <button
+              class="btn btn-outline-warning"
+              type="button"
+              [disabled]="isSubmittingTransfer()"
+              (click)="saveSingleMetadata('AXFR-MASTER-TSIG', editAxfrMasterTsig())"
+            >
+              @if (isSubmittingTransfer()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+            </button>
+          </div>
+          @if (tsigKeys().length === 0) {
+            <div class="form-text">
+              <a routerLink="/tsigkeys">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
+            </div>
+          }
+        </div>
+
+        <!-- AXFR-SOURCE -->
+        <div class="mb-4">
+          <label class="form-label fw-medium">
+            {{ "ZONE_DETAIL.AXFR_SOURCE" | translate }}
+            <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">AXFR-SOURCE</span>
+          </label>
+          <div class="form-text mb-2">
+            {{ "ZONE_DETAIL.AXFR_SOURCE_HELP" | translate }}
+          </div>
+          <div class="input-group" style="max-width: 420px">
+            <input
+              type="text"
+              class="form-control font-monospace"
+              placeholder="Local IP Address (optional)"
+              [value]="editAxfrSource()"
+              (input)="editAxfrSource.set($any($event.target).value)"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              [disabled]="isSubmittingTransfer()"
+              (click)="saveSingleMetadata('AXFR-SOURCE', editAxfrSource())"
+            >
+              @if (isSubmittingTransfer()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+    <!-- /secondary zone -->
+  </div>
+  <!-- /card-body -->
+}
+<!-- /!isLoadingMeta -->

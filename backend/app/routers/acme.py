@@ -216,7 +216,9 @@ async def patch_zone(
                 zone_id,
                 {
                     "acme_key": key.name,
-                    "detail": "Only TXT record modifications are allowed via ACME endpoint",
+                    "detail": (
+                        "Only TXT record modifications are allowed via ACME endpoint"
+                    ),
                 },
             )
             raise HTTPException(
@@ -230,7 +232,9 @@ async def patch_zone(
                 zone_id,
                 {
                     "acme_key": key.name,
-                    "detail": "Only _acme-challenge records can be modified via ACME endpoint",
+                    "detail": (
+                        "Only _acme-challenge records can be modified via ACME endpoint"
+                    ),
                 },
             )
             raise HTTPException(

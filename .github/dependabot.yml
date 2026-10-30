@@ -4,13 +4,18 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+# master is protected and only receives merges of dev: every update targets dev
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
+
+  # Python dependencies (pyproject.toml and uv.lock)
   - package-ecosystem: "uv"
-    directory: "/backend"
+    directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     groups:
@@ -24,8 +29,11 @@ updates:
           - "sqlmodel"
           - "sqlalchemy"
           - "alembic"
+
+  # Web interface (Angular)
   - package-ecosystem: "npm"
     directory: "/frontend"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
     ignore:
@@ -41,3 +49,15 @@ updates:
           - "zone.js"
           - "rxjs"
           - "typescript"
+
+  # Base images of the Dockerfile (node, python, uv) and of docker-compose.yml
+  - package-ecosystem: "docker"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"

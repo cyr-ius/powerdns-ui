@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/cyr-ius/powerdns-ui?label=License&color=blue) ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python) ![Angular](https://img.shields.io/badge/Angular-22-blue?logo=angular) [![ci::status]][ci::github] [![docker::pulls]][docker::hub] [![documentation::badge]][documentation::web]
 
-[ci::status]: https://img.shields.io/github/actions/workflow/status/cyr-ius/powerdns-ui/docker-publish.yml?logo=github
+[ci::status]: https://img.shields.io/github/actions/workflow/status/cyr-ius/powerdns-ui/publish.yml?logo=github
 [ci::github]: https://github.com/cyr-ius/powerdns-ui/actions
 [docker::pulls]: https://img.shields.io/docker/pulls/cyrius44/powerdns-ui.svg?logo=docker
 [docker::hub]: https://hub.docker.com/r/cyrius44/powerdns-ui
@@ -39,7 +39,7 @@ Single container (Angular served statically by FastAPI), SQLite by default — s
 # docker-compose.yaml
 services:
   pdns:
-    image: powerdns/pdns-auth-51:5.1.3
+    image: powerdns/pdns-auth-51:5.1.5
     restart: unless-stopped
     volumes:
       - powerdns_data:/var/lib/powerdns
@@ -78,6 +78,7 @@ docker compose up -d
 Open **http://localhost:8080** and log in as `admin` with the one-time password printed in the container logs on first start, then change it immediately.
 
 > **Note:** mounting a persistent volume on `/var/lib/powerdns-ui` is required — the generated admin password and JWT secret key are stored there.
+> The application runs as the unprivileged `powerdns-ui` user (UID 1000). On start, the container hands the volume over to this user if needed, so a volume created by an older release keeps working. With `cap_drop: ALL`, add the `CHOWN`, `SETUID` and `SETGID` capabilities, or run the container with `user: "1000:1000"`.
 
 For the full installation guide (PowerDNS API setup, MariaDB backend, reverse proxy) see **[Getting Started](https://cyr-ius.github.io/powerdns-ui/getting-started/)**.
 

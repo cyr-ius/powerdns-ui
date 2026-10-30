@@ -1,0 +1,62 @@
+[build-system]
+# 77: license expression (PEP 639)
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "app"
+version = "2.3.3"
+description = "PowerDNS UI"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]==0.162.0",
+    "pydantic[email]",
+    "pydantic-settings",
+    "sqlmodel==0.0.48",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "aiomysql",
+    "dnspython",
+    "alembic",
+    "pyjwt[crypto]>=2.10",
+    "bcrypt",
+    "python-multipart",
+    "httpx",
+]
+
+[project.urls]
+Homepage = "https://github.com/cyr-ius/powerdns-ui"
+Documentation = "https://cyr-ius.github.io/powerdns-ui/"
+Repository = "https://github.com/cyr-ius/powerdns-ui"
+Issues = "https://github.com/cyr-ius/powerdns-ui/issues"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-xdist>=3.6", "ruff>=0.5", "debugpy>=1.8"]
+docs = [
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.5",
+    "mkdocs-static-i18n>=1.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["backend/app"]
+
+[tool.alembic]
+# The application applies the migrations itself at startup (app.database.init_db).
+# From the repository root: `uv run alembic revision --autogenerate -m "..."`.
+script_location = "%(here)s/backend/app/migrations"
+prepend_sys_path = ["backend"]
+file_template = "%%(year)d%%(month).2d%%(day).2d_%%(rev)s_%%(slug)s"
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

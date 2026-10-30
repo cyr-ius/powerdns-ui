@@ -3,10 +3,11 @@ Powerdns UI - FastAPI Backend
 Copyright (C) 2021-2024  Cyr-ius (github.com/cyr-ius)
 """
 
+import fcntl
 import logging
 import secrets
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -14,7 +15,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.config import settings
+from app.config import DATA_DIR, settings
 from app.database import async_session, init_db
 from app.routers import (
     acme,
@@ -26,14 +27,15 @@ from app.routers import (
     catalogues,
     health,
     networks,
-    pdns,
     server,
     tokens,
     tsigkeys,
     views,
+    zones,
 )
 from app.routers.acme import router_api as acme_api_router
 from app.security import RateLimitMiddleware, SecurityHeadersMiddleware
+from app.services import pdns_service
 from app.services.auth_service import create_user, get_user_by_username
 from app.utils import resolve_safe_path
 
@@ -44,8 +46,41 @@ logging.basicConfig(
 )
 
 
+@contextmanager
+def startup_lock() -> Iterator[None]:
+    """Serialize the one-time initialization between the Uvicorn workers.
+
+    Every worker runs the lifespan: without this lock they race to create the
+    schema and the initial admin account on the first start.
+    """
+    try:
+        Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
+        lock_file = open(Path(DATA_DIR) / ".startup.lock", "a")
+    except OSError:
+        logger.warning("Cannot create the startup lock in %s", DATA_DIR)
+        yield
+        return
+    with lock_file:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    with startup_lock():
+        await _initialize()
+    await pdns_service.open_client()
+    try:
+        yield
+    finally:
+        await pdns_service.close_client()
+
+
+async def _initialize() -> None:
+    """Create or migrate the schema and the initial admin account."""
     await init_db()
     async with async_session() as db:
         admin_user = await get_user_by_username(db, settings.admin_username)
@@ -82,7 +117,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 "Admin account promoted to super administrator : %s",
                 settings.admin_username,
             )
-    yield
 
 
 app = FastAPI(
@@ -117,7 +151,7 @@ app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(audit.router)
-app.include_router(pdns.router)
+app.include_router(zones.router)
 app.include_router(catalogues.router)
 app.include_router(tsigkeys.router)
 app.include_router(server.router)
@@ -143,12 +177,12 @@ async def swagger_ui() -> HTMLResponse:
     )
 
 
-@app.get("/api/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "healthy", "app": app.title, "version": app.version}
-
-
 # ── Serve Angular SPA (must be last) ─────────────────────────────────────────
+# Resolved once at module load — avoids repeated filesystem calls per request.
+_FRONTEND_DIST = (Path(__file__).resolve().parents[2] / "frontend").resolve()
+_FRONTEND_INDEX = _FRONTEND_DIST / "index.html"
+
+
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_spa(full_path: str) -> FileResponse:
     """
@@ -159,19 +193,13 @@ async def serve_spa(full_path: str) -> FileResponse:
     Unknown or unsafe paths also fall back to index.html rather than 404-ing,
     letting the Angular router handle the error page.
     """
-
-    # Resolve once at module load — avoids repeated filesystem calls per request.
-    project_root = Path(__file__).resolve().parents[2]
-    frontend_dist = (project_root / "frontend").resolve()
-    frontend_index = frontend_dist / "index.html"
-
-    if not frontend_index.is_file():
-        logger.error("SPA index.html not found at %s", frontend_index)
+    if not _FRONTEND_INDEX.is_file():
+        logger.error("SPA index.html not found at %s", _FRONTEND_INDEX)
         raise HTTPException(status_code=503, detail="Frontend not available.")
 
-    safe = resolve_safe_path(full_path, frontend_dist)
+    safe = resolve_safe_path(full_path, _FRONTEND_DIST)
     if safe is not None:
         return FileResponse(safe)
 
     # SPA fallback: Angular router handles unknown client-side routes.
-    return FileResponse(frontend_index)
+    return FileResponse(_FRONTEND_INDEX)

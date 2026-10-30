@@ -15,55 +15,12 @@
             "regexp": "(.*?)"
           },
           "endsPattern": {
-            "regexp": "bundle generation complete"
+            "regexp": "bundle generation (complete|failed)"
           }
         }
       },
       "label": "npm: start - frontend",
       "detail": "ng serve"
-    },
-    {
-      "type": "shell",
-      "command": "docker compose up -d pdns",
-      "label": "docker: start pdns",
-      "detail": "Démarre le container powerdns/pdns-auth-50 (et sa base pdns-db)",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "type": "shell",
-      "command": "docker compose stop pdns",
-      "label": "docker: stop pdns",
-      "detail": "Arrête le container powerdns/pdns-auth-50",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "shared"
-      }
-    },
-    {
-      "type": "shell",
-      "command": "python3 -m venv .venv-docs 2>/dev/null; .venv-docs/bin/pip install -q -r docs/requirements.txt && .venv-docs/bin/mkdocs serve -a 0.0.0.0:8001",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "isBackground": true,
-      "problemMatcher": {
-        "pattern": {
-          "regexp": "^ERROR\\s+-\\s+(.*)$",
-          "message": 1
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "Serving on"
-        }
-      },
-      "label": "mkdocs: serve",
-      "detail": "MkDocs live-reload docs server (http://localhost:8001/)"
     }
   ]
 }

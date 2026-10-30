@@ -7,7 +7,8 @@ If not, fetches the SQL schema and applies it.
 
 Usage:
     python /app/backend/scripts/init_pdns_schema.py --host pdns-db --password pdns
-    docker exec <container> python /app/backend/scripts/init_pdns_schema.py --host pdns-db
+    docker exec <container> python /app/backend/scripts/init_pdns_schema.py ...
+        (same options as above)
 
     # Custom schema — local file:
     ... --schema /path/to/schema.mysql.sql

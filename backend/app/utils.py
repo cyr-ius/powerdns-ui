@@ -1,4 +1,4 @@
-"""Helper functions for the WireGuard UI backend."""
+"""Helper functions for the PowerDNS UI backend."""
 
 import logging
 from pathlib import Path

@@ -14,8 +14,9 @@
       "module": "uvicorn",
       "args": ["app.main:app", "--reload", "--log-level", "debug"],
       "jinja": true,
-      "preLaunchTask": "docker: start pdns",
-      "cwd": "${workspaceFolder}/backend"
+      "cwd": "${workspaceFolder}/backend",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "console": "integratedTerminal"
     },
     {
       "name": "Angular",
@@ -24,6 +25,21 @@
       "preLaunchTask": "npm: start - frontend",
       "url": "http://localhost:4200/",
       "webRoot": "${workspaceFolder}/frontend"
+    },
+    {
+      "name": "Docs: MkDocs (port 8001)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "mkdocs",
+      "args": ["serve", "-a", "127.0.0.1:8001"],
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "console": "integratedTerminal",
+      "serverReadyAction": {
+        "pattern": "Serving on (https?://\\S+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
     }
   ]
 }

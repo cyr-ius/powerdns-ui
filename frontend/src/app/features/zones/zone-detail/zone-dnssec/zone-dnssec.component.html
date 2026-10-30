@@ -1,0 +1,234 @@
+<div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSSEC_TITLE" | translate }}</span
+  >
+  <div class="d-flex gap-2">
+    @if (zone()!.kind !== "Slave" && zone()!.kind !== "Secondary") {
+      <button
+        class="btn btn-sm btn-outline-warning"
+        (click)="rectifyZone()"
+        [disabled]="isRectifying()"
+        [title]="'ZONE_DETAIL.RECTIFY' | translate"
+      >
+        @if (isRectifying()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-arrow-clockwise me-1"></i>{{ "ZONE_DETAIL.RECTIFY" | translate }}
+      </button>
+    }
+    <button class="btn btn-sm btn-primary" (click)="openKeyModal()">
+      <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.GENERATE_KEY" | translate }}
+    </button>
+  </div>
+</div>
+
+@if (keyError()) {
+  <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ keyError() }}
+    <button type="button" class="btn-close btn-sm ms-auto" (click)="keyError.set(null)"></button>
+  </div>
+}
+
+@if (isLoadingKeys()) {
+  <div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+  </div>
+} @else if (cryptoKeys().length === 0) {
+  <div class="text-center py-5">
+    <i class="bi bi-shield text-muted" style="font-size: 2.5rem"></i>
+    <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_DNSSEC_KEYS" | translate }}</p>
+    <p class="text-muted small mt-1">{{ "ZONE_DETAIL.DNSSEC_HELP" | translate }}</p>
+  </div>
+} @else {
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>{{ "COMMON.TYPE" | translate }}</th>
+          <th>Algorithm</th>
+          <th>Bits</th>
+          <th>{{ "ZONE_DETAIL.KEY_ACTIVE" | translate }}</th>
+          <th>{{ "ZONE_DETAIL.KEY_PUBLISHED" | translate }}</th>
+          <th>{{ "ZONE_DETAIL.KEY_DS" | translate }}</th>
+          <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (key of cryptoKeys(); track trackByKey($index, key)) {
+          <tr>
+            <td class="font-monospace text-muted small">{{ key.id }}</td>
+            <td>
+              <span class="badge bg-info-subtle text-info-emphasis text-uppercase">{{ key.keytype }}</span>
+            </td>
+            <td class="small">{{ key.algorithm }}</td>
+            <td class="small text-muted">{{ key.bits ?? "—" }}</td>
+            <td>
+              @if (key.active) {
+                <span class="badge bg-success-subtle text-success-emphasis">
+                  <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.KEY_ACTIVE" | translate }}
+                </span>
+              } @else {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{
+                  "ZONE_DETAIL.KEY_INACTIVE" | translate
+                }}</span>
+              }
+            </td>
+            <td>
+              @if (key.published) {
+                <span class="badge bg-primary-subtle text-primary-emphasis">
+                  <i class="bi bi-broadcast me-1"></i>{{ "ZONE_DETAIL.KEY_PUBLISHED" | translate }}
+                </span>
+              } @else {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis">{{
+                  "ZONE_DETAIL.KEY_RETIRED" | translate
+                }}</span>
+              }
+            </td>
+            <td style="max-width: 280px">
+              @if (key.ds && key.ds.length > 0) {
+                <div class="d-flex flex-column gap-1">
+                  @for (ds of key.ds; track $index) {
+                    <div class="d-flex align-items-center gap-1">
+                      <code class="small text-break flex-grow-1" style="font-size: 0.68rem">{{ ds }}</code>
+                      <button
+                        class="btn btn-sm btn-outline-secondary flex-shrink-0 py-0 px-1"
+                        style="font-size: 0.7rem"
+                        (click)="copyText(ds)"
+                        [title]="'ZONE_DETAIL.COPY' | translate"
+                      >
+                        <i
+                          class="bi"
+                          [class.bi-clipboard]="copiedText() !== ds"
+                          [class.bi-clipboard-check-fill]="copiedText() === ds"
+                        ></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <span class="text-muted small">—</span>
+              }
+            </td>
+            <td class="text-end text-nowrap">
+              <button class="btn btn-sm btn-outline-secondary me-1" (click)="toggleExpandKey(key.id)">
+                <i
+                  class="bi"
+                  [class.bi-eye]="expandedKeyId() !== key.id"
+                  [class.bi-eye-slash]="expandedKeyId() === key.id"
+                ></i>
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary me-1"
+                (click)="toggleKey(key)"
+                [title]="key.active ? ('ZONE_DETAIL.DISABLE' | translate) : ('ZONE_DETAIL.ENABLE' | translate)"
+              >
+                <i class="bi" [class.bi-toggle-on]="key.active" [class.bi-toggle-off]="!key.active"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary me-1" (click)="togglePublished(key)">
+                <i class="bi" [class.bi-broadcast]="key.published" [class.bi-broadcast-pin]="!key.published"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteKey(key)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          @if (expandedKeyId() === key.id) {
+            <tr class="table-light">
+              <td colspan="8" class="py-2 px-3">
+                <div class="d-flex align-items-start gap-2">
+                  <div class="flex-grow-1">
+                    <div class="small fw-semibold text-muted mb-1">DNSKEY</div>
+                    @if (key.dnskey) {
+                      <code class="small text-break d-block">{{ key.dnskey }}</code>
+                    } @else {
+                      <span class="text-muted small">{{ "ZONE_DETAIL.KEY_NOT_AVAILABLE" | translate }}</span>
+                    }
+                  </div>
+                  @if (key.dnskey) {
+                    <button
+                      class="btn btn-sm btn-outline-secondary flex-shrink-0"
+                      (click)="copyText(key.dnskey)"
+                      [title]="'ZONE_DETAIL.COPY' | translate"
+                    >
+                      <i
+                        class="bi"
+                        [class.bi-clipboard]="copiedText() !== key.dnskey"
+                        [class.bi-clipboard-check-fill]="copiedText() === key.dnskey"
+                      ></i>
+                      <span class="ms-1 small">{{ "ZONE_DETAIL.COPY" | translate }}</span>
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- ── Modal: Generate DNSSEC Key ─────────────────────────────────────────────────── -->
+@if (showKeyModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeKeyModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-shield-lock me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSSEC_KEY_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeKeyModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onCreateKey()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (keyError()) {
+              <div class="alert alert-danger py-2 small">{{ keyError() }}</div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium">{{ "ZONE_DETAIL.KEY_TYPE" | translate }}</label>
+              <select class="form-select" [formField]="keyForm.keytype">
+                <option value="ksk">KSK — Key Signing Key</option>
+                <option value="zsk">ZSK — Zone Signing Key</option>
+                <option value="csk">CSK — Combined Signing Key</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-medium">Algorithm</label>
+              <select class="form-select" [formField]="keyForm.algorithm">
+                @for (a of cryptoAlgorithms; track a) {
+                  <option [value]="a">{{ a }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.KEY_SIZE" | translate }}
+                <span class="text-muted small">{{ "ZONE_DETAIL.KEY_SIZE_OPTIONAL" | translate }}</span></label
+              >
+              <input
+                type="number"
+                class="form-control"
+                [placeholder]="'ZONE_DETAIL.KEY_DEFAULT_SIZE' | translate"
+                [formField]="keyForm.bits"
+              />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeKeyModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button type="button" class="btn btn-primary" (click)="onCreateKey()" [disabled]="isSubmittingKey()">
+              @if (isSubmittingKey()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.GENERATE" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import Text
 from sqlmodel import Field, SQLModel
 
 
@@ -11,6 +12,6 @@ class PersonalAccessToken(SQLModel, table=True):
     name: str = Field(max_length=100)
     token_prefix: str = Field(max_length=12)
     token_hash: str = Field(unique=True, index=True)
-    comment: str | None = Field(default=None)
+    comment: str | None = Field(default=None, sa_type=Text)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     expires_at: datetime | None = Field(default=None)

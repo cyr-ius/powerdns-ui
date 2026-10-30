@@ -1,0 +1,35 @@
+name: powerdns-ui-dev
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3-3.14-trixie
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/powerdns-ui:cached
+      - ${HOME}/.claude:/home/vscode/.claude:cached
+      - powerdns-ui-dev-data:/workspaces/powerdns-ui/.data_env:cached
+    environment:
+      - SWAGGER_ENABLED=true
+      - PDNS_AUTH_API_URL=http://pdns:8081
+      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}
+      - DATA_DIR=/workspaces/powerdns-ui/.data_env
+    depends_on:
+      - pdns
+  pdns:
+    image: powerdns/pdns-auth-51:5.1.5
+    restart: unless-stopped
+    volumes:
+      - powerdns-ui-dev-pdns:/var/lib/powerdns
+    command:
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:-change-this-api-key-in-production}"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--webserver-allow-from=0.0.0.0/0"
+      - "--logging-structured=yes"
+      - "--loglevel=6"
+      - "--loglevel-show=yes"
+
+volumes:
+  powerdns-ui-dev-data:
+  powerdns-ui-dev-pdns:

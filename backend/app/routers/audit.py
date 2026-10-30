@@ -29,7 +29,8 @@ router = APIRouter(prefix="/api/admin/audit", dependencies=[Depends(get_current_
 _SERVER = "/servers/localhost"
 
 # PowerDNS 5.x logfmt-style log lines, e.g.:
-#   Aug 02 19:55:03 msg="Packet denied" subsystem="receiver0" prio="Error" ts="1785693303.307" key="jerome-dyndns"
+#   Aug 02 19:55:03 msg="Packet denied" subsystem="receiver0" prio="Error"
+#   ts="1785693303.307" key="jerome-dyndns"   (one line)
 _LOG_TS_RE = re.compile(r"^(?P<ts>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(?P<rest>.*)$")
 _LOG_KV_RE = re.compile(r'(?P<key>\w+)="(?P<qval>[^"]*)"|(?P<key2>\w+)=(?P<val>\S+)')
 

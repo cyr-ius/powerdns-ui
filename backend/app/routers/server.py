@@ -110,7 +110,9 @@ async def get_statistics(
     statistic: Annotated[
         str | None,
         Query(
-            description="Specific statistic name (e.g. 'recursor') or leave empty for all"
+            description=(
+                "Specific statistic name (e.g. 'recursor') or leave empty for all"
+            )
         ),
     ] = None,
     includerings: Annotated[bool, Query(description="Include Ring items")] = False,

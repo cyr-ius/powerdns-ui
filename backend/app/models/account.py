@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from enum import StrEnum
 
+from sqlalchemy import Text
 from sqlmodel import Field, SQLModel
 
 
@@ -15,7 +16,7 @@ class Account(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True, max_length=100)
-    description: str | None = Field(default=None)
+    description: str | None = Field(default=None, sa_type=Text)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

@@ -4,18 +4,19 @@ from collections import defaultdict, deque
 from threading import Lock
 
 from fastapi import Request, status
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.responses import JSONResponse, Response
-from starlette.types import ASGIApp
+from starlette.datastructures import MutableHeaders
+from starlette.responses import JSONResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.client_ip import get_client_ip
 from app.config import settings
+from app.cookies import request_is_https
 
 logger = logging.getLogger(__name__)
 
 
-class SecurityHeadersMiddleware(BaseHTTPMiddleware):
-    """Add security headers to every HTTP response."""
+class SecurityHeadersMiddleware:
+    """Add security headers to every HTTP response (pure ASGI middleware)."""
 
     JSDELIVR = "https://cdn.jsdelivr.net/npm/"
     FONT_GOOGLE = "https://fonts.gstatic.com"
@@ -24,7 +25,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     # Build CSP once at class level — one directive per list entry, auditable.
     _CSP_DIRECTIVES: list[str] = [
         "default-src 'self'",
-        f"script-src 'self' 'unsafe-inline' {JSDELIVR}",  # Angular requires unsafe-inline
+        # The production build emits no inline script (critical CSS inlining is
+        # disabled in angular.json), so scripts are restricted to our origin.
+        "script-src 'self'",
         f"style-src 'self' 'unsafe-inline' {JSDELIVR}",  # Bootstrap inline styles
         "img-src 'self' data: https:",  # logos, QR codes base64
         f"font-src 'self' data: {FONT_GOOGLE}",  # Bootstrap Icons embedded font
@@ -34,22 +37,33 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     ]
     _CSP: str = "; ".join(_CSP_DIRECTIVES) + ";"
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Permissions-Policy"] = (
-            "camera=(), microphone=(), geolocation=(), payment=()"
-        )
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"
-        )
-        response.headers["Content-Security-Policy"] = self._CSP
-        return response
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        # Browsers ignore HSTS received over plain HTTP (RFC 6797 §8.1).
+        https = request_is_https(Request(scope))
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["X-Frame-Options"] = "DENY"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+                headers["Permissions-Policy"] = (
+                    "camera=(), microphone=(), geolocation=(), payment=()"
+                )
+                if https:
+                    headers["Strict-Transport-Security"] = (
+                        "max-age=31536000; includeSubDomains"
+                    )
+                headers["Content-Security-Policy"] = self._CSP
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
 
 
 class _SlidingWindowLimiter:
@@ -100,7 +114,10 @@ class _SlidingWindowLimiter:
             return True, 0
 
     def _sweep(self, now: float) -> None:
-        """Drop idle buckets. Called under the lock, throttled to one scan per interval."""
+        """Drop idle buckets.
+
+        Called under the lock, throttled to one scan per interval.
+        """
         if now - self._last_cleanup < self._CLEANUP_INTERVAL_S:
             return
         self._last_cleanup = now
@@ -112,7 +129,7 @@ class _SlidingWindowLimiter:
             del self._hits[key]
 
 
-class RateLimitMiddleware(BaseHTTPMiddleware):
+class RateLimitMiddleware:
     """Per-client-IP rate limiting with an in-memory sliding window.
 
     Only ``/api/*`` routes are throttled (the SPA's static assets and the health
@@ -122,6 +139,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     applied to the login endpoint to slow credential brute-forcing. Blocked
     requests are answered with 429 before reaching any route. Per-process only —
     front with a shared store (Redis) for multi-worker deployments.
+    Pure ASGI middleware.
     """
 
     _EXEMPT_PATHS: frozenset[str] = frozenset({"/api/health"})
@@ -136,7 +154,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         login_window_seconds: int,
         login_path: str,
     ) -> None:
-        super().__init__(app)
+        self.app = app
         self._max_requests = max_requests
         self._window_seconds = window_seconds
         self._login_max_attempts = login_max_attempts
@@ -152,12 +170,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 "the key. Set TRUSTED_PROXIES so the real client IP is used."
             )
 
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        request = Request(scope)
         path = request.url.path
         if not path.startswith("/api/") or path in self._EXEMPT_PATHS:
-            return await call_next(request)
+            await self.app(scope, receive, send)
+            return
 
         ip = get_client_ip(request) or "unknown"
         bucket = "global"
@@ -174,9 +195,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             logger.warning(
                 "Rate limit exceeded: ip=%s path=%s bucket=%s", ip, path, bucket
             )
-            return JSONResponse(
+            response = JSONResponse(
                 {"detail": "Too many attempts. Please try again later."},
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 headers={"Retry-After": str(retry_after)},
             )
-        return await call_next(request)
+            await response(scope, receive, send)
+            return
+        await self.app(scope, receive, send)

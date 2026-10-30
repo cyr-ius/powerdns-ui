@@ -1,13 +1,13 @@
+import jwt
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.client_ip import get_client_ip
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.services import auth_service, token_service
+from app.services import token_service
 from app.services.audit_service import AuditLogger
 
 bearer_scheme = HTTPBearer(
@@ -49,13 +49,22 @@ async def user_from_session_cookie(db: AsyncSession, request: Request) -> User |
             settings.secret_key,
             algorithms=[settings.algorithm],
         )
-    except JWTError:
+    except jwt.PyJWTError:
         return None
-    username: str | None = payload.get("sub")
-    if username is None:
+    user_id = payload.get("uid")
+    version = payload.get("ver")
+    if not isinstance(user_id, int) or not isinstance(version, int):
         return None
-    user = await auth_service.get_user_by_username(db, username)
-    return user if user is not None and user.is_active else None
+    user = await db.get(User, user_id)
+    if (
+        user is None
+        or not user.is_active
+        or user.username != payload.get("sub")
+        # Logout, password change and deactivation bump the version.
+        or user.token_version != version
+    ):
+        return None
+    return user
 
 
 async def get_current_user(
@@ -88,6 +97,26 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
             detail="Access restricted to administrators",
         )
     return current_user
+
+
+PASSWORD_MIN_LENGTH = 8
+
+
+async def ensure_password_length(
+    audit: AuditLogger, action: str, username: str, password: str
+) -> None:
+    """Reject a too-short password, after recording the failure in the audit log.
+
+    Checked in the route rather than in the request schema: a schema rejection
+    happens before the route runs, so the attempt would not be audited.
+    """
+    if len(password) >= PASSWORD_MIN_LENGTH:
+        return
+    detail = f"The password must contain at least {PASSWORD_MIN_LENGTH} characters."
+    await audit.failure(action, "user", username, {"detail": detail})
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail
+    )
 
 
 def get_audit_logger(

@@ -1,0 +1,44 @@
+name: GitHub release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. 1.0.0)"
+        type: string
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # Pre-release when the tag carries a semver pre-release suffix (e.g. 1.0.0-rc.1):
+      # workflow expressions have no regex function, so the shell computes the flag
+      - name: Detect pre-release
+        id: kind
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [[ "$TAG" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Release Please creates a draft release with its changelog: publish it.
+      # A tag pushed by hand has no release yet: create it with generated notes.
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          PRERELEASE: ${{ steps.kind.outputs.prerelease }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease="$PRERELEASE"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag \
+              --title "$TAG" --generate-notes --prerelease="$PRERELEASE"
+          fi
