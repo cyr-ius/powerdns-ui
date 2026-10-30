@@ -18,7 +18,7 @@ from app.cookies import (
 )
 from app.database import get_db
 from app.dependencies import (
-    ensure_password_length,
+    ensure_password_policy,
     get_audit_logger,
     get_current_user,
     user_from_session_cookie,
@@ -182,7 +182,7 @@ async def change_password(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Current password is incorrect",
         )
-    await ensure_password_length(
+    await ensure_password_policy(
         audit, "change_password", current_user.username, payload.new_password
     )
     current_user.hashed_password = auth_service.hash_password(payload.new_password)

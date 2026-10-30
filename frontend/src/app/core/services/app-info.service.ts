@@ -19,6 +19,12 @@ export interface GithubRelease {
   name: string;
 }
 
+export interface PdnsStatus {
+  connected: boolean;
+  version: string | null;
+  url: string | null;
+}
+
 export interface HealthStatus {
   status: string;
   app: string;
@@ -36,6 +42,7 @@ export class AppInfoService {
   readonly health = signal<HealthStatus | null>(null);
   readonly healthChecking = signal(false);
   readonly healthy = computed(() => this.health()?.status === "healthy");
+  readonly pdnsStatus = signal<PdnsStatus | null>(null);
 
   // Personal access tokens are hidden entirely when the backend disables them.
   readonly apiKeysEnabled = computed(() => this.appInfo()?.api_keys_enabled ?? false);
@@ -78,15 +85,29 @@ export class AppInfoService {
     }
   }
 
-  /** Probe the health endpoint; a failure leaves the status null, reported as down. */
+  /** Probe the health endpoint and the PowerDNS API; a failure leaves the status null, reported as down. */
   async checkHealth(): Promise<void> {
     this.healthChecking.set(true);
+    try {
+      await Promise.all([this.fetchHealth(), this.fetchPdnsStatus()]);
+    } finally {
+      this.healthChecking.set(false);
+    }
+  }
+
+  private async fetchHealth(): Promise<void> {
     try {
       this.health.set(await firstValueFrom(this.http.get<HealthStatus>("/api/health")));
     } catch {
       this.health.set(null);
-    } finally {
-      this.healthChecking.set(false);
+    }
+  }
+
+  private async fetchPdnsStatus(): Promise<void> {
+    try {
+      this.pdnsStatus.set(await firstValueFrom(this.http.get<PdnsStatus>("/api/server/status")));
+    } catch {
+      this.pdnsStatus.set(null);
     }
   }
 }

@@ -1,12 +1,14 @@
 import { Component, inject, OnInit, signal } from "@angular/core";
-import { form, FormField, required, submit } from "@angular/forms/signals";
+import { form, FormField, required, submit, validate } from "@angular/forms/signals";
 import { AdminService } from "../../../core/services/admin.service";
 import { AdminUser } from "../../../shared/models/admin.model";
 import { TranslatePipe } from "@ngx-translate/core";
+import { PasswordPolicyComponent } from "../../../shared/components/password-policy/password-policy.component";
+import { passwordMeetsPolicy } from "../../../shared/utils/password-policy";
 
 @Component({
   selector: "app-admin-users",
-  imports: [FormField, TranslatePipe],
+  imports: [FormField, TranslatePipe, PasswordPolicyComponent],
   templateUrl: "./users.component.html",
   styleUrl: "./users.component.css",
 })
@@ -25,6 +27,9 @@ export class AdminUsersComponent implements OnInit {
   readonly createForm = form(this.createModel, (s) => {
     required(s.username, { message: "The username is required" });
     required(s.password, { message: "The password is required" });
+    validate(s.password, ({ value }) =>
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+    );
   });
 
   // Reset password modal
@@ -35,6 +40,9 @@ export class AdminUsersComponent implements OnInit {
   readonly resetModel = signal({ password: "", confirm: "" });
   readonly resetForm = form(this.resetModel, (s) => {
     required(s.password, { message: "The new password is required" });
+    validate(s.password, ({ value }) =>
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+    );
     required(s.confirm, { message: "The confirmation is required" });
   });
 

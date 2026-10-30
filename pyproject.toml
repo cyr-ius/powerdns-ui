@@ -21,7 +21,7 @@ dependencies = [
     "aiomysql",
     "dnspython",
     "alembic",
-    "pyjwt[crypto]>=2.10",
+    "pyjwt[crypto]>=2.15.1",
     "bcrypt",
     "python-multipart",
     "httpx",
@@ -50,6 +50,10 @@ where = ["backend/app"]
 script_location = "%(here)s/backend/app/migrations"
 prepend_sys_path = ["backend"]
 file_template = "%%(year)d%%(month).2d%%(day).2d_%%(rev)s_%%(slug)s"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
 
 [tool.ruff]
 line-length = 88

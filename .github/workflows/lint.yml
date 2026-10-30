@@ -30,6 +30,8 @@ jobs:
         run: uv run ruff check --output-format=github backend
       - name: Ruff format
         run: uv run ruff format --check --diff backend
+      - name: Tests
+        run: uv run pytest
 
   frontend:
     runs-on: ubuntu-latest

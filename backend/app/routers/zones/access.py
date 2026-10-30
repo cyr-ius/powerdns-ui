@@ -1,5 +1,6 @@
 """Zone access control shared by the zone routers."""
 
+import re
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
@@ -18,6 +19,19 @@ from app.services.pdns_service import pdns_request
 SERVER = "/servers/localhost"
 
 ROLE_LEVELS: dict[str, int] = {"viewer": 0, "manager": 1, "admin": 2}
+
+# PowerDNS zone ids keep [A-Za-z0-9.-] and escape any other character as =XX
+# (e.g. "/" as "=2F"). "." and ".." would be read as dot segments of the API URL.
+_ZONE_ID_RE = re.compile(r"[A-Za-z0-9._=-]{1,255}")
+
+
+def check_zone_id(zone_id: str) -> None:
+    """Reject a zone id that is not a PowerDNS zone id."""
+    if zone_id in (".", "..") or not _ZONE_ID_RE.fullmatch(zone_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid zone id",
+        )
 
 
 def pdns_error_handler(exc: httpx.HTTPStatusError) -> HTTPException:
@@ -45,6 +59,7 @@ async def _check_zone_access(
     audit: AuditLogger | None,
     action: str,
 ) -> ZoneAccess:
+    check_zone_id(zone_id)
     try:
         zone: dict[str, Any] = await pdns_request("GET", f"{SERVER}/zones/{zone_id}")
     except httpx.HTTPStatusError as exc:

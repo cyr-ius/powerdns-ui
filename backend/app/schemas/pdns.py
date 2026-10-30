@@ -190,6 +190,14 @@ class ServerInfo(BaseModel):
     url: str | None = None
 
 
+class ServerStatus(BaseModel):
+    """Connection state of the PowerDNS API, shown on the About page."""
+
+    connected: bool
+    version: str | None = None
+    url: str | None = None  # only returned to administrators
+
+
 # ── Autoprimaries ─────────────────────────────────────────────────────────────
 
 

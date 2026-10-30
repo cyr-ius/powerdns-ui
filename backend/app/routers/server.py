@@ -12,9 +12,10 @@ from app.schemas.pdns import (
     ConfigSetting,
     SearchResult,
     ServerInfo,
+    ServerStatus,
     StatisticItem,
 )
-from app.services import admin_service
+from app.services import admin_service, pdns_service
 from app.services.audit_service import AuditLogger
 from app.services.pdns_service import pdns_request
 
@@ -54,6 +55,16 @@ async def get_server_info() -> dict[str, Any]:
         return await pdns_request("GET", _SERVER)  # type: ignore[no-any-return]
     except httpx.HTTPStatusError as exc:
         raise _pdns_error(exc) from exc
+
+
+@router.get("/server/status", response_model=ServerStatus)
+async def get_server_status(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Return whether the PowerDNS API answers, its version and, for admins, its URL."""
+    status = await pdns_service.get_server_status()
+    status["url"] = pdns_service.public_api_url() if current_user.is_admin else None
+    return status
 
 
 # ── Config ────────────────────────────────────────────────────────────────────
