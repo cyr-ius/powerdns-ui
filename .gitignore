@@ -26,8 +26,4 @@ venv/
 
 # Temporary data
 .data_env/
-
-# MkDocs
-site/
-.venv-docs/
 .mcp.json
