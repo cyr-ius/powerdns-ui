@@ -15,6 +15,10 @@ venv/
 .settings/
 *.sublime-workspace
 
+# Environment
+.env
+*.env.local
+
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json
