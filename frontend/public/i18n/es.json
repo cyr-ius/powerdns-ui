@@ -122,6 +122,8 @@
     "MEMBERS_NO_ACCOUNT_WARNING": "Esta zona no está asociada a ninguna cuenta. La adición, edición y eliminación de miembros están desactivadas. Asigne una cuenta a esta zona desde <strong>Administración &rsaquo; Cuentas</strong> para activar la gestión de miembros.",
     "RECORDS_TITLE": "Registros DNS",
     "NO_RECORDS": "No hay registros en esta zona",
+    "NO_RECORDS_MATCH": "Ningún registro coincide con el filtro",
+    "RECORDS_FILTER_PLACEHOLDER": "Filtrar por nombre, tipo o valor…",
     "ADD_RECORD": "Agregar",
     "DISABLED": "desactivado",
     "RECORDS_RANGE": "{{ from }}–{{ to }} de {{ total }} registro(s)",

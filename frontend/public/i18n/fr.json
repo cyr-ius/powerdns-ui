@@ -122,6 +122,8 @@
     "MEMBERS_NO_ACCOUNT_WARNING": "Cette zone n'est associée à aucun compte. L'ajout, la modification et la suppression de membres sont désactivés. Assignez un compte à cette zone via <strong>Administration &rsaquo; Comptes</strong> pour activer la gestion des membres.",
     "RECORDS_TITLE": "Enregistrements DNS",
     "NO_RECORDS": "Aucun enregistrement dans cette zone",
+    "NO_RECORDS_MATCH": "Aucun enregistrement ne correspond au filtre",
+    "RECORDS_FILTER_PLACEHOLDER": "Filtrer par nom, type ou valeur…",
     "ADD_RECORD": "Ajouter",
     "DISABLED": "désactivé",
     "RECORDS_RANGE": "{{ from }}–{{ to }} sur {{ total }} enregistrement(s)",

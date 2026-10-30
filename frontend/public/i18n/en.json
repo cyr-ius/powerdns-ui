@@ -122,6 +122,8 @@
     "MEMBERS_NO_ACCOUNT_WARNING": "This zone is not associated with any account. Adding, editing, and removing members is disabled. Assign an account to this zone via <strong>Administration &rsaquo; Accounts</strong> to enable member management.",
     "RECORDS_TITLE": "DNS Records",
     "NO_RECORDS": "No records in this zone",
+    "NO_RECORDS_MATCH": "No record matches the filter",
+    "RECORDS_FILTER_PLACEHOLDER": "Filter by name, type or value…",
     "ADD_RECORD": "Add",
     "DISABLED": "disabled",
     "RECORDS_RANGE": "{{ from }}–{{ to }} of {{ total }} record(s)",

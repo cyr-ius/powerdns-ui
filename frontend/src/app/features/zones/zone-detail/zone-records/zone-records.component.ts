@@ -56,14 +56,26 @@ export class ZoneRecordsComponent {
   readonly sortColumn = signal<"name" | "type" | "ttl">("name");
   readonly sortDirection = signal<"asc" | "desc">("asc");
 
+  // ── Filter ────────────────────────────────────────────────────────────────
+  readonly filterModel = signal({ filter: "" });
+  readonly filterForm = form(this.filterModel);
+  readonly filteredRRsets = computed(() => {
+    const rrsets = this.zone()?.rrsets ?? [];
+    const q = this.filterModel().filter.trim().toLowerCase();
+    if (!q) return rrsets;
+    return rrsets.filter((rrset) =>
+      [rrset.name, rrset.type, ...rrset.records.map((r) => r.content)].some((value) => value.toLowerCase().includes(q)),
+    );
+  });
+
   readonly recordsPageSize = 20;
-  // Back to the first page whenever the zone is reloaded.
-  readonly recordsPage = linkedSignal({ source: this.zone, computation: () => 1 });
+  // Back to the first page whenever the zone is reloaded or the filter changes.
+  readonly recordsPage = linkedSignal({ source: this.filteredRRsets, computation: () => 1 });
   readonly recordsTotalPages = computed(() =>
-    Math.max(1, Math.ceil((this.zone()?.rrsets.length ?? 0) / this.recordsPageSize)),
+    Math.max(1, Math.ceil(this.filteredRRsets().length / this.recordsPageSize)),
   );
   readonly sortedRRsets = computed(() => {
-    const rrsets = [...(this.zone()?.rrsets ?? [])];
+    const rrsets = [...this.filteredRRsets()];
     const col = this.sortColumn();
     const dir = this.sortDirection() === "asc" ? 1 : -1;
     rrsets.sort((a, b) => String(a[col] ?? "").localeCompare(String(b[col] ?? "")) * dir);
