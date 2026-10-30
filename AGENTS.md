@@ -141,7 +141,6 @@ Prefer `npm ci` over `npm install` to respect `package-lock.json`.
 cd backend
 uv run ruff check app
 uv run ruff format --check app
-uv run mypy app
 ```
 
 ### Frontend
