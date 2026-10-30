@@ -1,0 +1,383 @@
+<div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-list-ul me-2 text-primary"></i>{{ "ZONE_DETAIL.RECORDS_TITLE" | translate }}</span
+  >
+  @if (canWrite()) {
+    <button class="btn btn-sm btn-primary" (click)="openRecordModal()">
+      <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ADD_RECORD" | translate }}
+    </button>
+  }
+</div>
+
+@if (error()) {
+  <div class="alert alert-danger m-3 py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ error() }}
+  </div>
+}
+
+@if (zone()!.rrsets.length === 0) {
+  <div class="text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 2.5rem"></i>
+    <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_RECORDS" | translate }}</p>
+  </div>
+} @else {
+  <table class="table table-hover align-middle mb-0 w-100">
+    <thead class="table-light">
+      <tr>
+        <th class="col-name user-select-none" style="cursor: pointer" (click)="sortBy('name')">
+          {{ "COMMON.NAME" | translate }}
+          <i
+            class="bi small ms-1"
+            [class.bi-sort-alpha-down]="sortColumn() === 'name' && sortDirection() === 'asc'"
+            [class.bi-sort-alpha-up-alt]="sortColumn() === 'name' && sortDirection() === 'desc'"
+            [class.bi-arrow-down-up]="sortColumn() !== 'name'"
+          ></i>
+        </th>
+        <th class="col-type user-select-none" style="cursor: pointer" (click)="sortBy('type')">
+          {{ "COMMON.TYPE" | translate }}
+          <i
+            class="bi small ms-1"
+            [class.bi-sort-alpha-down]="sortColumn() === 'type' && sortDirection() === 'asc'"
+            [class.bi-sort-alpha-up-alt]="sortColumn() === 'type' && sortDirection() === 'desc'"
+            [class.bi-arrow-down-up]="sortColumn() !== 'type'"
+          ></i>
+        </th>
+        <th class="col-ttl user-select-none" style="cursor: pointer" (click)="sortBy('ttl')">
+          TTL
+          <i
+            class="bi small ms-1"
+            [class.bi-sort-numeric-down]="sortColumn() === 'ttl' && sortDirection() === 'asc'"
+            [class.bi-sort-numeric-up-alt]="sortColumn() === 'ttl' && sortDirection() === 'desc'"
+            [class.bi-arrow-down-up]="sortColumn() !== 'ttl'"
+          ></i>
+        </th>
+        <th>{{ "ZONE_DETAIL.CONTENT" | translate }}</th>
+        <th class="text-end col-actions">{{ "COMMON.ACTIONS" | translate }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (rrset of pagedRRsets(); track trackByRRset($index, rrset)) {
+        <tr>
+          <td class="font-monospace small record-name">
+            {{ rrset.name }}
+          </td>
+          <td>
+            <span class="badge bg-primary-subtle text-primary-emphasis">{{ rrset.type }}</span>
+          </td>
+          <td class="text-muted small text-nowrap">{{ rrset.ttl }}s</td>
+          <td class="font-monospace small record-content">
+            @for (rec of rrset.records; track $index) {
+              <div class="d-flex align-items-center gap-1" [class.text-muted]="rec.disabled">
+                <span [class.text-decoration-line-through]="rec.disabled">{{ rec.content }}</span>
+                @if (rec.disabled) {
+                  <span class="badge bg-warning-subtle text-warning-emphasis ms-1">{{
+                    "ZONE_DETAIL.DISABLED" | translate
+                  }}</span>
+                }
+                <button
+                  class="btn btn-link btn-sm p-0 ms-1 text-muted flex-shrink-0"
+                  style="font-size: 0.75rem; line-height: 1"
+                  [title]="rec.disabled ? ('ZONE_DETAIL.ENABLE' | translate) : ('ZONE_DETAIL.DISABLE' | translate)"
+                  (click)="toggleRecordDisabled(rrset, $index)"
+                >
+                  <i class="bi" [class.bi-eye-slash-fill]="!rec.disabled" [class.bi-eye-fill]="rec.disabled"></i>
+                </button>
+                @if (canWrite() && rrset.records.length > 1) {
+                  <button
+                    class="btn btn-link btn-sm p-0 ms-1 text-muted flex-shrink-0"
+                    style="font-size: 0.75rem; line-height: 1"
+                    [title]="'ZONE_DETAIL.DELETE_VALUE' | translate"
+                    (click)="pruneRecordValue(rrset, rec)"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                }
+              </div>
+            }
+          </td>
+          <td class="text-end text-nowrap">
+            @if (canWrite()) {
+              <button
+                class="btn btn-sm btn-outline-secondary me-1"
+                (click)="openEditModal(rrset)"
+                [title]="'COMMON.EDIT' | translate"
+              >
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteRRset(rrset)">
+                <i class="bi bi-trash"></i>
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (recordsTotalPages() > 1) {
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-top bg-body-tertiary">
+      <span class="text-muted small">
+        {{
+          "ZONE_DETAIL.RECORDS_RANGE"
+            | translate
+              : {
+                  from: (recordsPage() - 1) * recordsPageSize + 1,
+                  to:
+                    recordsPage() * recordsPageSize < zone()!.rrsets.length
+                      ? recordsPage() * recordsPageSize
+                      : zone()!.rrsets.length,
+                  total: zone()!.rrsets.length,
+                }
+        }}
+      </span>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="recordsPage() === 1">
+            <button class="page-link" (click)="goToPage(recordsPage() - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          @if (pageRange()[0] > 1) {
+            <li class="page-item">
+              <button class="page-link" (click)="goToPage(1)">1</button>
+            </li>
+            @if (pageRange()[0] > 2) {
+              <li class="page-item disabled">
+                <span class="page-link">…</span>
+              </li>
+            }
+          }
+          @for (p of pageRange(); track p) {
+            <li class="page-item" [class.active]="p === recordsPage()">
+              <button class="page-link" (click)="goToPage(p)">
+                {{ p }}
+              </button>
+            </li>
+          }
+          @if (pageRange()[pageRange().length - 1] < recordsTotalPages()) {
+            @if (pageRange()[pageRange().length - 1] < recordsTotalPages() - 1) {
+              <li class="page-item disabled">
+                <span class="page-link">…</span>
+              </li>
+            }
+            <li class="page-item">
+              <button class="page-link" (click)="goToPage(recordsTotalPages())">
+                {{ recordsTotalPages() }}
+              </button>
+            </li>
+          }
+          <li class="page-item" [class.disabled]="recordsPage() === recordsTotalPages()">
+            <button class="page-link" (click)="goToPage(recordsPage() + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  }
+}
+
+<!-- ── Modal: Add Record ─────────────────────────────────────────────────────── -->
+@if (showRecordModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeRecordModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>{{ "ZONE_DETAIL.ADD_RECORD_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeRecordModal()"></button>
+        </div>
+        <form (submit)="$event.preventDefault(); onAddRecord()">
+          <button type="submit" class="d-none" aria-hidden="true"></button>
+          <div class="modal-body">
+            @if (recordError()) {
+              <div class="alert alert-danger py-2 small">
+                {{ recordError() }}
+              </div>
+            }
+            <div class="mb-3">
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.NAME_FQDN" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                #recordNameInput
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="recordForm.name().touched() && recordForm.name().errors().length"
+                placeholder="www.example.com."
+                [formField]="recordForm.name"
+              />
+              @if (recordForm.name().touched() && recordForm.name().errors().length) {
+                <div class="invalid-feedback">
+                  {{ recordForm.name().errors()[0].message }}
+                </div>
+              }
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-medium">{{ "COMMON.TYPE" | translate }}</label>
+                <select class="form-select" [formField]="recordForm.type">
+                  @for (t of dnsTypes(); track t) {
+                    <option [value]="t">{{ t }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-medium">{{ "ZONE_DETAIL.TTL" | translate }}</label>
+                <input type="number" class="form-control" [formField]="recordForm.ttl" />
+              </div>
+            </div>
+            <div class="mb-0">
+              <label class="form-label fw-medium"
+                >{{ "ZONE_DETAIL.CONTENT" | translate }} <span class="text-danger">*</span></label
+              >
+              <input
+                type="text"
+                class="form-control font-monospace"
+                [class.is-invalid]="recordForm.content().touched() && recordForm.content().errors().length"
+                placeholder="1.2.3.4"
+                [formField]="recordForm.content"
+              />
+              @if (recordForm.content().touched() && recordForm.content().errors().length) {
+                <div class="invalid-feedback">
+                  {{ recordForm.content().errors()[0].message }}
+                </div>
+              }
+            </div>
+
+            @if (autoReverseEnabled() && reverseZoneForCurrentRecord()) {
+              <div class="alert alert-success py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
+                <i class="bi bi-arrow-repeat"></i>
+                {{ "ZONE_DETAIL.PTR_AUTO_CREATED" | translate }}
+                <code class="ms-1">{{ reverseZoneForCurrentRecord()!.name }}</code>
+              </div>
+            } @else if (
+              autoReverseEnabled() &&
+              (recordModel().type === "A" || recordModel().type === "AAAA") &&
+              recordModel().content.trim()
+            ) {
+              <div class="alert alert-warning py-2 small d-flex align-items-center gap-2 mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle"></i>
+                {{ "ZONE_DETAIL.NO_REVERSE_ZONE" | translate }}
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeRecordModal()">
+              {{ "COMMON.CANCEL" | translate }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="onAddRecord()"
+              [disabled]="isSubmittingRecord() || recordForm().invalid()"
+            >
+              @if (isSubmittingRecord()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              {{ "COMMON.ADD" | translate }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Modal: Edit Record ────────────────────────────────────────────────────────── -->
+@if (showEditModal()) {
+  <div class="modal-backdrop-overlay" (click)="closeEditModal()"></div>
+  <div class="modal d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content shadow">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-pencil-square me-2 text-primary"></i>{{ "ZONE_DETAIL.EDIT_RECORD_TITLE" | translate }}
+          </h5>
+          <button type="button" class="btn-close" (click)="closeEditModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (editError()) {
+            <div class="alert alert-danger py-2 small">{{ editError() }}</div>
+          }
+          <div class="row g-3 mb-3">
+            <div class="col-8">
+              <label class="form-label fw-medium">{{ "ZONE_DETAIL.NAME_FQDN" | translate }}</label>
+              <input
+                type="text"
+                class="form-control font-monospace bg-body-secondary"
+                [value]="editingRRset()?.name"
+                readonly
+              />
+            </div>
+            <div class="col-4">
+              <label class="form-label fw-medium">{{ "COMMON.TYPE" | translate }}</label>
+              <input type="text" class="form-control bg-body-secondary" [value]="editingRRset()?.type" readonly />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-medium">{{ "ZONE_DETAIL.TTL" | translate }}</label>
+            <input
+              type="number"
+              class="form-control"
+              [value]="editTtl()"
+              (input)="editTtl.set(+$any($event.target).value)"
+            />
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-medium d-block mb-2">{{ "ZONE_DETAIL.VALUES" | translate }}</label>
+            <div class="d-flex flex-column gap-2">
+              @for (rec of editRecords(); track $index) {
+                <div class="input-group">
+                  <input
+                    type="text"
+                    class="form-control font-monospace"
+                    [class.text-decoration-line-through]="rec.disabled"
+                    [class.text-muted]="rec.disabled"
+                    [value]="rec.content"
+                    (input)="updateEditRecord($index, $any($event.target).value)"
+                    [placeholder]="'ZONE_DETAIL.CONTENT_PLACEHOLDER' | translate"
+                  />
+                  <button
+                    class="btn"
+                    [class.btn-outline-secondary]="!rec.disabled"
+                    [class.btn-warning]="rec.disabled"
+                    type="button"
+                    [title]="rec.disabled ? ('ZONE_DETAIL.ENABLE' | translate) : ('ZONE_DETAIL.DISABLE' | translate)"
+                    (click)="toggleEditRecordDisabled($index)"
+                  >
+                    <i class="bi" [class.bi-eye-slash]="!rec.disabled" [class.bi-eye]="rec.disabled"></i>
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    type="button"
+                    [title]="'ZONE_DETAIL.DELETE_VALUE' | translate"
+                    (click)="removeEditRecord($index)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+          <button class="btn btn-sm btn-outline-primary mt-1" type="button" (click)="addEditRecord()">
+            <i class="bi bi-plus-lg me-1"></i>{{ "ZONE_DETAIL.ADD_VALUE" | translate }}
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">
+            {{ "COMMON.CANCEL" | translate }}
+          </button>
+          <button type="button" class="btn btn-primary" (click)="onSaveEdit()" [disabled]="isSubmittingEdit()">
+            @if (isSubmittingEdit()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            {{ "COMMON.SAVE" | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

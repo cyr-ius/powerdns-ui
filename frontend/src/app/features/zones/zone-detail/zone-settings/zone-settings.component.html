@@ -1,0 +1,195 @@
+<div class="card-header py-3 border-bottom">
+  <span class="fw-semibold">
+    <i class="bi bi-gear me-2 text-primary"></i>{{ "ZONE_DETAIL.SETTINGS_TITLE" | translate }}
+  </span>
+</div>
+
+<div class="card-body" style="max-width: 560px">
+  @if (settingsError()) {
+    <div class="alert alert-danger py-2 small">{{ settingsError() }}</div>
+  }
+  @if (settingsSuccess()) {
+    <div class="alert alert-success py-2 small">
+      <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.SETTINGS_SAVED" | translate }}
+    </div>
+  }
+
+  <div class="mb-3">
+    <label class="form-label fw-medium">{{ "ZONE_DETAIL.ZONE_TYPE" | translate }}</label>
+    <select class="form-select" [formField]="settingsForm.kind">
+      <option value="Native">Native</option>
+      <option value="Master">Master</option>
+      <option value="Slave">Slave</option>
+    </select>
+  </div>
+
+  @if (settingsModel().kind === "Slave" || settingsModel().kind === "Secondary") {
+    <div class="mb-4">
+      <label class="form-label fw-medium">{{ "ZONE_DETAIL.MASTER_SERVERS" | translate }}</label>
+      <input
+        type="text"
+        class="form-control"
+        placeholder="ns1.example.com, ns2.example.com"
+        [formField]="settingsForm.masters"
+      />
+      <div class="form-text">{{ "ZONE_DETAIL.MASTER_SERVERS_HELP" | translate }}</div>
+    </div>
+  }
+
+  <button
+    class="btn btn-primary"
+    (click)="onSaveSettings()"
+    [disabled]="isSavingSettings() || settingsForm().invalid()"
+  >
+    @if (isSavingSettings()) {
+      <span class="spinner-border spinner-border-sm me-1"></span>
+    }
+    <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+  </button>
+
+  <hr class="my-4" />
+
+  <h6 class="fw-semibold mb-3">
+    <i class="bi bi-arrow-repeat me-2 text-primary"></i>{{ "ZONE_DETAIL.AUTO_REVERSE" | translate }}
+  </h6>
+
+  @if (isLoadingMeta()) {
+    <div class="d-flex align-items-center gap-2 text-muted small">
+      <span class="spinner-border spinner-border-sm"></span>{{ "COMMON.LOADING" | translate }}
+    </div>
+  } @else {
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <div class="form-check form-switch mb-0">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="autoReverseToggle"
+          role="switch"
+          [checked]="autoReverseEnabled()"
+          [disabled]="isTogglingAutoReverse()"
+          (change)="toggleAutoReverse()"
+        />
+        <label class="form-check-label fw-medium" for="autoReverseToggle">
+          {{ "ZONE_DETAIL.AUTO_PTR" | translate }}
+        </label>
+      </div>
+      @if (isTogglingAutoReverse()) {
+        <span class="spinner-border spinner-border-sm text-primary"></span>
+      }
+    </div>
+    <div class="form-text">
+      {{ "ZONE_DETAIL.AUTO_PTR_HELP" | translate }}
+    </div>
+  }
+
+  @if (isZoneAdmin()) {
+    <hr class="my-4" />
+
+    <h6 class="fw-semibold mb-3">
+      <i class="bi bi-code-square me-2 text-primary"></i>{{ "ZONE_DETAIL.LUA_RECORDS_TITLE" | translate }}
+    </h6>
+
+    @if (isLoadingMeta()) {
+      <div class="d-flex align-items-center gap-2 text-muted small">
+        <span class="spinner-border spinner-border-sm"></span>{{ "COMMON.LOADING" | translate }}
+      </div>
+    } @else {
+      <div class="d-flex align-items-center gap-3 mb-2">
+        <div class="form-check form-switch mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="luaRecordsToggle"
+            role="switch"
+            [checked]="luaRecordsEnabled()"
+            [disabled]="isTogglingLuaRecords()"
+            (change)="toggleLuaRecords()"
+          />
+          <label class="form-check-label fw-medium" for="luaRecordsToggle">
+            {{ "ZONE_DETAIL.LUA_RECORDS_ENABLE" | translate }}
+          </label>
+        </div>
+        @if (isTogglingLuaRecords()) {
+          <span class="spinner-border spinner-border-sm text-primary"></span>
+        }
+      </div>
+      <div class="form-text">
+        {{ "ZONE_DETAIL.LUA_RECORDS_HELP" | translate }}
+        <a
+          href="https://doc.powerdns.com/authoritative/lua-records/index.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="ms-1"
+        >
+          {{ "ZONE_DETAIL.LUA_RECORDS_DOC" | translate }}
+          <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+        </a>
+      </div>
+    }
+  }
+
+  <hr class="my-4" />
+
+  <h6 class="fw-semibold mb-1">
+    <i class="bi bi-card-list me-2 text-primary"></i>{{ "ZONE_DETAIL.RECORD_TYPES_TITLE" | translate }}
+  </h6>
+  <p class="text-muted small mb-3">
+    {{ "ZONE_DETAIL.RECORD_TYPES_DESC" | translate }}
+    @if (zoneRecordTypesMeta()?.is_custom === false) {
+      <span class="badge bg-secondary ms-1">{{ "ZONE_DETAIL.GLOBAL_DEFAULTS" | translate }}</span>
+    } @else if (zoneRecordTypesMeta()?.is_custom) {
+      <span class="badge bg-info ms-1">{{ "ZONE_DETAIL.CUSTOM" | translate }}</span>
+    }
+  </p>
+
+  @if (zoneTypesError()) {
+    <div class="alert alert-danger py-2 small">
+      {{ zoneTypesError() }}
+    </div>
+  }
+  @if (zoneTypesSuccess()) {
+    <div class="alert alert-success py-2 small">
+      <i class="bi bi-check-circle me-1"></i>{{ "ZONE_DETAIL.TYPES_SAVED" | translate }}
+    </div>
+  }
+
+  @if (availableGlobalTypes().length === 0) {
+    <p class="text-muted small">{{ "ZONE_DETAIL.NO_TYPES" | translate }}</p>
+  } @else {
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      @for (rt of availableGlobalTypes(); track rt.id) {
+        <div class="form-check form-check-inline mb-0">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            [id]="'rt-' + rt.name"
+            [checked]="pendingZoneTypes().has(rt.name)"
+            (change)="toggleZoneType(rt.name)"
+          />
+          <label class="form-check-label font-monospace fw-medium" [for]="'rt-' + rt.name">
+            {{ rt.name }}
+          </label>
+        </div>
+      }
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-sm btn-primary" (click)="saveZoneRecordTypes()" [disabled]="isSavingZoneTypes()">
+        @if (isSavingZoneTypes()) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+      </button>
+      @if (zoneRecordTypesMeta()?.is_custom) {
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          (click)="resetZoneRecordTypes()"
+          [disabled]="isSavingZoneTypes()"
+          [title]="'ZONE_DETAIL.RESET_TO_GLOBAL' | translate"
+        >
+          <i class="bi bi-arrow-counterclockwise me-1"></i>{{ "COMMON.RESET" | translate }}
+        </button>
+      }
+    </div>
+  }
+</div>

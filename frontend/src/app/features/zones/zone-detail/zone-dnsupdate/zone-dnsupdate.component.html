@@ -1,0 +1,183 @@
+<div class="card-header py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-pencil-square me-2 text-primary"></i>{{ "ZONE_DETAIL.DNSUPDATE_TITLE" | translate }}</span
+  >
+  <div class="text-muted small mt-1">
+    {{ "ZONE_DETAIL.DNSUPDATE_DESC" | translate }}
+  </div>
+</div>
+
+@if (!dnsupdateEnabled()) {
+  <div class="alert alert-warning mx-3 mt-3 py-2 d-flex align-items-start gap-2">
+    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+    <span [innerHTML]="'ZONE_DETAIL.DNSUPDATE_DISABLED_WARNING' | translate"></span>
+  </div>
+}
+
+@if (isLoadingMeta()) {
+  <div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+  </div>
+} @else {
+  @if (transferError()) {
+    <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill"></i>{{ transferError() }}
+      <button type="button" class="btn-close btn-sm ms-auto" (click)="transferError.set(null)"></button>
+    </div>
+  }
+  @if (transferSuccess()) {
+    <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-check-circle-fill"></i>{{ transferSuccess() }}
+    </div>
+  }
+
+  <div class="card-body" [class.opacity-50]="!dnsupdateEnabled()" [attr.inert]="!dnsupdateEnabled() ? '' : null">
+    <!-- TSIG-ALLOW-DNSUPDATE -->
+    <div class="mb-4">
+      <label class="form-label fw-medium">
+        {{ "ZONE_DETAIL.TSIG_ALLOW_DNSUPDATE" | translate }}
+        <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">TSIG-ALLOW-DNSUPDATE</span>
+      </label>
+      <div class="form-text mb-2">
+        {{ "ZONE_DETAIL.TSIG_ALLOW_DNSUPDATE_HELP" | translate }}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        @for (keyId of tsigAllowDnsupdate(); track keyId) {
+          @let keyInfoDu = getTsigKeyById(keyId);
+          <span
+            class="badge bg-info-subtle text-info-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+          >
+            <i class="bi bi-key me-1 small"></i>
+            {{ keyInfoDu ? keyInfoDu.name + " (" + keyInfoDu.algorithm + ")" : keyId }}
+            <button
+              type="button"
+              class="btn-close btn-close-sm ms-1"
+              style="font-size: 0.6rem"
+              [disabled]="isSubmittingTransfer()"
+              (click)="removeMetadataEntry('TSIG-ALLOW-DNSUPDATE', keyId)"
+              [title]="'COMMON.DELETE' | translate"
+            ></button>
+          </span>
+        }
+        @if (tsigAllowDnsupdate().length === 0) {
+          <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_TSIG_KEY" | translate }}</span>
+        }
+      </div>
+      @if (availableTsigForDnsupdate().length > 0) {
+        <div class="input-group" style="max-width: 420px">
+          <select
+            class="form-select"
+            [value]="newTsigAllowDnsupdate()"
+            (change)="newTsigAllowDnsupdate.set($any($event.target).value)"
+          >
+            <option value="">{{ "ZONE_DETAIL.CHOOSE_TSIG" | translate }}</option>
+            @for (k of availableTsigForDnsupdate(); track k.id) {
+              <option [value]="k.id">{{ k.name }} ({{ k.algorithm }})</option>
+            }
+          </select>
+          <button
+            class="btn btn-outline-info"
+            type="button"
+            [disabled]="isSubmittingTransfer() || !newTsigAllowDnsupdate()"
+            (click)="addTsigAllowDnsupdateEntry()"
+          >
+            <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
+          </button>
+        </div>
+      } @else if (tsigKeys().length === 0) {
+        <div class="alert alert-info py-2 small d-flex align-items-center gap-2" style="max-width: 500px">
+          <i class="bi bi-info-circle-fill"></i>
+          {{ "ZONE_DETAIL.NO_TSIG_AVAILABLE" | translate }}
+          <a routerLink="/tsigkeys" class="ms-1">{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }} →</a>
+        </div>
+      } @else {
+        <div class="text-muted small fst-italic">{{ "ZONE_DETAIL.ALL_TSIG_ASSIGNED" | translate }}</div>
+      }
+      @if (tsigKeys().length > 0) {
+        <div class="form-text mt-1">
+          <a routerLink="/tsigkeys"><i class="bi bi-gear me-1"></i>{{ "ZONE_DETAIL.MANAGE_TSIG" | translate }}</a>
+        </div>
+      }
+    </div>
+
+    <!-- ALLOW-DNSUPDATE-FROM -->
+    <div class="mb-4">
+      <label class="form-label fw-medium">
+        {{ "ZONE_DETAIL.ALLOW_DNSUPDATE_FROM" | translate }}
+        <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">ALLOW-DNSUPDATE-FROM</span>
+      </label>
+      <div class="form-text mb-2">
+        {{ "ZONE_DETAIL.ALLOW_DNSUPDATE_FROM_HELP" | translate }}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        @for (ip of allowDnsupdateFrom(); track ip) {
+          <span
+            class="badge bg-primary-subtle text-primary-emphasis fs-6 fw-normal d-flex align-items-center gap-1 px-2 py-1"
+          >
+            <i class="bi bi-hdd-network me-1 small"></i>{{ ip }}
+            <button
+              type="button"
+              class="btn-close btn-close-sm ms-1"
+              style="font-size: 0.6rem"
+              [disabled]="isSubmittingTransfer()"
+              (click)="removeMetadataEntry('ALLOW-DNSUPDATE-FROM', ip)"
+              [title]="'COMMON.DELETE' | translate"
+            ></button>
+          </span>
+        }
+        @if (allowDnsupdateFrom().length === 0) {
+          <span class="text-muted small fst-italic">{{ "ZONE_DETAIL.NO_IP_RESTRICTION" | translate }}</span>
+        }
+      </div>
+      <div class="input-group" style="max-width: 420px">
+        <input
+          type="text"
+          class="form-control font-monospace"
+          placeholder="192.168.1.0/24"
+          [value]="newAllowDnsupdateFrom()"
+          (input)="newAllowDnsupdateFrom.set($any($event.target).value)"
+          (keyup.enter)="addAllowDnsupdateFromEntry()"
+        />
+        <button
+          class="btn btn-outline-primary"
+          type="button"
+          [disabled]="isSubmittingTransfer() || !newAllowDnsupdateFrom().trim()"
+          (click)="addAllowDnsupdateFromEntry()"
+        >
+          <i class="bi bi-plus-lg"></i> {{ "COMMON.ADD" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- FORWARD-DNSUPDATE -->
+    <div class="mb-4">
+      <label class="form-label fw-medium">
+        {{ "ZONE_DETAIL.FORWARD_DNSUPDATE" | translate }}
+        <span class="badge bg-secondary-subtle text-secondary-emphasis fw-normal ms-1 small">FORWARD-DNSUPDATE</span>
+      </label>
+      <div class="form-text mb-2">
+        {{ "ZONE_DETAIL.FORWARD_DNSUPDATE_HELP" | translate }}
+      </div>
+      <div class="input-group" style="max-width: 420px">
+        <input
+          type="text"
+          class="form-control font-monospace"
+          placeholder="192.0.2.1"
+          [value]="editForwardDnsupdate()"
+          (input)="editForwardDnsupdate.set($any($event.target).value)"
+        />
+        <button
+          class="btn btn-outline-secondary"
+          type="button"
+          [disabled]="isSubmittingTransfer()"
+          (click)="saveSingleMetadata('FORWARD-DNSUPDATE', editForwardDnsupdate())"
+        >
+          @if (isSubmittingTransfer()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          <i class="bi bi-floppy me-1"></i>{{ "COMMON.SAVE" | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

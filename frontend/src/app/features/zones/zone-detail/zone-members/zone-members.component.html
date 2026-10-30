@@ -1,0 +1,120 @@
+<div class="card-header d-flex align-items-center justify-content-between py-3 border-bottom">
+  <span class="fw-semibold"
+    ><i class="bi bi-people me-2 text-primary"></i>{{ "ZONE_DETAIL.MEMBERS_TITLE" | translate }}</span
+  >
+</div>
+
+@if (!zone()?.account) {
+  <div class="alert alert-warning mx-3 mt-3 py-2 d-flex align-items-start gap-2">
+    <i class="bi bi-exclamation-triangle-fill mt-1"></i>
+    <span [innerHTML]="'ZONE_DETAIL.MEMBERS_NO_ACCOUNT_WARNING' | translate"></span>
+  </div>
+}
+
+@if (membersError()) {
+  <div class="alert alert-danger mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill"></i>{{ membersError() }}
+    <button type="button" class="btn-close btn-sm ms-auto" (click)="membersError.set(null)"></button>
+  </div>
+}
+@if (membersSuccess()) {
+  <div class="alert alert-success mx-3 mt-3 py-2 d-flex align-items-center gap-2">
+    <i class="bi bi-check-circle-fill"></i>{{ membersSuccess() }}
+  </div>
+}
+
+@if (isLoadingMembers()) {
+  <div class="text-center py-4">
+    <div class="spinner-border spinner-border-sm text-primary"></div>
+  </div>
+} @else {
+  <div class="card-body">
+    <!-- Add a member -->
+    <div [class.opacity-50]="!zone()?.account" [attr.inert]="!zone()?.account ? '' : null">
+      <h6 class="fw-semibold mb-3">{{ "ZONE_DETAIL.ADD_MEMBER" | translate }}</h6>
+      <div class="d-flex gap-2 mb-4 flex-wrap" style="max-width: 600px">
+        <select
+          class="form-select"
+          style="max-width: 220px"
+          [value]="newMemberUserId() ?? ''"
+          (change)="newMemberUserId.set(+$any($event.target).value || null)"
+        >
+          <option value="">{{ "ZONE_DETAIL.CHOOSE_USER" | translate }}</option>
+          @for (u of availableUsersToAdd(); track u.id) {
+            <option [value]="u.id">{{ u.username }}</option>
+          }
+        </select>
+        <select
+          class="form-select"
+          style="max-width: 160px"
+          [value]="newMemberRole()"
+          (change)="newMemberRole.set($any($event.target).value)"
+        >
+          <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
+          <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
+          <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
+        </select>
+        <button class="btn btn-primary" [disabled]="!newMemberUserId() || isSavingMember()" (click)="addMember()">
+          @if (isSavingMember()) {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+          }
+          <i class="bi bi-person-plus me-1"></i>{{ "COMMON.ADD" | translate }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Members list -->
+    @if (members().length === 0) {
+      <div class="text-center py-4">
+        <i class="bi bi-people text-muted" style="font-size: 2rem"></i>
+        <p class="text-muted mt-2 mb-0">{{ "ZONE_DETAIL.NO_MEMBERS" | translate }}</p>
+      </div>
+    } @else {
+      <h6 class="fw-semibold mb-2">{{ "ZONE_DETAIL.CURRENT_MEMBERS" | translate }}</h6>
+      <table class="table table-hover align-middle mb-0" style="max-width: 640px">
+        <thead class="table-light">
+          <tr>
+            <th>{{ "ZONE_DETAIL.USER" | translate }}</th>
+            <th>{{ "ZONE_DETAIL.ROLE" | translate }}</th>
+            <th class="text-end">{{ "COMMON.ACTIONS" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (m of members(); track m.user_id) {
+            <tr>
+              <td>
+                <span class="fw-medium">{{ m.username }}</span>
+                @if (m.email) {
+                  <div class="text-muted small">{{ m.email }}</div>
+                }
+              </td>
+              <td>
+                <select
+                  class="form-select form-select-sm"
+                  style="width: auto"
+                  [value]="m.role"
+                  [disabled]="!zone()?.account"
+                  (change)="updateMemberRole(m, $any($event.target).value)"
+                >
+                  <option value="admin">{{ "ZONE_DETAIL.ROLE_ADMIN_OPT" | translate }}</option>
+                  <option value="manager">{{ "ZONE_DETAIL.ROLE_MANAGER_OPT" | translate }}</option>
+                  <option value="viewer">{{ "ZONE_DETAIL.ROLE_VIEWER_OPT" | translate }}</option>
+                </select>
+              </td>
+              <td class="text-end">
+                <button
+                  class="btn btn-sm btn-outline-danger"
+                  [disabled]="!zone()?.account"
+                  (click)="removeMember(m)"
+                  [title]="'COMMON.DELETE' | translate"
+                >
+                  <i class="bi bi-person-dash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
