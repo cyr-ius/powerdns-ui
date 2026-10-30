@@ -44,9 +44,19 @@ docs = [
 [tool.setuptools.packages.find]
 where = ["backend/app"]
 
+[tool.alembic]
+# The application applies the migrations itself at startup (app.database.init_db).
+# From the repository root: `uv run alembic revision --autogenerate -m "..."`.
+script_location = "%(here)s/backend/app/migrations"
+prepend_sys_path = ["backend"]
+file_template = "%%(year)d%%(month).2d%%(day).2d_%%(rev)s_%%(slug)s"
+
 [tool.ruff]
 line-length = 88
 target-version = "py314"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

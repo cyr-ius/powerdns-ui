@@ -13,6 +13,19 @@ uv sync
 uv run uvicorn app.main:app --reload --port 8080
 ```
 
+### Database migrations
+
+The schema is managed by [Alembic](https://alembic.sqlalchemy.org/): the application applies
+the pending revisions (`backend/app/migrations/versions/`) at startup. After changing a model,
+generate a revision from the repository root, review it, and commit it with the model:
+
+```bash
+uv run alembic revision --autogenerate -m "add user locale"
+uv run alembic check   # no difference left between the models and the revisions
+```
+
+A published revision is never modified: fix it with a new one.
+
 ## Frontend
 
 ```bash

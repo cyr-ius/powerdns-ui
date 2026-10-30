@@ -9,7 +9,7 @@
 | `ACCESS_TOKEN_EXPIRE_MINUTES`     | `480`                               | Token validity duration (minutes)                                                                                          |
 | `PDNS_AUTH_API_URL`               | `http://pdns:8081`                  | PowerDNS REST API URL                                                                                                      |
 | `PDNS_AUTH_API_KEY`               | `change-this-api-key-in-production` | PowerDNS API key (`api-key` in pdns.conf)                                                                                  |
-| `DATABASE_URL`                    | `sqlite+aiosqlite:///…/database.db` | Database URL                                                                                                               |
+| `DATABASE_URL`                    | `sqlite+aiosqlite:///…/database.db` | Database URL of the UI: SQLite (`sqlite+aiosqlite://`) or MySQL/MariaDB (`mysql+aiomysql://`); the schema is migrated at startup |
 | `DATA_DIR`                        | `/var/lib/powerdns-ui`              | Data directory (SQLite)                                                                                                    |
 | `LOG_LEVEL`                       | `INFO`                              | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`)                                                                            |
 | `SWAGGER_ENABLED`                 | `true`                              | Expose the Swagger UI (`/api/docs`) and OpenAPI schema                                                                     |

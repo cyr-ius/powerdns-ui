@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import Text
 from sqlmodel import Field, SQLModel
 
 
@@ -12,8 +13,8 @@ class AcmeApiKey(SQLModel, table=True):
     name: str = Field(max_length=100)
     key_prefix: str = Field(max_length=12)
     key_hash: str = Field(unique=True, index=True)
-    zones: str = Field(default="[]")
+    zones: str = Field(default="[]", sa_type=Text)
     key_type: str = Field(default="acme", max_length=10)
-    comment: str | None = Field(default=None)
+    comment: str | None = Field(default=None, sa_type=Text)
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     last_used_at: datetime | None = Field(default=None)
