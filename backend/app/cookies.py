@@ -12,11 +12,12 @@ from fastapi import Request, Response
 from app.config import settings
 
 
-def _cookie_secure(request: Request) -> bool:
-    """Set the ``Secure`` flag only when the request is actually over HTTPS.
+def request_is_https(request: Request) -> bool:
+    """Tell whether the request reached the user's browser over HTTPS.
 
-    Honours ``X-Forwarded-Proto`` for TLS-terminating proxies so the cookie is
-    marked secure in production, while staying usable on plain-HTTP local dev.
+    Drives the cookie ``Secure`` flag and the HSTS header. Honours
+    ``X-Forwarded-Proto`` for TLS-terminating proxies, while staying usable on
+    plain-HTTP local dev.
     """
     proto = request.headers.get("x-forwarded-proto")
     if proto:
@@ -30,7 +31,7 @@ def set_auth_cookie(response: Response, request: Request, token: str) -> None:
         value=token,
         max_age=settings.access_token_expire_minutes * 60,
         httponly=True,
-        secure=_cookie_secure(request),
+        secure=request_is_https(request),
         samesite="lax",
         path="/",
     )
@@ -56,7 +57,7 @@ def set_id_token_cookie(response: Response, request: Request, id_token: str) -> 
         value=id_token,
         max_age=settings.access_token_expire_minutes * 60,
         httponly=True,
-        secure=_cookie_secure(request),
+        secure=request_is_https(request),
         samesite="lax",
         path="/",
     )
@@ -68,4 +69,34 @@ def clear_id_token_cookie(response: Response) -> None:
         httponly=True,
         samesite="lax",
         path="/",
+    )
+
+
+# Carries the signed OIDC flow (state, nonce, PKCE verifier) between the login
+# request and the provider's callback. Scoped to the OIDC routes.
+OIDC_FLOW_COOKIE_NAME = "pdns_oidc_flow"
+OIDC_FLOW_COOKIE_PATH = "/api/auth/oidc"
+
+
+def set_oidc_flow_cookie(
+    response: Response, request: Request, flow_token: str, max_age: int
+) -> None:
+    response.set_cookie(
+        key=OIDC_FLOW_COOKIE_NAME,
+        value=flow_token,
+        max_age=max_age,
+        httponly=True,
+        secure=request_is_https(request),
+        # Lax: sent on the top-level redirect back from the provider.
+        samesite="lax",
+        path=OIDC_FLOW_COOKIE_PATH,
+    )
+
+
+def clear_oidc_flow_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=OIDC_FLOW_COOKIE_NAME,
+        httponly=True,
+        samesite="lax",
+        path=OIDC_FLOW_COOKIE_PATH,
     )

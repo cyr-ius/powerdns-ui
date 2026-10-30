@@ -8,10 +8,13 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.client_ip import get_client_ip
 from app.config import settings
 from app.cookies import (
+    OIDC_FLOW_COOKIE_NAME,
     clear_auth_cookie,
     clear_id_token_cookie,
+    clear_oidc_flow_cookie,
     set_auth_cookie,
     set_id_token_cookie,
+    set_oidc_flow_cookie,
 )
 from app.database import get_db
 from app.dependencies import (
@@ -91,7 +94,7 @@ async def login(
         )
     audit.user_id = user.id
     await audit.success("login", "auth")
-    token = auth_service.create_access_token({"sub": user.username})
+    token = auth_service.create_session_token(user)
     set_auth_cookie(response, request, token)
 
 
@@ -105,6 +108,11 @@ async def logout(
     # expired — hence the identity is resolved best-effort rather than required.
     user = await user_from_session_cookie(db, request)
     if user is not None:
+        # Revoke the JWT server-side too: a copy of the cookie stops working.
+        # This ends the user's sessions on every device.
+        auth_service.revoke_sessions(user)
+        db.add(user)
+        await db.commit()
         audit = AuditLogger(db, user.username, user.id, get_client_ip(request))
         await audit.success("logout", "auth")
 
@@ -143,6 +151,8 @@ async def me(
 @router.put("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(
     payload: ChangePasswordRequest,
+    request: Request,
+    response: Response,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     audit: AuditLogger = Depends(get_audit_logger),
@@ -183,20 +193,38 @@ async def change_password(
             detail="New password must contain at least 8 characters",
         )
     current_user.hashed_password = auth_service.hash_password(payload.new_password)
+    # Revoke every other session; the current one gets a fresh token.
+    auth_service.revoke_sessions(current_user)
     db.add(current_user)
     await db.commit()
+    set_auth_cookie(response, request, auth_service.create_session_token(current_user))
     await audit.success("change_password", "user", current_user.username)
 
 
 @router.get("/oidc/login", response_model=OidcLoginResponse)
-async def oidc_login(db: AsyncSession = Depends(get_db)) -> OidcLoginResponse:
+async def oidc_login(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+) -> OidcLoginResponse:
     cfg = await _get_oidc_cfg(db)
     if not cfg:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="OIDC not configured"
         )
-    url = await auth_service.build_oidc_authorization_url(cfg)
+    url, flow_token = await auth_service.start_oidc_flow(cfg)
+    set_oidc_flow_cookie(
+        response,
+        request,
+        flow_token,
+        int(auth_service.OIDC_FLOW_TTL.total_seconds()),
+    )
     return OidcLoginResponse(authorization_url=url)
+
+
+def _oidc_redirect(url: str) -> RedirectResponse:
+    """Redirect at the end of the OIDC callback; the flow cookie is single-use."""
+    redirect = RedirectResponse(url=url)
+    clear_oidc_flow_cookie(redirect)
+    return redirect
 
 
 @router.get("/oidc/callback")
@@ -209,47 +237,57 @@ async def oidc_callback(
             status_code=status.HTTP_400_BAD_REQUEST, detail="OIDC not configured"
         )
     try:
-        auth_service.validate_and_consume_oidc_state(state)
-    except ValueError:
-        logger.warning(
-            "OIDC state validation failed (params: %s)", dict(request.query_params)
+        nonce, code_verifier = auth_service.validate_oidc_flow(
+            request.cookies.get(OIDC_FLOW_COOKIE_NAME), state
         )
+    except ValueError as exc:
+        # Never log the query string: it carries the authorization code.
+        logger.warning("OIDC state validation failed: %s", exc)
         audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure("login", "auth", details={"detail": "Invalid OIDC state"})
-        return RedirectResponse(url="/login?error=oidc_state_invalid")
+        return _oidc_redirect("/login?error=oidc_state_invalid")
     try:
-        tokens = await auth_service.exchange_oidc_code(code, cfg)
+        tokens = await auth_service.exchange_oidc_code(code, code_verifier, cfg)
+        claims = await auth_service.verify_oidc_id_token(
+            tokens.get("id_token", ""), nonce, cfg
+        )
     except Exception as exc:
         _log_oidc_error("token exchange", exc)
         audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure(
             "login", "auth", details={"detail": "OIDC token exchange failed"}
         )
-        return RedirectResponse(url="/login?error=oidc_failed")
+        return _oidc_redirect("/login?error=oidc_failed")
     try:
         userinfo = await auth_service.get_oidc_userinfo(tokens["access_token"], cfg)
+        # OpenID Connect Core 5.3.2: the UserInfo sub must match the id_token.
+        if userinfo.get("sub") != claims["sub"]:
+            raise ValueError("UserInfo subject does not match the id_token")
     except Exception as exc:
         _log_oidc_error("userinfo fetch", exc)
         audit = AuditLogger(db, "oidc", ip=get_client_ip(request))
         await audit.failure(
             "login", "auth", details={"detail": "OIDC userinfo fetch failed"}
         )
-        return RedirectResponse(url="/login?error=oidc_failed")
+        return _oidc_redirect("/login?error=oidc_failed")
+    username: str = userinfo.get("preferred_username") or claims["sub"]
     try:
-        username: str = userinfo.get("preferred_username") or userinfo.get("sub", "")
         email: str | None = userinfo.get("email")
         user = await auth_service.get_or_create_oidc_user(
-            db, username=username, email=email
+            db,
+            issuer=claims["iss"],
+            subject=claims["sub"],
+            username=username,
+            email=email,
         )
         audit = AuditLogger(
             db, user.username, user_id=user.id, ip=get_client_ip(request)
         )
         await audit.success("login", "auth", details={"method": "oidc"})
-        jwt_token = auth_service.create_access_token({"sub": user.username})
-        redirect = RedirectResponse(url="/")
+        jwt_token = auth_service.create_session_token(user)
+        redirect = _oidc_redirect("/")
         set_auth_cookie(redirect, request, jwt_token)
-        if tokens.get("id_token"):
-            set_id_token_cookie(redirect, request, tokens["id_token"])
+        set_id_token_cookie(redirect, request, tokens["id_token"])
         return redirect
     except Exception as exc:
         _log_oidc_error("user provisioning", exc)
@@ -257,7 +295,7 @@ async def oidc_callback(
         await audit.failure(
             "login", "auth", details={"detail": "OIDC user provisioning failed"}
         )
-        return RedirectResponse(url="/login?error=oidc_failed")
+        return _oidc_redirect("/login?error=oidc_failed")
 
 
 def _log_oidc_error(step: str, exc: Exception) -> None:

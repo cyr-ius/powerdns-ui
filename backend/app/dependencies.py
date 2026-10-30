@@ -7,7 +7,7 @@ from app.client_ip import get_client_ip
 from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.services import auth_service, token_service
+from app.services import token_service
 from app.services.audit_service import AuditLogger
 
 bearer_scheme = HTTPBearer(
@@ -51,11 +51,20 @@ async def user_from_session_cookie(db: AsyncSession, request: Request) -> User |
         )
     except jwt.PyJWTError:
         return None
-    username: str | None = payload.get("sub")
-    if username is None:
+    user_id = payload.get("uid")
+    version = payload.get("ver")
+    if not isinstance(user_id, int) or not isinstance(version, int):
         return None
-    user = await auth_service.get_user_by_username(db, username)
-    return user if user is not None and user.is_active else None
+    user = await db.get(User, user_id)
+    if (
+        user is None
+        or not user.is_active
+        or user.username != payload.get("sub")
+        # Logout, password change and deactivation bump the version.
+        or user.token_version != version
+    ):
+        return None
+    return user
 
 
 async def get_current_user(
