@@ -39,7 +39,7 @@ Single container (Angular served statically by FastAPI), SQLite by default — s
 # docker-compose.yaml
 services:
   pdns:
-    image: powerdns/pdns-auth-51:5.1.3
+    image: powerdns/pdns-auth-51:5.1.5
     restart: unless-stopped
     volumes:
       - powerdns_data:/var/lib/powerdns
