@@ -10,6 +10,7 @@ from starlette.types import ASGIApp
 
 from app.client_ip import get_client_ip
 from app.config import settings
+from app.cookies import request_is_https
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +25,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     # Build CSP once at class level — one directive per list entry, auditable.
     _CSP_DIRECTIVES: list[str] = [
         "default-src 'self'",
-        # Angular requires unsafe-inline
-        f"script-src 'self' 'unsafe-inline' {JSDELIVR}",
+        # The production build emits no inline script (critical CSS inlining is
+        # disabled in angular.json), so scripts are restricted to our origin.
+        "script-src 'self'",
         f"style-src 'self' 'unsafe-inline' {JSDELIVR}",  # Bootstrap inline styles
         "img-src 'self' data: https:",  # logos, QR codes base64
         f"font-src 'self' data: {FONT_GOOGLE}",  # Bootstrap Icons embedded font
@@ -41,14 +43,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = (
             "camera=(), microphone=(), geolocation=(), payment=()"
         )
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"
-        )
+        # Browsers ignore HSTS received over plain HTTP (RFC 6797 §8.1).
+        if request_is_https(request):
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
         response.headers["Content-Security-Policy"] = self._CSP
         return response
 
