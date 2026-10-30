@@ -85,7 +85,7 @@ Any implementation, modification, or code review performed in this repository mu
 
 - Angular
 - TypeScript
-- Node.js `>= 22`
+- Node.js `26` (the version of the CI and of the Docker build; Angular 22 accepts `^22.22.3 || ^24.15.0 || >=26`)
 - npm
 - Angular CLI
 
@@ -105,7 +105,7 @@ The development environment requires:
 
 - Python `>= 3.14`
 - `uv` installed: https://docs.astral.sh/uv/
-- Node.js `>= 22`
+- Node.js `26`
 - npm
 
 ## Dependency installation
