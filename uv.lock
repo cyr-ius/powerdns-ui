@@ -125,7 +125,7 @@ requires-dist = [
     { name = "mkdocs-static-i18n", marker = "extra == 'docs'", specifier = ">=1.2" },
     { name = "pydantic", extras = ["email"] },
     { name = "pydantic-settings" },
-    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.15.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6" },
     { name = "python-multipart" },

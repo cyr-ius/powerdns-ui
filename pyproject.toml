@@ -21,7 +21,7 @@ dependencies = [
     "aiomysql",
     "dnspython",
     "alembic",
-    "pyjwt[crypto]>=2.10",
+    "pyjwt[crypto]>=2.15.1",
     "bcrypt",
     "python-multipart",
     "httpx",
