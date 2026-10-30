@@ -7,6 +7,16 @@ from app.config import GITHUB_REPOSITORY, settings
 router = APIRouter()
 
 
+@router.get("/api/health")
+async def health_check(request: Request) -> dict[str, str]:
+    """Liveness probe, exempt from rate limiting and authentication."""
+    return {
+        "status": "healthy",
+        "app": request.app.title,
+        "version": request.app.version,
+    }
+
+
 @router.get("/api/info")
 async def info(request: Request) -> dict[str, Any]:
     """Public application metadata consumed by the About page."""

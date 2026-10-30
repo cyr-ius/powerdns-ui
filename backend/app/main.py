@@ -35,6 +35,7 @@ from app.routers import (
 )
 from app.routers.acme import router_api as acme_api_router
 from app.security import RateLimitMiddleware, SecurityHeadersMiddleware
+from app.services import pdns_service
 from app.services.auth_service import create_user, get_user_by_username
 from app.utils import resolve_safe_path
 
@@ -71,7 +72,11 @@ def startup_lock() -> Iterator[None]:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     with startup_lock():
         await _initialize()
-    yield
+    await pdns_service.open_client()
+    try:
+        yield
+    finally:
+        await pdns_service.close_client()
 
 
 async def _initialize() -> None:
@@ -172,12 +177,12 @@ async def swagger_ui() -> HTMLResponse:
     )
 
 
-@app.get("/api/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "healthy", "app": app.title, "version": app.version}
-
-
 # ── Serve Angular SPA (must be last) ─────────────────────────────────────────
+# Resolved once at module load — avoids repeated filesystem calls per request.
+_FRONTEND_DIST = (Path(__file__).resolve().parents[2] / "frontend").resolve()
+_FRONTEND_INDEX = _FRONTEND_DIST / "index.html"
+
+
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_spa(full_path: str) -> FileResponse:
     """
@@ -188,19 +193,13 @@ async def serve_spa(full_path: str) -> FileResponse:
     Unknown or unsafe paths also fall back to index.html rather than 404-ing,
     letting the Angular router handle the error page.
     """
-
-    # Resolve once at module load — avoids repeated filesystem calls per request.
-    project_root = Path(__file__).resolve().parents[2]
-    frontend_dist = (project_root / "frontend").resolve()
-    frontend_index = frontend_dist / "index.html"
-
-    if not frontend_index.is_file():
-        logger.error("SPA index.html not found at %s", frontend_index)
+    if not _FRONTEND_INDEX.is_file():
+        logger.error("SPA index.html not found at %s", _FRONTEND_INDEX)
         raise HTTPException(status_code=503, detail="Frontend not available.")
 
-    safe = resolve_safe_path(full_path, frontend_dist)
+    safe = resolve_safe_path(full_path, _FRONTEND_DIST)
     if safe is not None:
         return FileResponse(safe)
 
     # SPA fallback: Angular router handles unknown client-side routes.
-    return FileResponse(frontend_index)
+    return FileResponse(_FRONTEND_INDEX)
