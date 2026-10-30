@@ -38,9 +38,9 @@ ENV PYTHONPATH=/app/backend
 
 WORKDIR /app
 
-RUN --mount=type=bind,source=backend/pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=backend/uv.lock,target=uv.lock \
-    uv sync --frozen --no-dev
+RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    uv sync --frozen --no-dev --no-install-project
 
 COPY --from=frontend-builder /build/frontend/dist/frontend/browser ./frontend
 
