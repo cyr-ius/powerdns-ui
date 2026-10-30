@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 import bcrypt
 import httpx
-from jose import JWTError, jwt
+import jwt
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
@@ -32,7 +32,7 @@ def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
     to_encode["exp"] = expire
-    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)  # type: ignore[no-any-return]
+    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
 
 async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
@@ -113,7 +113,7 @@ def _generate_oidc_state() -> str:
     Stateless: survives app restarts and works across multiple workers.
     """
     expire = datetime.now(UTC) + timedelta(minutes=10)
-    return jwt.encode(  # type: ignore[no-any-return]
+    return jwt.encode(
         {"sub": "oidc_state", "exp": expire, "nonce": secrets.token_urlsafe(16)},
         settings.secret_key,
         algorithm=settings.algorithm,
@@ -128,7 +128,7 @@ def validate_and_consume_oidc_state(state: str) -> None:
         )
         if payload.get("sub") != "oidc_state":
             raise ValueError("Invalid OIDC state subject")
-    except JWTError as exc:
+    except jwt.PyJWTError as exc:
         raise ValueError("Invalid or expired OIDC state") from exc
 
 

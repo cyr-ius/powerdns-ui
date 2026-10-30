@@ -1,6 +1,6 @@
+import jwt
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.client_ip import get_client_ip
@@ -49,7 +49,7 @@ async def user_from_session_cookie(db: AsyncSession, request: Request) -> User |
             settings.secret_key,
             algorithms=[settings.algorithm],
         )
-    except JWTError:
+    except jwt.PyJWTError:
         return None
     username: str | None = payload.get("sub")
     if username is None:
