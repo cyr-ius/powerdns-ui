@@ -5,7 +5,7 @@ from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.database import get_db
-from app.dependencies import ensure_password_length, get_audit_logger, get_current_admin
+from app.dependencies import ensure_password_policy, get_audit_logger, get_current_admin
 from app.models.account import UserAccount
 from app.models.oidc_settings import OidcSettings
 from app.models.record_type import RecordType
@@ -58,7 +58,7 @@ async def create_user(
             status_code=status.HTTP_409_CONFLICT,
             detail="Nom d'utilisateur déjà utilisé",
         )
-    await ensure_password_length(audit, "create", payload.username, payload.password)
+    await ensure_password_policy(audit, "create", payload.username, payload.password)
     user = await admin_service.create_local_user(
         db,
         username=payload.username,
@@ -148,7 +148,7 @@ async def reset_password(
             status_code=400,
             detail="SSO users cannot have their password reset",
         )
-    await ensure_password_length(
+    await ensure_password_policy(
         audit, "reset_password", user.username, payload.new_password
     )
     await admin_service.reset_password(db, user, payload.new_password)

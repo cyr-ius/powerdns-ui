@@ -292,6 +292,10 @@
                 {{ passwordForm.new_password().errors()[0].message }}
               </div>
             }
+            <app-password-policy
+              [password]="passwordModel().new_password"
+              [confirm]="passwordModel().confirm_password"
+            />
           </div>
           <div class="col-12 col-md-4">
             <label class="form-label fw-medium">

@@ -742,5 +742,14 @@
     "OPEN_ISSUE": "Open an issue",
     "SWAGGER": "Swagger UI",
     "SWAGGER_DISABLED": "Swagger is disabled on this instance"
+  },
+  "PASSWORD_POLICY": {
+    "MIN_LENGTH": "At least {{ count }} characters",
+    "LOWERCASE": "A lowercase letter",
+    "UPPERCASE": "An uppercase letter",
+    "DIGIT": "A digit",
+    "SYMBOL": "A symbol (non-alphanumeric character)",
+    "MATCH": "The passwords match",
+    "MISMATCH": "The passwords do not match"
   }
 }

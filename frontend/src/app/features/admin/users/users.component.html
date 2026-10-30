@@ -161,6 +161,7 @@
               @if (createForm.password().touched() && createForm.password().errors().length) {
                 <div class="invalid-feedback">{{ createForm.password().errors()[0].message }}</div>
               }
+              <app-password-policy [password]="createModel().password" />
             </div>
             <div class="mb-3">
               <label class="form-label fw-medium">{{ "USERS.EMAIL" | translate }}</label>
@@ -231,6 +232,7 @@
               @if (resetForm.password().touched() && resetForm.password().errors().length) {
                 <div class="invalid-feedback">{{ resetForm.password().errors()[0].message }}</div>
               }
+              <app-password-policy [password]="resetModel().password" [confirm]="resetModel().confirm" />
             </div>
             <div class="mb-0">
               <label class="form-label fw-medium"

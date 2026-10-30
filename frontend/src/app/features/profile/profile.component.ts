@@ -1,7 +1,7 @@
 import { DatePipe } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
 import { Component, computed, inject, OnInit, signal } from "@angular/core";
-import { form, FormField, required, submit } from "@angular/forms/signals";
+import { form, FormField, required, submit, validate } from "@angular/forms/signals";
 import { RouterLink } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 import { AppInfoService } from "../../core/services/app-info.service";
@@ -9,12 +9,14 @@ import { AuthService } from "../../core/services/auth.service";
 import { PersonalAccessToken, TokensService } from "../../core/services/tokens.service";
 import { Theme, ThemeService } from "../../core/services/theme.service";
 import { TranslatePipe, TranslateService } from "@ngx-translate/core";
+import { PasswordPolicyComponent } from "../../shared/components/password-policy/password-policy.component";
+import { passwordMeetsPolicy } from "../../shared/utils/password-policy";
 
 type Tab = "info" | "appearance" | "password" | "apikeys";
 
 @Component({
   selector: "app-profile",
-  imports: [DatePipe, RouterLink, FormField, TranslatePipe],
+  imports: [DatePipe, RouterLink, FormField, TranslatePipe, PasswordPolicyComponent],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.css",
 })
@@ -63,6 +65,9 @@ export class ProfileComponent implements OnInit {
     required(s.current_password, { message: "Current password required" });
     required(s.new_password, { message: "New password required" });
     required(s.confirm_password, { message: "Confirmation required" });
+    validate(s.new_password, ({ value }) =>
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+    );
   });
 
   onChangePassword(): void {

@@ -99,23 +99,37 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
     return current_user
 
 
-PASSWORD_MIN_LENGTH = 8
+PASSWORD_MIN_LENGTH = 12
+PASSWORD_POLICY = (
+    f"The password must contain at least {PASSWORD_MIN_LENGTH} characters, "
+    "a lowercase letter, an uppercase letter, a digit and a symbol."
+)
 
 
-async def ensure_password_length(
+def password_meets_policy(password: str) -> bool:
+    """Tell whether a password follows the password policy."""
+    return (
+        len(password) >= PASSWORD_MIN_LENGTH
+        and any(c.islower() for c in password)
+        and any(c.isupper() for c in password)
+        and any(c.isdigit() for c in password)
+        and any(not c.isalnum() for c in password)
+    )
+
+
+async def ensure_password_policy(
     audit: AuditLogger, action: str, username: str, password: str
 ) -> None:
-    """Reject a too-short password, after recording the failure in the audit log.
+    """Reject a password that breaks the policy, after auditing the attempt.
 
     Checked in the route rather than in the request schema: a schema rejection
     happens before the route runs, so the attempt would not be audited.
     """
-    if len(password) >= PASSWORD_MIN_LENGTH:
+    if password_meets_policy(password):
         return
-    detail = f"The password must contain at least {PASSWORD_MIN_LENGTH} characters."
-    await audit.failure(action, "user", username, {"detail": detail})
+    await audit.failure(action, "user", username, {"detail": PASSWORD_POLICY})
     raise HTTPException(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=detail
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=PASSWORD_POLICY
     )
 
 

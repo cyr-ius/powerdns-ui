@@ -742,5 +742,14 @@
     "OPEN_ISSUE": "Abrir una incidencia",
     "SWAGGER": "Swagger UI",
     "SWAGGER_DISABLED": "Swagger está desactivado en esta instancia"
+  },
+  "PASSWORD_POLICY": {
+    "MIN_LENGTH": "Al menos {{ count }} caracteres",
+    "LOWERCASE": "Una letra minúscula",
+    "UPPERCASE": "Una letra mayúscula",
+    "DIGIT": "Un dígito",
+    "SYMBOL": "Un símbolo (carácter no alfanumérico)",
+    "MATCH": "Las contraseñas coinciden",
+    "MISMATCH": "Las contraseñas no coinciden"
   }
 }
