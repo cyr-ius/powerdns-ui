@@ -14,7 +14,6 @@
       "module": "uvicorn",
       "args": ["app.main:app", "--reload", "--log-level", "debug"],
       "jinja": true,
-      "preLaunchTask": "docker: start pdns",
       "cwd": "${workspaceFolder}/backend",
       "python": "${workspaceFolder}/.venv/bin/python",
       "console": "integratedTerminal"

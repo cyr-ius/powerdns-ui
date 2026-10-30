@@ -1,6 +1,10 @@
 {
   "name": "FastAPI + Angular Dev Environment",
-  "image": "mcr.microsoft.com/devcontainers/python:3-3.14-trixie",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "runServices": ["app", "pdns"],
+  "workspaceFolder": "/workspaces/powerdns-ui",
+  "shutdownAction": "stopCompose",
   "features": {
     "ghcr.io/devcontainers-extra/features/prek:1": {},
     "ghcr.io/devcontainers-extra/features/uv:1": {},
@@ -15,10 +19,6 @@
     "8000": { "label": "FastAPI Backend", "onAutoForward": "notify" }
   },
   "postCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder} && sudo apt-get update -qq && prek install --overwrite && uv sync --extra dev --extra docs --link-mode=copy && npm --prefix frontend ci --no-audit --no-fund && sudo chown -R vscode:vscode ${containerWorkspaceFolder}/.data_env",
-  "containerEnv": {
-    "DATA_DIR": "${containerWorkspaceFolder}/.data_env" // (db, configuration files, etc...)
-  },
-  "mounts": ["target=${containerWorkspaceFolder}/.data_env,type=volume,consistency=cached"],
   // ─── VS Code extensions ────────────────────────────────────────────────
   "customizations": {
     "vscode": {
