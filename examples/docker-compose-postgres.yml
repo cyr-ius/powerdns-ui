@@ -1,0 +1,83 @@
+services:
+  pdns:
+    image: powerdns/pdns-auth-51:5.1.5
+    restart: unless-stopped
+    depends_on:
+      pdns-db:
+        condition: service_healthy
+    volumes:
+      - powerdns_data:/var/lib/powerdns
+    ports:
+      - 53:53
+      - 53:53/udp
+    command:
+      - "--no-config"
+      - "--api=yes"
+      - "--api-key=${PDNS_AUTH_API_KEY:?Set PDNS_AUTH_API_KEY}"
+      - "--launch=gpgsql"
+      - "--gpgsql-host=pdns-db"
+      - "--gpgsql-port=5432"
+      - "--gpgsql-user=${POSTGRES_USER:-powerdns}"
+      - "--gpgsql-password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}"
+      - "--gpgsql-dbname=${POSTGRES_DB:-powerdns}"
+      - "--gpgsql-dnssec=yes"
+      - "--webserver=yes"
+      - "--webserver-address=0.0.0.0"
+      - "--webserver-port=8081"
+      - "--webserver-allow-from=0.0.0.0/0"
+      - "--logging-structured=yes"
+      - "--loglevel=6"
+      - "--loglevel-show=yes"
+
+  pdns-ui:
+    image: ghcr.io/cyr-ius/powerdns-ui:latest
+    restart: unless-stopped
+    depends_on:
+      - pdns
+    environment:
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      # The admin password is always auto-generated and printed in the logs on
+      # first start; a random SECRET_KEY is generated and persisted under DATA_DIR.
+      - SECRET_KEY=${SECRET_KEY:-}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PDNS_AUTH_API_URL=${PDNS_AUTH_API_URL:-http://pdns:8081}
+      - PDNS_AUTH_API_KEY=${PDNS_AUTH_API_KEY:?Set PDNS_AUTH_API_KEY}
+    volumes:
+      - powerdns-ui_data:/var/lib/powerdns-ui
+    ports:
+      - 8080:8080/tcp
+
+  pdns-db:
+    image: postgres:18
+    restart: unless-stopped
+    depends_on:
+      pdns-schema:
+        condition: service_completed_successfully
+    volumes:
+      - powerdns_db:/var/lib/postgresql
+      # Applied by the postgres entrypoint only on the first start (empty data dir).
+      - powerdns_initdb:/docker-entrypoint-initdb.d:ro
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-powerdns}
+      - POSTGRES_USER=${POSTGRES_USER:-powerdns}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-shot: copies the PostgreSQL schema shipped with the PowerDNS image so
+  # that it matches the server version.
+  pdns-schema:
+    image: powerdns/pdns-auth-51:5.1.5
+    user: root
+    entrypoint: ["cp", "/usr/local/share/doc/pdns/schema.pgsql.sql", "/initdb/"]
+    volumes:
+      - powerdns_initdb:/initdb
+
+volumes:
+  powerdns_data:
+  powerdns-ui_data:
+  powerdns_db:
+  powerdns_initdb:
