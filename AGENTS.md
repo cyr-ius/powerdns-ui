@@ -7,6 +7,7 @@ Instructions for AI agents operating in this repository.
 This document defines the rules and workflow that AI agents must follow when analyzing, modifying, testing, or deploying this repository.
 
 The objective is to:
+
 - quickly understand the project structure;
 - prepare a consistent local development environment;
 - apply the required development standards;
@@ -32,6 +33,26 @@ AI agents must not:
 - ignore existing conventions;
 - bypass failing validation checks;
 - create duplicated implementations when an existing component can be extended.
+
+## Before writing code
+
+- Call `get_development_standards` with the technologies of the change
+  (e.g. `python`, `fastapi`) or the files you touch (`pyproject.toml`).
+- Apply these standards. Report any deviation with its reason.
+
+## Before saying a task is done
+
+1. Call `scan_code` on each changed file. Check each lead in the code.
+2. Call `get_review_checklist` for `python`, `api`, `*` and `company`.
+   Add `config` if the `Dockerfile` changes.
+3. If `pyproject.toml` or `uv.lock` changes, call `scan_dependencies`.
+4. Call `save_security_report` once:
+   project `shop-api`, `review_type` `security-review`, branch and commit,
+   `checklist_results` and `scan_rules` filled in.
+5. Fix the `critical` and `high` findings before finishing.
+6. Never change a status. Use `propose_finding_status` with a reason.
+
+If the `security-review` server does not answer, say so. Never claim the review was done.
 
 ## Development standards
 
