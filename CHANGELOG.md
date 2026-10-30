@@ -1,5 +1,27 @@
 # Changelog
 
+## [2.6.0](https://github.com/cyr-ius/powerdns-ui/compare/2.5.0...2.6.0) (2026-10-30)
+
+
+### Features
+
+* **about:** show the PowerDNS connection, version and URL ([c14a484](https://github.com/cyr-ius/powerdns-ui/commit/c14a484c575b303d3e137c4ae2ff5b96ea14ebb5))
+* **admin:** rename the OIDC menu and page to Connexions ([4c281fc](https://github.com/cyr-ius/powerdns-ui/commit/4c281fc28af25a1667a126de660d59b4fe03319f))
+* **auth:** enforce the password policy ([471dec4](https://github.com/cyr-ius/powerdns-ui/commit/471dec4039d9d0813864fbab293b03af73250f7a))
+* **catalogues:** explain what a producer catalog is when there is none ([5346fd2](https://github.com/cyr-ius/powerdns-ui/commit/5346fd20dd9329bd0d51dd931611dd9148bdb6e9))
+* **search:** search the term anywhere by default ([eef481a](https://github.com/cyr-ius/powerdns-ui/commit/eef481a36486a98eb927e92773673561dd5515d6))
+* **zones:** filter the records of a zone ([b874eeb](https://github.com/cyr-ius/powerdns-ui/commit/b874eebb600d158a788036f45f58c1fb9a840ae3))
+
+
+### Bug Fixes
+
+* **zones:** validate zone ids and bound the zone file import ([6c50d9b](https://github.com/cyr-ius/powerdns-ui/commit/6c50d9b041a3acbfed61741f34caae6fdfc15ca5))
+
+
+### Documentation
+
+* **accounts:** explain that an account groups zones like a tenant ([42fb26e](https://github.com/cyr-ius/powerdns-ui/commit/42fb26e6251967898a50fa0fe835c904befd06e0))
+
 ## [2.5.0](https://github.com/cyr-ius/powerdns-ui/compare/2.4.0...2.5.0) (2026-10-30)
 
 
