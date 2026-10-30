@@ -1,8 +1,13 @@
-name: Docs
+name: Documentation
 
 on:
   push:
-    branches: ["master"]
+    branches: [master]
+    paths:
+      - "docs/**"
+      - "mkdocs.yml"
+      - ".github/workflows/docs.yml"
+  pull_request:
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -11,49 +16,40 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: Build documentation
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout the repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 0 # full history for the git-revision-date plugin
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
-          python-version: "3.x"
-          cache: pip
-          cache-dependency-path: docs/requirements.txt
-
-      - name: 📦 Install MkDocs and plugins
-        run: pip install -r docs/requirements.txt
-
-      - name: 🏗️ Build the site
-        run: mkdocs build --strict
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v5
+          python-version: "3.14"
+          enable-cache: true
+      # --strict turns broken links and nav warnings into errors
+      - run: uv run --no-project --with-requirements docs/requirements.txt mkdocs build --strict
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.event_name != 'pull_request'
         with:
-          path: site
+          path: site/
 
   deploy:
-    name: Deploy to GitHub Pages
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

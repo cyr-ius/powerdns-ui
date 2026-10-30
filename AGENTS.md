@@ -182,11 +182,21 @@ If a command fails:
 
 ## Deployment
 
-Production releases must use:
-
-```bash
-scripts/release.sh
-```
+- `dev` is the development branch; `master` only receives merges of `dev`, never direct commits.
+- **A release is a `X.Y.Z` tag on `master` (no `v` prefix), created by Release Please**
+  (`.github/workflows/release-please.yml`, `release-please-config.json`). Do not change the
+  version by hand: Release Please computes it from the Conventional Commits (`fix:` → `Z`,
+  `feat:` → `Y`, `feat!:` or a `BREAKING CHANGE:` footer → `X`). Procedure:
+  1. merge `dev` into `master`;
+  2. Release Please opens (or updates) the release pull request: `CHANGELOG.md` and the version
+     in `pyproject.toml`, `uv.lock`, `frontend/package.json` and `frontend/package-lock.json`;
+  3. merging that pull request creates the tag and a draft GitHub release, then dispatches
+     `publish.yml` on the tag: lint, check that the tag matches the versions, Docker images on
+     GHCR and Docker Hub (`docker.yml`), then publication of the GitHub release (`release.yml`).
+     After a release, `release-please.yml` merges `master` back into `dev`: pull `dev` first.
+- **An agent never creates or pushes a tag, never merges into `master` and never merges the
+  Release Please pull request without an explicit request**: publishing a version is
+  irreversible.
 
 ## References
 

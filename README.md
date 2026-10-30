@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/cyr-ius/powerdns-ui?label=License&color=blue) ![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python) ![Angular](https://img.shields.io/badge/Angular-22-blue?logo=angular) [![ci::status]][ci::github] [![docker::pulls]][docker::hub] [![documentation::badge]][documentation::web]
 
-[ci::status]: https://img.shields.io/github/actions/workflow/status/cyr-ius/powerdns-ui/docker-publish.yml?logo=github
+[ci::status]: https://img.shields.io/github/actions/workflow/status/cyr-ius/powerdns-ui/publish.yml?logo=github
 [ci::github]: https://github.com/cyr-ius/powerdns-ui/actions
 [docker::pulls]: https://img.shields.io/docker/pulls/cyrius44/powerdns-ui.svg?logo=docker
 [docker::hub]: https://hub.docker.com/r/cyrius44/powerdns-ui

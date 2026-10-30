@@ -1,0 +1,156 @@
+name: Docker image
+
+# Every pull request builds and smoke-tests the image, whatever files it touches. A release
+# (called by publish.yml on a X.Y.Z tag) or a manual run with "push" publishes it to GitHub
+# Container Registry and Docker Hub.
+#
+# Docker Hub needs the repository secret DOCKERHUB_TOKEN (access token with read/write scope
+# on the cyrius44/powerdns-ui repository). GHCR uses the workflow token.
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      push:
+        description: "Publish the images (tagged with the branch name)"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      push:
+        description: "Publish the images"
+        type: boolean
+        default: true
+
+# Only the push job may write packages (pull request builds never get that permission)
+permissions:
+  contents: read
+
+env:
+  DOCKERHUB_NAMESPACE: cyrius44
+  # Annotations on the multi-platform index too, so that registries show the description
+  DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # Loaded into the local daemon to check that the application starts
+      - name: Build for the smoke test
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: powerdns-ui:smoke-test
+          build-args: |
+            VERSION=smoke-test
+          cache-from: type=gha,scope=image
+          cache-to: type=gha,mode=max,scope=image
+
+      # Default SQLite database: the API must answer on /api/health
+      - name: Smoke test
+        run: |
+          docker run -d --name smoke-test -p 8080:8080 powerdns-ui:smoke-test
+          for _ in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/api/health; then
+              docker rm -f smoke-test > /dev/null
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs smoke-test
+          docker rm -f smoke-test > /dev/null
+          exit 1
+
+  push:
+    needs: image
+    if: inputs.push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Registry names must be lowercase
+      - name: Image names
+        id: names
+        run: |
+          {
+            echo "images<<EOF"
+            echo "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/powerdns-ui"
+            echo "docker.io/${DOCKERHUB_NAMESPACE}/powerdns-ui"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        id: meta
+        with:
+          images: ${{ steps.names.outputs.images }}
+          # X.Y.Z -> X.Y.Z, X.Y, X and latest; a pre-release (X.Y.Z-rc.1) only gets its version
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=branch
+            type=ref,event=pr
+          flavor: |
+            latest=auto
+          labels: |
+            org.opencontainers.image.title=PowerDNS UI
+            org.opencontainers.image.description=PowerDNS UI - Secure DNS management
+            org.opencontainers.image.vendor=cyr-ius
+            org.opencontainers.image.documentation=https://cyr-ius.github.io/powerdns-ui/
+          annotations: |
+            org.opencontainers.image.title=PowerDNS UI
+            org.opencontainers.image.description=PowerDNS UI - Secure DNS management
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check the Docker Hub token
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          if [ -z "$DOCKERHUB_TOKEN" ]; then
+            echo "::error::Repository secret DOCKERHUB_TOKEN is missing"
+            exit 1
+          fi
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          username: ${{ env.DOCKERHUB_NAMESPACE }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Reuses the cache of the smoke-test build; SBOM and provenance attached
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=image
+          cache-to: type=gha,mode=max,scope=image
