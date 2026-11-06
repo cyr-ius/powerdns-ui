@@ -22,7 +22,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.2",
     "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
+    "tslib": "^2.9.1"
   },
   "overrides": {
     "esbuild": "^0.28.1"
