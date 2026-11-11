@@ -39,7 +39,8 @@ repos:
           - --skip="./.*,*.csv,*.json,*.ambr"
           - --quiet-level=2
         exclude_types: [csv, json, html]
-        exclude: .devcontainer|.agents|swagger
+        # CHANGELOG.md is written by Release Please: its pull request must pass as generated
+        exclude: .devcontainer|.agents|swagger|^CHANGELOG\.md$
 
   # ── TypeScript / Angular: Prettier ───────────────────────────────────────
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -50,7 +51,8 @@ repos:
         types_or: [javascript, html, css, scss, json, yaml, markdown]
         # docs/ is excluded because Prettier reflows the indented admonition
         # bodies used by the MkDocs (pymdownx.admonition) syntax and breaks them.
-        exclude: node_modules|.agents|swagger|^docs/
+        # CHANGELOG.md is written by Release Please: its pull request must pass as generated
+        exclude: node_modules|.agents|swagger|^docs/|^CHANGELOG\.md$
 
   - repo: local
     hooks:

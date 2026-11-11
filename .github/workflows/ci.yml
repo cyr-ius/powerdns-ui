@@ -1,0 +1,28 @@
+---
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: cyr-ius/.github/.github/workflows/web-ci.yml@v1
+    with:
+      backend-dir: .
+      sync-args: --locked --extra dev
+      backend-run: |
+        uv run ruff check --output-format=github backend
+        uv run ruff format --check --diff backend
+        uv run pytest
+      node-version: "26"

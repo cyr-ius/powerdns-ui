@@ -26,7 +26,9 @@
     "CLOSE": "Cerrar",
     "BACK": "Volver",
     "NO_EMAIL": "Sin email",
-    "SEARCH": "Buscar"
+    "SEARCH": "Buscar",
+    "SHOW": "Mostrar",
+    "HIDE": "Ocultar"
   },
   "NAV": {
     "PERSONAL": "Mi espacio",
@@ -354,7 +356,10 @@
     "EMAIL_RECIPIENT": "Dirección destinataria",
     "EMAIL_CONFIG_HINT": "Configure el servidor SMTP en <strong>Administración &rsaquo; Servidor de correo</strong>.",
     "EMAIL_ALERT_FILTERS_TITLE": "Filtros de alerta",
-    "EMAIL_ALERT_FILTERS_HINT": "Seleccione los criterios que desencadenan una alerta. Si no se marca ninguna casilla en una categoría, se incluyen todos los valores."
+    "EMAIL_ALERT_FILTERS_HINT": "Seleccione los criterios que desencadenan una alerta. Si no se marca ninguna casilla en una categoría, se incluyen todos los valores.",
+    "SYSLOG_HOST_REQUIRED": "El servidor syslog es obligatorio",
+    "SYSLOG_PORT_REQUIRED": "El puerto es obligatorio",
+    "EMAIL_RECIPIENT_REQUIRED": "La dirección del destinatario es obligatoria"
   },
   "MAIL": {
     "TITLE": "Servidor de correo",
@@ -447,7 +452,13 @@
     "NEW_PASSWORD": "Nueva contraseña",
     "CONFIRM_PASSWORD": "Confirmar contraseña",
     "DELETE_CONFIRM": "¿Eliminar el usuario {{ username }}? Esta acción es irreversible.",
-    "CONFIRM_DELETION": "Confirmar eliminación"
+    "CONFIRM_DELETION": "Confirmar eliminación",
+    "USERNAME_REQUIRED": "El nombre de usuario es obligatorio",
+    "PASSWORD_REQUIRED": "La contraseña es obligatoria",
+    "NEW_PASSWORD_REQUIRED": "La nueva contraseña es obligatoria",
+    "CONFIRM_REQUIRED": "La confirmación es obligatoria",
+    "CREATE_ERROR": "Error al crear el usuario",
+    "RESET_ERROR": "Error al restablecer la contraseña"
   },
   "AUTOPRIMARIES": {
     "TITLE": "Autoprimarios",
@@ -542,7 +553,11 @@
     "TAB_TOKENS": "Tokens de acceso personal",
     "ROLE": "Rol",
     "ROLE_ADMIN": "Súper administrador",
-    "ROLE_ACCOUNT_ADMIN": "Admin de cuenta"
+    "ROLE_ACCOUNT_ADMIN": "Admin de cuenta",
+    "CURRENT_PASSWORD_REQUIRED": "La contraseña actual es obligatoria",
+    "NEW_PASSWORD_REQUIRED": "La nueva contraseña es obligatoria",
+    "CONFIRM_PASSWORD_REQUIRED": "La confirmación es obligatoria",
+    "CHANGE_PASSWORD_ERROR": "Error al cambiar la contraseña"
   },
   "SEARCH": {
     "TITLE": "Búsqueda global",
@@ -759,6 +774,7 @@
     "DIGIT": "Un dígito",
     "SYMBOL": "Un símbolo (carácter no alfanumérico)",
     "MATCH": "Las contraseñas coinciden",
-    "MISMATCH": "Las contraseñas no coinciden"
+    "MISMATCH": "Las contraseñas no coinciden",
+    "NOT_MET": "La contraseña no cumple la política"
   }
 }

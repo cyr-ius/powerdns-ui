@@ -130,7 +130,7 @@
           <button type="submit" class="d-none" aria-hidden="true"></button>
           <div class="modal-body">
             @if (createError()) {
-              <div class="alert alert-danger py-2 small">{{ createError() }}</div>
+              <div class="alert alert-danger py-2 small">{{ createError() | translate }}</div>
             }
             <div class="mb-3">
               <label class="form-label fw-medium"
@@ -144,7 +144,7 @@
                 autocomplete="off"
               />
               @if (createForm.username().touched() && createForm.username().errors().length) {
-                <div class="invalid-feedback">{{ createForm.username().errors()[0].message }}</div>
+                <div class="invalid-feedback">{{ createForm.username().errors()[0].message | translate }}</div>
               }
             </div>
             <div class="mb-3">
@@ -159,7 +159,7 @@
                 autocomplete="new-password"
               />
               @if (createForm.password().touched() && createForm.password().errors().length) {
-                <div class="invalid-feedback">{{ createForm.password().errors()[0].message }}</div>
+                <div class="invalid-feedback">{{ createForm.password().errors()[0].message | translate }}</div>
               }
               <app-password-policy [password]="createModel().password" />
             </div>
@@ -216,7 +216,7 @@
           <button type="submit" class="d-none" aria-hidden="true"></button>
           <div class="modal-body">
             @if (resetError()) {
-              <div class="alert alert-danger py-2 small">{{ resetError() }}</div>
+              <div class="alert alert-danger py-2 small">{{ resetError() | translate }}</div>
             }
             <div class="mb-3">
               <label class="form-label fw-medium"
@@ -230,7 +230,7 @@
                 autocomplete="new-password"
               />
               @if (resetForm.password().touched() && resetForm.password().errors().length) {
-                <div class="invalid-feedback">{{ resetForm.password().errors()[0].message }}</div>
+                <div class="invalid-feedback">{{ resetForm.password().errors()[0].message | translate }}</div>
               }
               <app-password-policy [password]="resetModel().password" [confirm]="resetModel().confirm" />
             </div>
@@ -246,7 +246,7 @@
                 autocomplete="new-password"
               />
               @if (resetForm.confirm().touched() && resetForm.confirm().errors().length) {
-                <div class="invalid-feedback">{{ resetForm.confirm().errors()[0].message }}</div>
+                <div class="invalid-feedback">{{ resetForm.confirm().errors()[0].message | translate }}</div>
               }
             </div>
           </div>
