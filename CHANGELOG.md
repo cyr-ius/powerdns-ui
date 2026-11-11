@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.6.1](https://github.com/cyr-ius/powerdns-ui/compare/2.6.0...2.6.1) (2026-11-11)
+
+
+### Bug Fixes
+
+* **i18n:** translate the password form messages ([010d521](https://github.com/cyr-ius/powerdns-ui/commit/010d5218bd92f377efaa1bd23ff818d0e9ccf29a))
+* **spa:** revalidate unhashed files so translations follow the release ([2c262e6](https://github.com/cyr-ius/powerdns-ui/commit/2c262e6f8a1638317f180e9b30d5f185ec5cf739))
+
 ## [2.6.0](https://github.com/cyr-ius/powerdns-ui/compare/2.5.0...2.6.0) (2026-10-30)
 
 
