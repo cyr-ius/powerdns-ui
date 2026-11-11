@@ -62,11 +62,11 @@ export class ProfileComponent implements OnInit {
     confirm_password: "",
   });
   readonly passwordForm = form(this.passwordModel, (s) => {
-    required(s.current_password, { message: "Current password required" });
-    required(s.new_password, { message: "New password required" });
-    required(s.confirm_password, { message: "Confirmation required" });
+    required(s.current_password, { message: "PROFILE.CURRENT_PASSWORD_REQUIRED" });
+    required(s.new_password, { message: "PROFILE.NEW_PASSWORD_REQUIRED" });
+    required(s.confirm_password, { message: "PROFILE.CONFIRM_PASSWORD_REQUIRED" });
     validate(s.new_password, ({ value }) =>
-      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "PASSWORD_POLICY.NOT_MET" },
     );
   });
 
@@ -74,7 +74,7 @@ export class ProfileComponent implements OnInit {
     submit(this.passwordForm, async () => {
       const { current_password, new_password, confirm_password } = this.passwordModel();
       if (new_password !== confirm_password) {
-        this.passwordError.set("Passwords do not match");
+        this.passwordError.set("PASSWORD_POLICY.MISMATCH");
         return;
       }
       this.isChangingPassword.set(true);
@@ -86,7 +86,7 @@ export class ProfileComponent implements OnInit {
         this.passwordModel.set({ current_password: "", new_password: "", confirm_password: "" });
       } catch (err: unknown) {
         const detail = (err as { error?: { detail?: string } })?.error?.detail;
-        this.passwordError.set(detail ?? "Error occurred while changing password");
+        this.passwordError.set(detail ?? "PROFILE.CHANGE_PASSWORD_ERROR");
       } finally {
         this.isChangingPassword.set(false);
       }

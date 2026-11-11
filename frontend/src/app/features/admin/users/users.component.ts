@@ -25,10 +25,10 @@ export class AdminUsersComponent implements OnInit {
   readonly createError = signal<string | null>(null);
   readonly createModel = signal({ username: "", password: "", email: "", is_admin: false });
   readonly createForm = form(this.createModel, (s) => {
-    required(s.username, { message: "The username is required" });
-    required(s.password, { message: "The password is required" });
+    required(s.username, { message: "USERS.USERNAME_REQUIRED" });
+    required(s.password, { message: "USERS.PASSWORD_REQUIRED" });
     validate(s.password, ({ value }) =>
-      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "PASSWORD_POLICY.NOT_MET" },
     );
   });
 
@@ -39,11 +39,11 @@ export class AdminUsersComponent implements OnInit {
   readonly resetError = signal<string | null>(null);
   readonly resetModel = signal({ password: "", confirm: "" });
   readonly resetForm = form(this.resetModel, (s) => {
-    required(s.password, { message: "The new password is required" });
+    required(s.password, { message: "USERS.NEW_PASSWORD_REQUIRED" });
     validate(s.password, ({ value }) =>
-      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "The password does not meet the policy" },
+      passwordMeetsPolicy(value()) ? null : { kind: "passwordPolicy", message: "PASSWORD_POLICY.NOT_MET" },
     );
-    required(s.confirm, { message: "The confirmation is required" });
+    required(s.confirm, { message: "USERS.CONFIRM_REQUIRED" });
   });
 
   // Delete confirm
@@ -86,7 +86,7 @@ export class AdminUsersComponent implements OnInit {
         await this.load();
       } catch (err: unknown) {
         const detail = (err as { error?: { detail?: string } })?.error?.detail;
-        this.createError.set(detail ?? "Error occurred while creating the user");
+        this.createError.set(detail ?? "USERS.CREATE_ERROR");
       } finally {
         this.isCreating.set(false);
       }
@@ -122,7 +122,7 @@ export class AdminUsersComponent implements OnInit {
     submit(this.resetForm, async () => {
       const { password, confirm } = this.resetModel();
       if (password !== confirm) {
-        this.resetError.set("The passwords do not match");
+        this.resetError.set("PASSWORD_POLICY.MISMATCH");
         return;
       }
       this.isResetting.set(true);
@@ -132,7 +132,7 @@ export class AdminUsersComponent implements OnInit {
         this.showResetModal.set(false);
       } catch (err: unknown) {
         const detail = (err as { error?: { detail?: string } })?.error?.detail;
-        this.resetError.set(detail ?? "Error occurred while resetting the password");
+        this.resetError.set(detail ?? "USERS.RESET_ERROR");
       } finally {
         this.isResetting.set(false);
       }

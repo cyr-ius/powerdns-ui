@@ -26,7 +26,9 @@
     "CLOSE": "Fermer",
     "BACK": "Retour",
     "NO_EMAIL": "Pas d'email",
-    "SEARCH": "Rechercher"
+    "SEARCH": "Rechercher",
+    "SHOW": "Afficher",
+    "HIDE": "Masquer"
   },
   "NAV": {
     "PERSONAL": "Mon espace",
@@ -354,7 +356,10 @@
     "EMAIL_RECIPIENT": "Adresse destinataire",
     "EMAIL_CONFIG_HINT": "Configurez le serveur SMTP dans <strong>Administration &rsaquo; Serveur mail</strong>.",
     "EMAIL_ALERT_FILTERS_TITLE": "Filtres d'alerte",
-    "EMAIL_ALERT_FILTERS_HINT": "Sélectionnez les critères déclenchant une alerte. Si aucune case n'est cochée dans une catégorie, toutes les valeurs sont prises en compte."
+    "EMAIL_ALERT_FILTERS_HINT": "Sélectionnez les critères déclenchant une alerte. Si aucune case n'est cochée dans une catégorie, toutes les valeurs sont prises en compte.",
+    "SYSLOG_HOST_REQUIRED": "Le serveur syslog est obligatoire",
+    "SYSLOG_PORT_REQUIRED": "Le port est obligatoire",
+    "EMAIL_RECIPIENT_REQUIRED": "L'adresse destinataire est obligatoire"
   },
   "MAIL": {
     "TITLE": "Serveur mail",
@@ -447,7 +452,13 @@
     "NEW_PASSWORD": "Nouveau mot de passe",
     "CONFIRM_PASSWORD": "Confirmer le mot de passe",
     "DELETE_CONFIRM": "Supprimer l'utilisateur {{ username }} ? Cette action est irréversible.",
-    "CONFIRM_DELETION": "Confirmer la suppression"
+    "CONFIRM_DELETION": "Confirmer la suppression",
+    "USERNAME_REQUIRED": "Le nom d'utilisateur est obligatoire",
+    "PASSWORD_REQUIRED": "Le mot de passe est obligatoire",
+    "NEW_PASSWORD_REQUIRED": "Le nouveau mot de passe est obligatoire",
+    "CONFIRM_REQUIRED": "La confirmation est obligatoire",
+    "CREATE_ERROR": "Erreur lors de la création de l'utilisateur",
+    "RESET_ERROR": "Erreur lors de la réinitialisation du mot de passe"
   },
   "AUTOPRIMARIES": {
     "TITLE": "Autoprimaires",
@@ -542,7 +553,11 @@
     "TAB_TOKENS": "Jetons d’accès (PAT)",
     "ROLE": "Rôle",
     "ROLE_ADMIN": "Super administrateur",
-    "ROLE_ACCOUNT_ADMIN": "Admin de compte"
+    "ROLE_ACCOUNT_ADMIN": "Admin de compte",
+    "CURRENT_PASSWORD_REQUIRED": "Le mot de passe actuel est obligatoire",
+    "NEW_PASSWORD_REQUIRED": "Le nouveau mot de passe est obligatoire",
+    "CONFIRM_PASSWORD_REQUIRED": "La confirmation est obligatoire",
+    "CHANGE_PASSWORD_ERROR": "Erreur lors du changement de mot de passe"
   },
   "SEARCH": {
     "TITLE": "Recherche globale",
@@ -759,6 +774,7 @@
     "DIGIT": "Un chiffre",
     "SYMBOL": "Un symbole (caractère non alphanumérique)",
     "MATCH": "Les mots de passe correspondent",
-    "MISMATCH": "Les mots de passe ne correspondent pas"
+    "MISMATCH": "Les mots de passe ne correspondent pas",
+    "NOT_MET": "Le mot de passe ne respecte pas la politique"
   }
 }

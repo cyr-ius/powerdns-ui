@@ -26,7 +26,9 @@
     "CLOSE": "Close",
     "BACK": "Back",
     "NO_EMAIL": "No email",
-    "SEARCH": "Search"
+    "SEARCH": "Search",
+    "SHOW": "Show",
+    "HIDE": "Hide"
   },
   "NAV": {
     "PERSONAL": "My Space",
@@ -354,7 +356,10 @@
     "EMAIL_RECIPIENT": "Recipient address",
     "EMAIL_CONFIG_HINT": "Configure the SMTP server in <strong>Administration &rsaquo; Mail Server</strong>.",
     "EMAIL_ALERT_FILTERS_TITLE": "Alert filters",
-    "EMAIL_ALERT_FILTERS_HINT": "Select the criteria that trigger an alert. If no box is checked in a category, all values are included."
+    "EMAIL_ALERT_FILTERS_HINT": "Select the criteria that trigger an alert. If no box is checked in a category, all values are included.",
+    "SYSLOG_HOST_REQUIRED": "The syslog server is required",
+    "SYSLOG_PORT_REQUIRED": "The port is required",
+    "EMAIL_RECIPIENT_REQUIRED": "The recipient address is required"
   },
   "MAIL": {
     "TITLE": "Mail Server",
@@ -447,7 +452,13 @@
     "NEW_PASSWORD": "New Password",
     "CONFIRM_PASSWORD": "Confirm Password",
     "DELETE_CONFIRM": "Delete the user {{ username }} ? This action is irreversible.",
-    "CONFIRM_DELETION": "Confirm deletion"
+    "CONFIRM_DELETION": "Confirm deletion",
+    "USERNAME_REQUIRED": "The username is required",
+    "PASSWORD_REQUIRED": "The password is required",
+    "NEW_PASSWORD_REQUIRED": "The new password is required",
+    "CONFIRM_REQUIRED": "The confirmation is required",
+    "CREATE_ERROR": "Error occurred while creating the user",
+    "RESET_ERROR": "Error occurred while resetting the password"
   },
   "AUTOPRIMARIES": {
     "TITLE": "Autoprimaries",
@@ -542,7 +553,11 @@
     "TAB_TOKENS": "Personal Access Tokens",
     "ROLE": "Role",
     "ROLE_ADMIN": "Super Administrator",
-    "ROLE_ACCOUNT_ADMIN": "Account Admin"
+    "ROLE_ACCOUNT_ADMIN": "Account Admin",
+    "CURRENT_PASSWORD_REQUIRED": "The current password is required",
+    "NEW_PASSWORD_REQUIRED": "The new password is required",
+    "CONFIRM_PASSWORD_REQUIRED": "The confirmation is required",
+    "CHANGE_PASSWORD_ERROR": "Error occurred while changing the password"
   },
   "SEARCH": {
     "TITLE": "Global search",
@@ -706,8 +721,8 @@
     "FIRST_ZONE_HELP": "A view must contain at least one zone to be created.",
     "ADD_ZONE_TITLE": "Add Zone to « {{ name }} »",
     "ZONE_NAME": "Zone name",
-    "DELETE_VIEW": "Supprimer la vue",
-    "REMOVE_FROM_VIEW": "Retirer de la vue"
+    "DELETE_VIEW": "Delete view",
+    "REMOVE_FROM_VIEW": "Remove from view"
   },
   "HOME": {
     "TITLE": "Dashboard",
@@ -759,6 +774,7 @@
     "DIGIT": "A digit",
     "SYMBOL": "A symbol (non-alphanumeric character)",
     "MATCH": "The passwords match",
-    "MISMATCH": "The passwords do not match"
+    "MISMATCH": "The passwords do not match",
+    "NOT_MET": "The password does not meet the policy"
   }
 }

@@ -252,7 +252,7 @@
       @if (passwordError()) {
         <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
           <i class="bi bi-exclamation-triangle-fill"></i>
-          <span>{{ passwordError() }}</span>
+          <span>{{ passwordError() | translate }}</span>
         </div>
       }
       <form (ngSubmit)="onChangePassword()" novalidate>
@@ -272,7 +272,7 @@
             />
             @if (passwordForm.current_password().touched() && passwordForm.current_password().errors().length) {
               <div class="invalid-feedback">
-                {{ passwordForm.current_password().errors()[0].message }}
+                {{ passwordForm.current_password().errors()[0].message | translate }}
               </div>
             }
           </div>
@@ -289,7 +289,7 @@
             />
             @if (passwordForm.new_password().touched() && passwordForm.new_password().errors().length) {
               <div class="invalid-feedback">
-                {{ passwordForm.new_password().errors()[0].message }}
+                {{ passwordForm.new_password().errors()[0].message | translate }}
               </div>
             }
             <app-password-policy
@@ -312,7 +312,7 @@
             />
             @if (passwordForm.confirm_password().touched() && passwordForm.confirm_password().errors().length) {
               <div class="invalid-feedback">
-                {{ passwordForm.confirm_password().errors()[0].message }}
+                {{ passwordForm.confirm_password().errors()[0].message | translate }}
               </div>
             }
           </div>
