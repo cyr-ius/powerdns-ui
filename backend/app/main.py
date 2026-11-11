@@ -5,6 +5,7 @@ Copyright (C) 2021-2024  Cyr-ius (github.com/cyr-ius)
 
 import fcntl
 import logging
+import re
 import secrets
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager, contextmanager
@@ -181,6 +182,12 @@ async def swagger_ui() -> HTMLResponse:
 # Resolved once at module load — avoids repeated filesystem calls per request.
 _FRONTEND_DIST = (Path(__file__).resolve().parents[2] / "frontend").resolve()
 _FRONTEND_INDEX = _FRONTEND_DIST / "index.html"
+# Bundles named with a content hash by Angular (outputHashing), e.g. main-B5zA5YFy.js.
+_HASHED_ASSET = re.compile(r"-[A-Za-z0-9_-]{8}\.(?:js|css)$")
+# Unhashed files (index.html, i18n/*.json...) keep their URL across releases: the
+# browser must revalidate them (ETag), or it mixes a new bundle with stale translations.
+_NO_CACHE = {"Cache-Control": "no-cache"}
+_IMMUTABLE = {"Cache-Control": "public, max-age=31536000, immutable"}
 
 
 @app.get("/{full_path:path}", include_in_schema=False)
@@ -199,7 +206,8 @@ async def serve_spa(full_path: str) -> FileResponse:
 
     safe = resolve_safe_path(full_path, _FRONTEND_DIST)
     if safe is not None:
-        return FileResponse(safe)
+        headers = _IMMUTABLE if _HASHED_ASSET.search(safe.name) else _NO_CACHE
+        return FileResponse(safe, headers=headers)
 
     # SPA fallback: Angular router handles unknown client-side routes.
-    return FileResponse(_FRONTEND_INDEX)
+    return FileResponse(_FRONTEND_INDEX, headers=_NO_CACHE)
