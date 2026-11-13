@@ -34,7 +34,7 @@ Repository = "https://github.com/cyr-ius/powerdns-ui"
 Issues = "https://github.com/cyr-ius/powerdns-ui/issues"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-xdist>=3.6", "ruff>=0.5", "debugpy>=1.8"]
+dev = ["pytest>=8", "pytest-xdist>=3.6", "ruff>=0.17.4", "debugpy>=1.8"]
 docs = [
     "mkdocs>=1.6,<2",
     "mkdocs-material>=9.5",
