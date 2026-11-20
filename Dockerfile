@@ -12,7 +12,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # ─── Stage 2: Final container ─────────────────────────────────────────────
-FROM python:3.14-alpine
+FROM python:3.15-alpine
 
 LABEL maintainer="cyr-ius <https://github.com/cyr-ius>"
 LABEL org.opencontainers.image.title="PowerDNS UI"
