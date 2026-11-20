@@ -15,7 +15,7 @@ dependencies = [
     "fastapi[standard]==0.162.2",
     "pydantic[email]",
     "pydantic-settings",
-    "sqlmodel==0.0.48",
+    "sqlmodel==0.0.50",
     "sqlalchemy[asyncio]",
     "aiosqlite",
     "aiomysql",
